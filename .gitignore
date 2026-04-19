@@ -1,0 +1,8 @@
+*.fsdb
+*.log
+csrc/
+simv*
+verdi*
+ucli*
+novas*
+.vscode
