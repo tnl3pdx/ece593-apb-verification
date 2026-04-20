@@ -65,7 +65,6 @@ initial begin
 
 	// Test Case 1: Write to Slave 0 and read back
 	doTransact(5'h0A, 32'hDEADBEEF, 1'b1, ADDR_SLAVE_0);
-
 	doTransact(5'h0A, 32'h0, 1'b0, ADDR_SLAVE_0);
 
 	// Print results
@@ -73,25 +72,44 @@ initial begin
 
 	// Test Case 1: Write to different address in Slave 0 and read back
 	doTransact(5'h0B, 32'hCAFEBABE, 1'b1, ADDR_SLAVE_0);
-
 	doTransact(5'h0B, 32'h0, 1'b0, ADDR_SLAVE_0);
 
 	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out);
 
 	// Test Case 3: Write to Slave 1 and read back
 	doTransact(5'h0A, 32'hDEDEDEDE, 1'b1, ADDR_SLAVE_1);
-
 	doTransact(5'h0A, 32'h0, 1'b0, ADDR_SLAVE_1);
 
 	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out);
 
 	// Test Case 4: Write to different address in Slave 1 and read back
 	doTransact(5'h0B, 32'hBEEFBEEF, 1'b1, ADDR_SLAVE_1);
-
 	doTransact(5'h0B, 32'h0, 1'b0, ADDR_SLAVE_1);
 
 	// Print results
 	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out);
+
+	// Test case 5: Access border addresses of Slave 0 and Slave 1
+	doTransact(5'h00, 32'h12345678, 1'b1, ADDR_SLAVE_0); // First address of Slave 0
+	doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_0); // Read back first address of Slave 0
+
+	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out); // Read back first address of Slave 0
+
+	doTransact(5'h1F, 32'h87654321, 1'b1, ADDR_SLAVE_0); // Last address of Slave 0
+	doTransact(5'h1F, 32'h0, 1'b0, ADDR_SLAVE_0); // Read back last address of Slave 0
+
+	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out); // Read back last address of Slave 0
+
+	doTransact(5'h00, 32'hAABBCCDD, 1'b1, ADDR_SLAVE_1); // First address of Slave 1
+	doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_1); // Read back first address of Slave 1
+
+	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out); // Read back first address of Slave 1
+
+	doTransact(5'h1F, 32'hDDBBCCAA, 1'b1, ADDR_SLAVE_1); // Last address of Slave 1
+	doTransact(5'h1F, 32'h0, 1'b0, ADDR_SLAVE_1); // Read back last address of Slave 1
+
+	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out); // Read back last address of Slave 1
+
 
 	$finish;
 end
