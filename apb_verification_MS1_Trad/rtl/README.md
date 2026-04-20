@@ -2,9 +2,9 @@
 
 Design files for MS1.
 
+This directory includes the APB source files with our custom APB peripheral.
 
-
-
+Note: As of MS1, our custom peripheral is still work in progress. Once our peripheral is done, it will be moved into the APB folder.
 
 # Ownership Note
 
