@@ -5,10 +5,10 @@ all_2step_ng: clean build_2step run
 all_3step_ng: clean build_3step run
 
 VCS_FLAGS = -sverilog -debug_access+all -kdb
-VCS_TB = APB_TB
+VCS_TB = APB_TOP
 
 build_2step:
-	vcs $(VCS_FLAGS) rtl/APB/*.sv TRAD_TB/*.sv -top $(VCS_TB) -l comp.log
+	vcs $(VCS_FLAGS) rtl/APB/*.sv CLASS_TB/APB_TOP.sv -top $(VCS_TB) -l comp.log
 
 build_3step:
 	vlogan -sverilog -kdb *.sv -l vlogan.log
