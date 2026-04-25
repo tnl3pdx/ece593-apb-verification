@@ -47,6 +47,7 @@ always @(posedge i_pclk or negedge i_prstn)
   if (!i_prstn) begin
     count_pready<='0;
     o_pready<=1'b0;
+    o_prdata<='0;
   end
   else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
     count_pready<='0; 

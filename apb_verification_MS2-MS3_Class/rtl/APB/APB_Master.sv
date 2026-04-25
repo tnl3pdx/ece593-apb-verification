@@ -67,6 +67,8 @@ always @(posedge i_pclk or negedge i_prstn)
     o_pwrite<=1'b0;
     o_penable<=1'b0;
     o_pwdata<='0;
+    o_transfer_status<=1'b0;
+    o_data_out<='0;
   end
   else begin
     case (state)
