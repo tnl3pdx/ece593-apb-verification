@@ -5,7 +5,11 @@ module APB_SYS_DUT
 	parameter ADDR_WIDTH = 32,                                           //Address bus width
 	parameter REG_NUM = 5,                                               //Number of registers within a slave equals 2^REG_NUM. Address span within a given slave equals 2**REG_NUM [REG_NUM-1:0]
 	parameter MASTER_COUNT = 1,                                          //Maximum allowed number of masters
-	parameter SLAVE_COUNT=2                                              //Number of slaves on the bus
+	parameter SLAVE_COUNT=2,                                             //Number of slaves on the bus
+	parameter WAIT_WRITE_S0 = 0,                                         //Waitstates for Slave 0 writes
+	parameter WAIT_READ_S0 = 0,                                          //Waitstates for Slave 0 reads
+	parameter WAIT_WRITE_S1 = 0,                                         //Waitstates for Slave 1 writes
+	parameter WAIT_READ_S1 = 0                                           //Waitstates for Slave 1 reads
 )
 (
 	apb_external_if ext_if
@@ -65,7 +69,7 @@ APB_Master
 	);
 
 APB_Slave
-#(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .REG_NUM(REG_NUM), .WAIT_WRITE(0), .WAIT_READ(0)) mem0 (
+#(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .REG_NUM(REG_NUM), .WAIT_WRITE(WAIT_WRITE_S0), .WAIT_READ(WAIT_READ_S0)) mem0 (
 	// Clock/Reset
 	.i_prstn(ext_if.rst_n),
 	.i_pclk(ext_if.clk),
@@ -84,7 +88,7 @@ APB_Slave
 	);
 
 APB_Slave
-#(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .REG_NUM(REG_NUM), .WAIT_WRITE(0), .WAIT_READ(0)) mem1 (
+#(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .REG_NUM(REG_NUM), .WAIT_WRITE(WAIT_WRITE_S1), .WAIT_READ(WAIT_READ_S1)) mem1 (
 	// Clock/Reset
 	.i_prstn(ext_if.rst_n),
 	.i_pclk(ext_if.clk),

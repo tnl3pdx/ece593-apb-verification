@@ -48,9 +48,20 @@ assign t_status = ext_if.transfer_status;
 assign valid = ext_if.valid;
 assign ready = ext_if.ready;
 
-// DUT Instantiation
-APB_SYS_DUT apb_sys
-(
+// DUT Instantiation with configurable waitstates
+// Slave 0: 2 read waitstates, 1 write waitstate
+// Slave 1: 1 read waitstate, 0 write waitstates
+APB_SYS_DUT #(
+	.DATA_WIDTH(DATA_WIDTH),
+	.ADDR_WIDTH(ADDR_WIDTH),
+	.REG_NUM(REG_NUM),
+	.MASTER_COUNT(MASTER_COUNT),
+	.SLAVE_COUNT(SLAVE_COUNT),
+	.WAIT_WRITE_S0(1),
+	.WAIT_READ_S0(2),
+	.WAIT_WRITE_S1(0),
+	.WAIT_READ_S1(1)
+) apb_sys (
 	.ext_if(ext_if)
 );
 
@@ -64,53 +75,97 @@ initial begin
 	// Reset DUT
 	resetDUT();
 
+	// ===================================================================
+	// SECTION 1: Basic Functionality Tests (no waitstates)
+	// ===================================================================
+	$display("\n=== Basic Read/Write Tests  ===");
+	$display("(Slave 0: WAIT_READ=2, WAIT_WRITE=1)\n(Slave 1: WAIT_READ=1, WAIT_WRITE=0)\n");
+
 	// Test Case 1: Write to Slave 0 and read back
 	doTransact(5'h0A, 32'hDEADBEEF, 1'b1, ADDR_SLAVE_0);
 	doTransact(5'h0A, 32'h0, 1'b0, ADDR_SLAVE_0);
+	$display("Test 1: Slave 0 address 0x%02x - Expected: 0xDEADBEEF, Got: 0x%08x", addr_in, d_out);
 
-	// Print results
-	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out);
-
-	// Test Case 1: Write to different address in Slave 0 and read back
+	// Test Case 2: Different address in Slave 0
 	doTransact(5'h0B, 32'hCAFEBABE, 1'b1, ADDR_SLAVE_0);
 	doTransact(5'h0B, 32'h0, 1'b0, ADDR_SLAVE_0);
+	$display("Test 2: Slave 0 address 0x%02x - Expected: 0xCAFEBABE, Got: 0x%08x", addr_in, d_out);
 
-	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out);
-
-	// Test Case 3: Write to Slave 1 and read back
+	// Test Case 3: Write to Slave 1 (no write waitstates)
 	doTransact(5'h0A, 32'hDEDEDEDE, 1'b1, ADDR_SLAVE_1);
 	doTransact(5'h0A, 32'h0, 1'b0, ADDR_SLAVE_1);
+	$display("Test 3: Slave 1 address 0x%02x - Expected: 0xDEDEDEDE, Got: 0x%08x", addr_in, d_out);
 
-	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out);
-
-	// Test Case 4: Write to different address in Slave 1 and read back
+	// Test Case 4: Different address in Slave 1
 	doTransact(5'h0B, 32'hBEEFBEEF, 1'b1, ADDR_SLAVE_1);
 	doTransact(5'h0B, 32'h0, 1'b0, ADDR_SLAVE_1);
+	$display("Test 4: Slave 1 address 0x%02x - Expected: 0xBEEFBEEF, Got: 0x%08x\n", addr_in, d_out);
 
-	// Print results
-	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out);
+	// ===================================================================
+	// SECTION 2: Waitstate Verification Tests
+	// ===================================================================
+	$display("=== Waitstate Tests ===\n");
 
-	// Test case 5: Access border addresses of Slave 0 and Slave 1
-	doTransact(5'h00, 32'h12345678, 1'b1, ADDR_SLAVE_0); // First address of Slave 0
-	doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_0); // Read back first address of Slave 0
+	// Test Case 5: Read from Slave 0 (2 read waitstates expected)
+	$display("Test 5: Slave 0 READ with 2 waitstates");
+	$display("  - Slave 0 configured with WAIT_READ=2");
+	doTransact(5'h10, 32'h11111111, 1'b1, ADDR_SLAVE_0);  // First write known value
+	doTransact(5'h10, 32'h0, 1'b0, ADDR_SLAVE_0);          // Read with waitstates
+	$display("  - Expected: 0x11111111, Got: 0x%08x", d_out);
+	$display("  - If pready stayed low for 2 cycles, data is valid\n");
 
-	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out); // Read back first address of Slave 0
+	// Test Case 6: Read from Slave 1 (1 read waitstate expected)
+	$display("Test 6: Slave 1 READ with 1 waitstate");
+	$display("  - Slave 1 configured with WAIT_READ=1");
+	doTransact(5'h10, 32'h22222222, 1'b1, ADDR_SLAVE_1);  // First write known value
+	doTransact(5'h10, 32'h0, 1'b0, ADDR_SLAVE_1);          // Read with waitstate
+	$display("  - Expected: 0x22222222, Got: 0x%08x", d_out);
+	$display("  - If pready stayed low for 1 cycle, data is valid\n");
 
-	doTransact(5'h1F, 32'h87654321, 1'b1, ADDR_SLAVE_0); // Last address of Slave 0
-	doTransact(5'h1F, 32'h0, 1'b0, ADDR_SLAVE_0); // Read back last address of Slave 0
+	// Test Case 7: Write to Slave 0 (1 write waitstate expected)
+	$display("Test 7: Slave 0 WRITE with 1 waitstate");
+	$display("  - Slave 0 configured with WAIT_WRITE=1");
+	doTransact(5'h0C, 32'h33333333, 1'b1, ADDR_SLAVE_0);  // Write with waitstate
+	doTransact(5'h0C, 32'h0, 1'b0, ADDR_SLAVE_0);          // Read back
+	$display("  - Expected: 0x33333333, Got: 0x%08x", d_out);
+	$display("  - If pready stayed low for 1 cycle, write was accepted\n");
 
-	$display("Data read from Slave 0 at address %h: %h", addr_in, d_out); // Read back last address of Slave 0
+	// Test Case 8: Write to Slave 1 (no write waitstate)
+	$display("Test 8: Slave 1 WRITE with 0 waitstates");
+	$display("  - Slave 1 configured with WAIT_WRITE=0");
+	doTransact(5'h0D, 32'h44444444, 1'b1, ADDR_SLAVE_1);  // Write with NO waitstate
+	doTransact(5'h0D, 32'h0, 1'b0, ADDR_SLAVE_1);          // Read back
+	$display("  - Expected: 0x44444444, Got: 0x%08x", d_out);
+	$display("  - pready should assert immediately on first cycle\n");
 
-	doTransact(5'h00, 32'hAABBCCDD, 1'b1, ADDR_SLAVE_1); // First address of Slave 1
-	doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_1); // Read back first address of Slave 1
+	// Test Case 9: Boundary addresses with waitstates
+	$display("Test 9: Boundary address tests");
+	doTransact(5'h00, 32'h12345678, 1'b1, ADDR_SLAVE_0);  // First addr of Slave 0
+	doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_0);
+	$display("  - Slave 0 addr 0x00: Expected 0x12345678, Got: 0x%08x", d_out);
 
-	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out); // Read back first address of Slave 1
+	doTransact(5'h1F, 32'h87654321, 1'b1, ADDR_SLAVE_0);  // Last addr of Slave 0
+	doTransact(5'h1F, 32'h0, 1'b0, ADDR_SLAVE_0);
+	$display("  - Slave 0 addr 0x1F: Expected 0x87654321, Got: 0x%08x", d_out);
 
-	doTransact(5'h1F, 32'hDDBBCCAA, 1'b1, ADDR_SLAVE_1); // Last address of Slave 1
-	doTransact(5'h1F, 32'h0, 1'b0, ADDR_SLAVE_1); // Read back last address of Slave 1
+	doTransact(5'h00, 32'hAABBCCDD, 1'b1, ADDR_SLAVE_1);  // First addr of Slave 1
+	doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_1);
+	$display("  - Slave 1 addr 0x00: Expected 0xAABBCCDD, Got: 0x%08x", d_out);
 
-	$display("Data read from Slave 1 at address %h: %h", addr_in, d_out); // Read back last address of Slave 1
+	doTransact(5'h1F, 32'hDDBBCCAA, 1'b1, ADDR_SLAVE_1);  // Last addr of Slave 1
+	doTransact(5'h1F, 32'h0, 1'b0, ADDR_SLAVE_1);
+	$display("  - Slave 1 addr 0x1F: Expected 0xDDBBCCAA, Got: 0x%08x\n", d_out);
 
+	// Test Case 10: Consecutive transactions to verify waitstate recovery
+	$display("Test 10: Consecutive reads to same slave (waitstate recovery)");
+	$display("  - Each read from Slave 0 should independently apply 2 waitstates");
+	doTransact(5'h0E, 32'hFFFFFFFF, 1'b1, ADDR_SLAVE_0);
+	doTransact(5'h0E, 32'h0, 1'b0, ADDR_SLAVE_0);
+	$display("  - Read 1: Expected 0xFFFFFFFF, Got: 0x%08x", d_out);
+	
+	doTransact(5'h0F, 32'hEEEEEEEE, 1'b1, ADDR_SLAVE_0);
+	doTransact(5'h0F, 32'h0, 1'b0, ADDR_SLAVE_0);
+	$display("  - Read 2: Expected 0xEEEEEEEE, Got: 0x%08x\n", d_out);
 
 	$finish;
 end
@@ -123,38 +178,23 @@ task automatic doTransact(
 	input [ADDR_MSB_len-1:0] slave_sel
 	);
 
+	// Only launch when master is idle/ready.
+	while (!ready) @(posedge pclk);
+
+	// Drive command fields before pulsing start.
+	rw = rw_sel;
+	d_in = (rw_sel) ? data : '0;
+	addr_in = addr;
+	slave_in = slave_sel;
+
+	// Pulse start for one cycle.
+	start = 1'b1;
 	@(posedge pclk);
+	start = 1'b0;
 
-	// Check if master is ready for transaction
-	if (!ready) begin
-		$display("Master is not ready for transaction. Aborting.");
-	end else begin
-		// Start transaction
-		start = 1'b1;
-		rw = rw_sel;
-
-		if (start) begin
-			// For rw_sel=1 (write), set data
-			if (rw_sel) begin
-				d_in = data;
-			end
-			addr_in = addr;
-			slave_in = slave_sel;
-		end
-
-		// Clock in the transaction
-		@(posedge pclk);
-
-		// Wait for transaction to complete
-		@(posedge pclk);
-		
-		// Set start back to 0 after one clock cycle
-		start = 1'b0;
-
-		// Need to add buffer clocks after transaction
-		@(posedge pclk);
-		@(posedge pclk);
-	end
+	// Wait for transaction accept (ready high -> low), then completion (low -> high).
+	while (ready)  @(posedge pclk);
+	while (!ready) @(posedge pclk);
 
 endtask
 
@@ -168,8 +208,8 @@ task automatic resetDUT();
 
 	prstn = 1'b0;
 	@(posedge pclk) 
-	@(posedge pclk) 
 	prstn = 1'b1;
+	@(posedge pclk); 
 endtask 
 
 
