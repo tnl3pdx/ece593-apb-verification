@@ -18,7 +18,7 @@ class GENERATOR;
 		repeat (tests) begin
 			tx = new();
 			assert (tx.randomize()) else $fatal("Failed to randomize transaction");
-			$display("[GENERATOR] Generated transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx_count, tx.addr, tx.data_in, tx.rw);
+			$display("[GENERATOR] Generated transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx_count + 1, tx.addr, tx.data_in, tx.rw);
 			gen2drv.put(tx);
 			tx_count++;
 		end

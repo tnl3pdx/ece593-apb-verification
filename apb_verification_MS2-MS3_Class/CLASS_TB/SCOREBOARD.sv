@@ -8,6 +8,7 @@ class SCOREBOARD;
 	int read_fail_count;
 	int write_pass_count;
 	int write_fail_count;
+	int total_input_count;
 	int total_output_count;
 	int error_count;
 
@@ -24,6 +25,7 @@ class SCOREBOARD;
 		this.read_fail_count = 0;
 		this.write_pass_count = 0;
 		this.write_fail_count = 0;
+		this.total_input_count = 0;
 		this.total_output_count = 0;
 		this.error_count = 0;
 
@@ -99,12 +101,13 @@ class SCOREBOARD;
 
 		forever begin
 			mon_in2sb.get(tx);
+			total_input_count++;
 			slave_idx = decode_slave_index(tx.addr);
 			model_idx = get_model_index(slave_idx);
 			reg_idx = decode_reg_index(tx.addr);
 
 			$display("[SCOREBOARD] IN  #%0d: slave=%0d reg=%0d addr=0x%08x rw=%b data_in=0x%08x",
-				total_output_count, slave_idx, reg_idx, tx.addr, tx.rw, tx.data_in);
+				total_input_count, slave_idx, reg_idx, tx.addr, tx.rw, tx.data_in);
 
 			if (model_idx < 0) begin
 				$display("[SCOREBOARD] INFO: peripheral at slave %0d is not modeled", slave_idx);

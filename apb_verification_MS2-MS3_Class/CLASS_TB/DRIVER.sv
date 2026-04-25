@@ -32,7 +32,7 @@ class DRIVER;
 		forever begin
 			TRANSACTION tx;
 			gen2drv.get(tx); // Wait for a transaction from the generator
-			$display("[DRIVER] Received transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx_count1, tx.addr, tx.data_in, tx.rw);
+			$display("[DRIVER] Received transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx_count1 + 1, tx.addr, tx.data_in, tx.rw);
 
 			// Wait until DUT is ready/idle.
 			wait_cycles = 0;
@@ -40,7 +40,7 @@ class DRIVER;
 				@(posedge vif.clk);
 				wait_cycles++;
 				if (wait_cycles >= READY_TIMEOUT_CYCLES) begin
-					$fatal(1, "[DRIVER] Timeout waiting for ready=1 before tx #%0d", tx_count1);
+					$fatal(1, "[DRIVER] Timeout waiting for ready=1 before tx #%0d", tx_count1 + 1);
 				end
 			end
 
@@ -49,7 +49,7 @@ class DRIVER;
 			vif.data_in <= (tx.rw) ? tx.data_in : '0; // Only drive data for write transactions
 			vif.addr <= tx.addr;
 			vif.start <= 1; // Assert start to initiate the transaction
-			$display("[DRIVER] Driving transaction #%0d onto the interface", tx_count1);
+			$display("[DRIVER] Driving transaction #%0d onto the interface", tx_count1 + 1);
 			@(posedge vif.clk);
 			vif.start <= 0; // Deassert start after one cycle
 			tx_count1++;
@@ -60,7 +60,7 @@ class DRIVER;
 				@(posedge vif.clk);
 				wait_cycles++;
 				if (wait_cycles >= READY_TIMEOUT_CYCLES) begin
-					$fatal(1, "[DRIVER] Timeout waiting for ready=0 after issuing tx #%0d", tx_count1-1);
+					$fatal(1, "[DRIVER] Timeout waiting for ready=0 after issuing tx #%0d", tx_count1);
 				end
 			end
 
@@ -69,7 +69,7 @@ class DRIVER;
 				@(posedge vif.clk);
 				wait_cycles++;
 				if (wait_cycles >= READY_TIMEOUT_CYCLES) begin
-					$fatal(1, "[DRIVER] Timeout waiting for ready=1 completion for tx #%0d", tx_count1-1);
+					$fatal(1, "[DRIVER] Timeout waiting for ready=1 completion for tx #%0d", tx_count1);
 				end
 			end
 
