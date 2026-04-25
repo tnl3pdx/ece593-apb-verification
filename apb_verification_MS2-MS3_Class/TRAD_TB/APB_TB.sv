@@ -7,13 +7,14 @@ parameter DATA_WIDTH = 32;                                           //Data bus 
 parameter ADDR_WIDTH = 32;                                           //Address bus width
 parameter REG_NUM = 5;                                               //Number of registers within a slave equals 2^REG_NUM. Address span within a given slave equals 2**REG_NUM [REG_NUM-1:0]
 parameter MASTER_COUNT = 1;                                          //Maximum allowed number of masters
-parameter SLAVE_COUNT=2;                                             //Number of slaves on the bus
+parameter SLAVE_COUNT= 3;                                             //Number of slaves on the bus (changed to 3 for slave_2)
 
 localparam WORD_LEN = $clog2(DATA_WIDTH>>3);                         //Number of bits requried to specify a given byte within a word. Example: for 32-bit word 2 bits are needed for byte0-byte3. These are the LSBs of the address which are zeros in normal operation (access is word-based)
 localparam ADDR_MSB_len = ADDR_WIDTH-WORD_LEN-REG_NUM;               //Part of the address bus used to select a slave unit. Address span for the salves equals 2**ADDR_MSB_len-1 
 
 parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_0 = 0;                       //Address of slave_0
 parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_1= 1;                        //Address of slave_1
+parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_2= 2;						//Address of slave_2
 
 // Input Signals
 logic pclk, prstn;
@@ -167,6 +168,24 @@ initial begin
 	doTransact(5'h0F, 32'h0, 1'b0, ADDR_SLAVE_0);
 	$display("  - Read 2: Expected 0xEEEEEEEE, Got: 0x%08x\n", d_out);
 
+
+// ===================================================================
+    // SECTION 3: Timer Verification
+    // ===================================================================
+    $display("=== Timer Tests ===");
+    
+    // Write value 5 to Timer 0 (Address offset 0x0)
+    doTransact(5'h00, 32'h00000005, 1'b1, ADDR_SLAVE_2);
+    
+    // Wait a few clock cycles for it to decrement
+    @(posedge pclk);
+    @(posedge pclk);
+    
+    // Read Timer 0 (Should be less than 5 now)
+    doTransact(5'h00, 32'h0, 1'b0, ADDR_SLAVE_2);
+    $display("Timer 0 Readback: Got: %0d (Expected < 5)", d_out);
+
+
 	$finish;
 end
 
@@ -213,7 +232,13 @@ task automatic resetDUT();
 endtask 
 
 
-initial 
-	$fsdbDumpvars();
+// initial 
+// 	$fsdbDumpvars();
+
+//explicitly defining filename
+initial begin
+    $fsdbDumpfile("novas.fsdb");
+    $fsdbDumpvars(0, APB_TB);
+end
 
 endmodule
