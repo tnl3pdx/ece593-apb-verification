@@ -22,7 +22,7 @@ module APB_TOP;
 
 	// Class Based Environment
 	TEST #(
-		.NUM_TESTS(20)
+		.NUM_TESTS(700)
 	) test (ext_if);
 
 	// DUV instantiation

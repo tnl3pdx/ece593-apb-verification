@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<meta name="Author" content="<username>"> <meta name="GENERATOR" content="urg/version [en] (platform name) [urg]">
+<title>Unified Coverage Report :: Group :: $unit::MONITOR_IN::apb_cg</title>
+<link type="text/css" rel="stylesheet" href="css/.urg.css">
+<link type="text/css" rel="stylesheet" href="css/.layout.css">
+<link type="text/css" rel="stylesheet" href="css/.breadcrumb.css">
+<script type="text/javascript" src="js/.jquery.js"></script>
+<script type="text/javascript" src="js/.jquery-ui.js"></script>
+<script type="text/javascript" src="js/.sortable.js"></script>
+<script type="text/javascript" src="js/.layout.js"></script>
+<script type="text/javascript" src="js/.breadcrumb.js"></script>
+<script type="text/javascript">
+var layout, westLayout, centerLayout;
+$(document).ready(function () {
+  if ($("#north-bread-crumb")) {
+    $("#north-bread-crumb").jBreadCrumb({easing:'swing'})
+  }
+  layout = $("body").layout({ 
+    resizable: true,
+    spacing_open: 4,
+    spacing_closed: 4,
+    north: {
+      size: 76
+    },
+    south: {
+      size: 45,
+      initClosed: true
+    },
+    west: {
+      size: 500,
+      resizable: true,
+      initClosed: false
+    }
+  });
+  centerLayout = $('div.ui-layout-center').layout({
+    north__paneSelector: ".ui-layout-center-inner-north",
+    center__paneSelector: ".ui-layout-center-inner-center", 
+    north__size: 50,
+    spacing_open: 4,
+    spacing_closed: 4
+  });
+});
+</script>
+</head>
+<body onLoad="initPage();"><div class="ui-layout-north">
+<div class="logo"></div>
+<center class="pagetitle">Group : $unit::MONITOR_IN::apb_cg</center>
+<div align="center"><a href="dashboard.html" ><b>dashboard</b></a> | <a href="hierarchy.html" ><b>hierarchy</b></a> | <a href="modlist.html" ><b>modlist</b></a> | <a href="groups.html" ><b>groups</b></a> | <a href="tests.html" ><b>tests</b></a> | asserts</div>
+
+</div>
+<div class="ui-layout-west">
+<div>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Group : <a href="#"  onclick="showContent('$unit::MONITOR_IN::apb_cg')">$unit::MONITOR_IN::apb_cg</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td><b>SCORE</b></td><td>INSTANCES</td><td>WEIGHT</td><td>GOAL</td><td>AT LEAST</td><td>PER INSTANCE</td><td>AUTO BIN MAX</td><td>PRINT MISSING</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">100   </td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">64    </td>
+<td class="wht cl rt">64    </td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Source File(s) : </span>
+<br clear=all>
+<a href="javascript:void(0);"  onclick="openSrcFile('/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/CLASS_TB/MONITOR_IN.sv')">/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/CLASS_TB/MONITOR_IN.sv</a><br clear=all>
+<br clear=all>
+<span class=repname>1 Instances:</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td><b>SCORE</b></td><td>WEIGHT</td><td>GOAL</td><td>AT LEAST</td><td>AUTO BIN MAX</td><td>PRINT MISSING</td></tr><tr>
+<td class="wht cl wordwrap"><a href="grp0.html#inst_tag_APB_Functional_Coverage"  onclick="showContent('APB_Functional_Coverage')">APB_Functional_Coverage</a></td>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">100   </td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">64    </td>
+<td class="wht cl rt">64    </td>
+</tr></table><br clear=all>
+<br clear=all>
+</div>
+<hr>
+<br clear=all>
+<span class=repname>Summary for Group   $unit::MONITOR_IN::apb_cg
+</span>
+<br clear=all>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td></tr><tr class="s10">
+<td><a href="#var_tbl_$unit::MONITOR_IN::apb_cg" >Variables</a></td>
+<td class="rt">5</td>
+<td class="rt">0</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td><a href="#crs_tbl_$unit::MONITOR_IN::apb_cg" >Crosses</a></td>
+<td class="rt">6</td>
+<td class="rt">0</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class="repname" id="var_tbl_$unit::MONITOR_IN::apb_cg">Variables for Group  $unit::MONITOR_IN::apb_cg
+</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">VARIABLE</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td><td>GOAL</td><td>WEIGHT</td><td>AT LEAST</td><td>AUTO BIN MAX</td><td>COMMENT</td></tr><tr class="s10">
+<td><a href="#inst_tag_$unit::MONITOR_IN::apb_cg.cp_rw"  onclick="checkLink(this)" target="detailFrame">cp_rw</a></td>
+<td class="rt">2</td>
+<td class="rt">0</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+<td class="rt">100</td>
+<td class="rt">1</td>
+<td class="rt">1</td>
+<td class="rt">0</td>
+<td></td>
+</tr><tr class="s10">
+<td><a href="#inst_tag_$unit::MONITOR_IN::apb_cg.cp_slave"  onclick="checkLink(this)" target="detailFrame">cp_slave</a></td>
+<td class="rt">3</td>
+<td class="rt">0</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+<td class="rt">100</td>
+<td class="rt">1</td>
+<td class="rt">1</td>
+<td class="rt">0</td>
+<td></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class="repname" id="crs_tbl_$unit::MONITOR_IN::apb_cg">Crosses for Group  $unit::MONITOR_IN::apb_cg
+</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CROSS</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td><td>GOAL</td><td>WEIGHT</td><td>AT LEAST</td><td>PRINT MISSING</td><td>COMMENT</td></tr><tr class="s10">
+<td><a href="#inst_tag_$unit::MONITOR_IN::apb_cg.cx_slave_rw"  onclick="checkLink(this)" target="detailFrame">cx_slave_rw</a></td>
+<td class="rt">6</td>
+<td class="rt">0</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td class="rt">100</td>
+<td class="rt">1</td>
+<td class="rt">1</td>
+<td class="rt">0</td>
+<td></td>
+</tr></table><br clear=all>
+</div>
+<div name='APB_Functional_Coverage'>
+<a name="inst_tag_APB_Functional_Coverage"></a>
+<hr>
+<div class=modhdr>
+<br clear=all>
+<span class=titlename>Group Instance : <a href="groups.html#tag_APB_Functional_Coverage" >APB_Functional_Coverage</a></span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td><b>SCORE</b></td><td>WEIGHT</td><td>GOAL</td><td>AT LEAST</td><td>AUTO BIN MAX</td><td>PRINT MISSING</td></tr><tr>
+<td class="s10 cl rt">100.00</td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">100   </td>
+<td class="wht cl rt">1     </td>
+<td class="wht cl rt">64    </td>
+<td class="wht cl rt">64    </td>
+</tr></table><br clear=all>
+<br clear=all>
+</div>
+<hr>
+<br clear=all>
+<span class=repname>Summary for Group Instance   APB_Functional_Coverage
+</span>
+<br clear=all>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td></tr><tr class="s10">
+<td><a href="#var_tbl_APB_Functional_Coverage" >Variables</a></td>
+<td class="rt">5</td>
+<td class="rt">0</td>
+<td class="rt">5</td>
+<td class="rt">100.00</td>
+</tr><tr class="s10">
+<td><a href="#crs_tbl_APB_Functional_Coverage" >Crosses</a></td>
+<td class="rt">6</td>
+<td class="rt">0</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class="repname" id="var_tbl_APB_Functional_Coverage">Variables for Group Instance  APB_Functional_Coverage
+</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">VARIABLE</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td><td>GOAL</td><td>WEIGHT</td><td>AT LEAST</td><td>AUTO BIN MAX</td><td>COMMENT</td></tr><tr class="s10">
+<td><a href="#inst_tag_APB_Functional_Coverage.cp_rw"  onclick="checkLink(this)" target="detailFrame">cp_rw</a></td>
+<td class="rt">2</td>
+<td class="rt">0</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+<td class="rt">100</td>
+<td class="rt">1</td>
+<td class="rt">1</td>
+<td class="rt">0</td>
+<td></td>
+</tr><tr class="s10">
+<td><a href="#inst_tag_APB_Functional_Coverage.cp_slave"  onclick="checkLink(this)" target="detailFrame">cp_slave</a></td>
+<td class="rt">3</td>
+<td class="rt">0</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+<td class="rt">100</td>
+<td class="rt">1</td>
+<td class="rt">1</td>
+<td class="rt">0</td>
+<td></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class="repname" id="crs_tbl_APB_Functional_Coverage">Crosses for Group Instance  APB_Functional_Coverage
+</span>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CROSS</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td><td>GOAL</td><td>WEIGHT</td><td>AT LEAST</td><td>PRINT MISSING</td><td>COMMENT</td></tr><tr class="s10">
+<td><a href="#inst_tag_APB_Functional_Coverage.cx_slave_rw"  onclick="checkLink(this)" target="detailFrame">cx_slave_rw</a></td>
+<td class="rt">6</td>
+<td class="rt">0</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td class="rt">100</td>
+<td class="rt">1</td>
+<td class="rt">1</td>
+<td class="rt">0</td>
+<td></td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center">
+<div class="ui-layout-center-inner-center">
+<div name='$unit::MONITOR_IN::apb_cg'>
+<br clear=all>
+<a name="inst_tag_$unit::MONITOR_IN::apb_cg.cp_rw"></a><span class="repname" id="inst_tag_$unit::MONITOR_IN::apb_cg.cp_rw">Summary for Variable cp_rw</span>
+<br clear=all>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td></tr><tr class="s10">
+<td>User Defined Bins</td>
+<td class="rt">2</td>
+<td class="rt">0</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>User Defined Bins for cp_rw</span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Bins</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>COUNT</td><td>AT LEAST</td></tr><tr class="s10">
+<td>write</td>
+<td class="rt">411</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>read</td>
+<td class="rt">289</td>
+<td class="rt">1</td>
+</tr></table><br clear=all>
+<hr>
+<br clear=all>
+<a name="inst_tag_$unit::MONITOR_IN::apb_cg.cp_slave"></a><span class="repname" id="inst_tag_$unit::MONITOR_IN::apb_cg.cp_slave">Summary for Variable cp_slave</span>
+<br clear=all>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td></tr><tr class="s10">
+<td>User Defined Bins</td>
+<td class="rt">3</td>
+<td class="rt">0</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>User Defined Bins for cp_slave</span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Bins</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>COUNT</td><td>AT LEAST</td></tr><tr class="s10">
+<td>slave2_timer</td>
+<td class="rt">247</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave1_mem</td>
+<td class="rt">242</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave0_mem</td>
+<td class="rt">211</td>
+<td class="rt">1</td>
+</tr></table><br clear=all>
+<hr>
+<br clear=all>
+<a name="inst_tag_$unit::MONITOR_IN::apb_cg.cx_slave_rw"></a><span class="repname" id="inst_tag_$unit::MONITOR_IN::apb_cg.cx_slave_rw">Summary for Cross cx_slave_rw</span>
+<br clear=all>
+<br clear=all>
+Samples crossed: cp_slave cp_rw<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td><td>MISSING</td></tr><tr class="s10">
+<td>Automatically Generated Cross Bins</td>
+<td class="rt">6</td>
+<td class="rt">0</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Automatically Generated Cross Bins for cx_slave_rw</span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Bins</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">cp_slave</td><td nowrap width=40 class="alfsrt">cp_rw</td><td>COUNT</td><td>AT LEAST</td></tr><tr class="s10">
+<td>slave2_timer</td>
+<td>write</td>
+<td class="rt">143</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave2_timer</td>
+<td>read</td>
+<td class="rt">104</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave1_mem</td>
+<td>write</td>
+<td class="rt">147</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave1_mem</td>
+<td>read</td>
+<td class="rt">95</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave0_mem</td>
+<td>write</td>
+<td class="rt">121</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave0_mem</td>
+<td>read</td>
+<td class="rt">90</td>
+<td class="rt">1</td>
+</tr></table><br clear=all>
+</div>
+<div name='APB_Functional_Coverage'>
+<br clear=all>
+<a name="inst_tag_APB_Functional_Coverage.cp_rw"></a><span class="repname" id="inst_tag_APB_Functional_Coverage.cp_rw">Summary for Variable cp_rw</span>
+<br clear=all>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td></tr><tr class="s10">
+<td>User Defined Bins</td>
+<td class="rt">2</td>
+<td class="rt">0</td>
+<td class="rt">2</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>User Defined Bins for cp_rw</span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Bins</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>COUNT</td><td>AT LEAST</td></tr><tr class="s10">
+<td>write</td>
+<td class="rt">411</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>read</td>
+<td class="rt">289</td>
+<td class="rt">1</td>
+</tr></table><br clear=all>
+<hr>
+<br clear=all>
+<a name="inst_tag_APB_Functional_Coverage.cp_slave"></a><span class="repname" id="inst_tag_APB_Functional_Coverage.cp_slave">Summary for Variable cp_slave</span>
+<br clear=all>
+<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td></tr><tr class="s10">
+<td>User Defined Bins</td>
+<td class="rt">3</td>
+<td class="rt">0</td>
+<td class="rt">3</td>
+<td class="rt">100.00</td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>User Defined Bins for cp_slave</span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Bins</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">NAME</td><td>COUNT</td><td>AT LEAST</td></tr><tr class="s10">
+<td>slave2_timer</td>
+<td class="rt">247</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave1_mem</td>
+<td class="rt">242</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave0_mem</td>
+<td class="rt">211</td>
+<td class="rt">1</td>
+</tr></table><br clear=all>
+<hr>
+<br clear=all>
+<a name="inst_tag_APB_Functional_Coverage.cx_slave_rw"></a><span class="repname" id="inst_tag_APB_Functional_Coverage.cx_slave_rw">Summary for Cross cx_slave_rw</span>
+<br clear=all>
+<br clear=all>
+Samples crossed: cp_slave cp_rw<br clear=all>
+<table align=left>
+<tr class="sortablehead">
+<td class="alfsrt">CATEGORY</td><td>EXPECTED</td><td>UNCOVERED</td><td>COVERED</td><td>PERCENT</td><td>MISSING</td></tr><tr class="s10">
+<td>Automatically Generated Cross Bins</td>
+<td class="rt">6</td>
+<td class="rt">0</td>
+<td class="rt">6</td>
+<td class="rt">100.00</td>
+<td></td>
+</tr></table><br clear=all>
+<br clear=all>
+<span class=repname>Automatically Generated Cross Bins for cx_slave_rw</span>
+<br clear=all>
+<br clear=all>
+<span class=repname>Bins</span>
+<br clear=all>
+<table align=left class="sortable">
+<tr class="sortablehead">
+<td class="alfsrt">cp_slave</td><td nowrap width=40 class="alfsrt">cp_rw</td><td>COUNT</td><td>AT LEAST</td></tr><tr class="s10">
+<td>slave2_timer</td>
+<td>write</td>
+<td class="rt">143</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave2_timer</td>
+<td>read</td>
+<td class="rt">104</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave1_mem</td>
+<td>write</td>
+<td class="rt">147</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave1_mem</td>
+<td>read</td>
+<td class="rt">95</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave0_mem</td>
+<td>write</td>
+<td class="rt">121</td>
+<td class="rt">1</td>
+</tr><tr class="s10">
+<td>slave0_mem</td>
+<td>read</td>
+<td class="rt">90</td>
+<td class="rt">1</td>
+</tr></table><br clear=all>
+</div>
+</div>
+<div class="ui-layout-center-inner-north">
+<div id="center-bread-crumb" class="breadCrumb module urg-margin-bottom">
+  <ul name="$unit::MONITOR_IN::apb_cg">
+    <li>
+      <a href="#inst_tag_$unit::MONITOR_IN::apb_cg.cp_rw">Variable : cp_rw</a>    </li>
+    <li>
+      <a href="#inst_tag_$unit::MONITOR_IN::apb_cg.cp_slave">Variable : cp_slave</a>    </li>
+    <li>
+      <a href="#inst_tag_$unit::MONITOR_IN::apb_cg.cx_slave_rw">Cross : cx_slave_rw</a>    </li>
+  </ul>
+  <ul name="APB_Functional_Coverage">
+    <li>
+      <a href="#inst_tag_APB_Functional_Coverage.cp_rw">Variable : cp_rw</a>    </li>
+    <li>
+      <a href="#inst_tag_APB_Functional_Coverage.cp_slave">Variable : cp_slave</a>    </li>
+    <li>
+      <a href="#inst_tag_APB_Functional_Coverage.cx_slave_rw">Cross : cx_slave_rw</a>    </li>
+  </ul>
+</div>
+</div>
+</div>
+<div class="ui-layout-south">
+<table align=center><tr><td class="s0 cl">0%</td>
+<td class="s1 cl">10%</td>
+<td class="s2 cl">20%</td>
+<td class="s3 cl">30%</td>
+<td class="s4 cl">40%</td>
+<td class="s5 cl">50%</td>
+<td class="s6 cl">60%</td>
+<td class="s7 cl">70%</td>
+<td class="s8 cl">80%</td>
+<td class="s9 cl">90%</td>
+<td class="s10 cl">100%</td></tr></table></div>
+</body>
+</html>

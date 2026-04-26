@@ -1,0 +1,8 @@
+<Command name="schRTLInfo"  delimiter="."  >
+<RTLBlock >
+<RTLInfo   name="state_0"  type="2"  fileName="rtl/APB/APB_Master.sv"  >
+    <Seg beginLine="50"  endLine="58"  />
+  </RTLInfo>
+ <Instance name="APB_TOP.apb_sys.m0"  />
+</RTLBlock>
+ </Command>

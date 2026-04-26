@@ -1,0 +1,3830 @@
+===============================================================================
+Module : APB_Timer
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 55.33  72.22  58.82  37.32 --      52.94 
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_Timer.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                   
+ 55.33  72.22  58.82  37.32 --      52.94 APB_TOP.apb_sys.timer0 
+
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Module : APB_Timer
+
+             Line No.   Total   Covered  Percent
+TOTAL                       36       26    72.22
+ALWAYS             38        9        7    77.78
+ALWAYS             64       27       19    70.37
+
+37                      always_ff @(posedge i_pclk or negedge i_prstn) begin
+38         1/1              if (!i_prstn) begin
+39         1/1                  for (int i = 0; i < num_timers; i++) begin
+40         1/1                      t_reg[i] <= '0;
+41                              end
+42                          end 
+43                          else begin
+44                              // 1. Default Timer Behavior: Decrement if > 0
+45         1/1                  for (int i = 0; i < num_timers; i++) begin
+46         1/1                      if (t_reg[i] > 0) begin
+47         0/1     ==>                  t_reg[i] <= t_reg[i] - 1;
+48                                  end
+                        MISSING_ELSE
+49                              end
+50                      
+51                              // 2. APB Write: Overrides the decrement if a new value is written
+52         1/1                  if (i_psel && i_penable && i_pwrite && o_pready) begin
+53         1/1                      if (timer_idx < num_timers) begin
+54         0/1     ==>                  t_reg[timer_idx] <= i_pwdata;
+55                                  end
+                        MISSING_ELSE
+56                              end
+                        MISSING_ELSE
+57                          end
+58                      end
+59                      
+60                      // ==============================================================================
+61                      // APB Read & Wait State Protocol Logic
+62                      // ==============================================================================
+63                      always_ff @(posedge i_pclk or negedge i_prstn) begin
+64         1/1              if (!i_prstn) begin
+65         1/1                  count_pready <= '0;
+66         1/1                  o_pready     <= 1'b0;
+67         1/1                  o_prdata     <= '0;
+68                          end
+69                          // APB Setup Phase
+70         1/1              else if (i_psel && !i_penable) begin
+71         1/1                  count_pready <= '0;
+72         1/1                  if (i_pwrite && WAIT_WRITE == 0) begin         // Write command, no wait states
+73         1/1                      o_pready <= 1'b1;
+74                              end 
+75         1/1                  else if (!i_pwrite && WAIT_READ == 0) begin    // Read command, no wait states
+76         1/1                      o_pready <= 1'b1;
+77         1/1                      o_prdata <= (timer_idx < num_timers) ? t_reg[timer_idx] : '0;
+78                              end 
+79                              else begin
+80         0/1     ==>              o_pready <= 1'b0;
+81                              end
+82                          end
+83                          // APB Access Phase - Write with Wait States
+84         1/1              else if (i_pwrite && i_psel) begin
+85         1/1                  if (count_pready == $bits(count_pready)'(WAIT_WRITE-1)) begin
+86         0/1     ==>              o_pready     <= 1'b1;
+87         0/1     ==>              count_pready <= count_pready + $bits(count_pready)'(1);	  
+88                              end 
+89         1/1                  else if (count_pready == $bits(count_pready)'(WAIT_WRITE)) begin
+90         1/1                      o_pready <= 1'b0;
+91                              end 
+92                              else begin
+93         0/1     ==>              count_pready <= count_pready + $bits(count_pready)'(1);
+94                              end
+95                          end
+96                          // APB Access Phase - Read with Wait States
+97         1/1              else if (!i_pwrite && i_psel) begin
+98         1/1                  if (count_pready == $bits(count_pready)'(WAIT_READ-1)) begin                    
+99         0/1     ==>              o_pready     <= 1'b1;
+100        0/1     ==>              o_prdata     <= (timer_idx < num_timers) ? t_reg[timer_idx] : '0;
+101        0/1     ==>              count_pready <= count_pready + $bits(count_pready)'(1);
+102                             end 
+103        1/1                  else if (count_pready == $bits(count_pready)'(WAIT_READ)) begin
+104        1/1                      o_pready <= 1'b0;
+105                             end 
+106                             else begin
+107        0/1     ==>              count_pready <= count_pready + $bits(count_pready)'(1);
+108                             end
+109                         end
+                        MISSING_ELSE
+
+-------------------------------------------------------------------------------
+Cond Coverage for Module : APB_Timer
+
+               Total   Covered  Percent
+Conditions         34       20    58.82
+Logical            34       20    58.82
+Non-Logical         0        0
+Event               0        0
+
+ LINE       52
+ EXPRESSION (i_psel && i_penable && i_pwrite && o_pready)
+             ---1--    ----2----    ----3---    ----4---
+
+-1- -2- -3- -4- Status
+ 0   1   1   1  Not Covered
+ 1   0   1   1  Not Covered
+ 1   1   0   1  Covered
+ 1   1   1   0  Not Covered
+ 1   1   1   1  Covered
+
+ LINE       70
+ EXPRESSION (i_psel && ((!i_penable)))
+             ---1--    -------2------
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       72
+ EXPRESSION (i_pwrite && (WAIT_WRITE == 0))
+             ----1---    --------2--------
+
+-1- -2- Status
+ 0   -  Covered
+ 1   -  Covered
+
+ LINE       72
+ SUB-EXPRESSION (WAIT_WRITE == 0)
+                --------1--------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       75
+ EXPRESSION (((!i_pwrite)) && (WAIT_READ == 0))
+             ------1------    --------2-------
+
+-1- -2- Status
+ 0   -  Not Covered
+ 1   -  Covered
+
+ LINE       75
+ SUB-EXPRESSION (WAIT_READ == 0)
+                --------1-------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       77
+ EXPRESSION ((timer_idx < num_timers) ? t_reg[timer_idx] : '0)
+             ------------1-----------
+
+-1- Status
+ 0  Covered
+ 1  Not Covered
+
+ LINE       84
+ EXPRESSION (i_pwrite && i_psel)
+             ----1---    ---2--
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       85
+ EXPRESSION (count_pready == 3'((WAIT_WRITE - 1)))
+            -------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Not Covered
+
+ LINE       89
+ EXPRESSION (count_pready == 3'(WAIT_WRITE))
+            ----------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       97
+ EXPRESSION (((!i_pwrite)) && i_psel)
+             ------1------    ---2--
+
+-1- -2- Status
+ 0   1  Not Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       98
+ EXPRESSION (count_pready == 3'((WAIT_READ - 1)))
+            ------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Not Covered
+
+ LINE       100
+ EXPRESSION ((timer_idx < num_timers) ? t_reg[timer_idx] : '0)
+             ------------1-----------
+
+-1- Status
+ 0  Not Covered
+ 1  Not Covered
+
+ LINE       103
+ EXPRESSION (count_pready == 3'(WAIT_READ))
+            ---------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : APB_Timer
+                Total Covered Percent 
+Totals          12    6       50.00   
+Total Bits      276   103     37.32   
+Total Bits 0->1 138   52      37.68   
+Total Bits 1->0 138   51      36.96   
+
+                             
+Ports          10  6  60.00  
+Port Bits      206 89 43.20  
+Port Bits 0->1 103 45 43.69  
+Port Bits 1->0 103 44 42.72  
+
+                              
+Signals          2  0  0.00   
+Signal Bits      70 14 20.00  
+Signal Bits 0->1 35 7  20.00  
+Signal Bits 1->0 35 7  20.00  
+
+Port Details
+               Toggle Toggle 1->0 Toggle 0->1 Direction 
+i_prstn        No     No          Yes         INPUT     
+i_pclk         Yes    Yes         Yes         INPUT     
+i_paddr[1:0]   No     No          No          INPUT     
+i_paddr[8:2]   Yes    Yes         Yes         INPUT     
+i_paddr[31:9]  No     No          No          INPUT     
+i_pwrite       Yes    Yes         Yes         INPUT     
+i_psel         Yes    Yes         Yes         INPUT     
+i_penable      Yes    Yes         Yes         INPUT     
+i_pwdata[31:0] Yes    Yes         Yes         INPUT     
+o_prdata[31:0] No     No          No          OUTPUT    
+o_pready       Yes    Yes         Yes         OUTPUT    
+o_pslverr      No     No          No          OUTPUT    
+
+Signal Details
+                  Toggle Toggle 1->0 Toggle 0->1 
+count_pready[2:0] No     No          No          
+timer_idx[6:0]    Yes    Yes         Yes         
+timer_idx[31:7]   No     No          No          
+
+
+-------------------------------------------------------------------------------
+Branch Coverage for Module : APB_Timer
+         Line No. Total Covered Percent 
+Branches          17    9       52.94   
+IF       38       4     3       75.00   
+IF       64       13    6       46.15   
+
+
+38             if (!i_prstn) begin
+               -1-  
+39                 for (int i = 0; i < num_timers; i++) begin
+                   ==>
+40                     t_reg[i] <= '0;
+41                 end
+42             end 
+43             else begin
+44                 // 1. Default Timer Behavior: Decrement if > 0
+45                 for (int i = 0; i < num_timers; i++) begin
+46                     if (t_reg[i] > 0) begin
+47                         t_reg[i] <= t_reg[i] - 1;
+48                     end
+49                 end
+50         
+51                 // 2. APB Write: Overrides the decrement if a new value is written
+52                 if (i_psel && i_penable && i_pwrite && o_pready) begin
+                   -2-  
+53                     if (timer_idx < num_timers) begin
+                       -3-  
+54                         t_reg[timer_idx] <= i_pwdata;
+                           ==>
+55                     end
+                       MISSING_ELSE
+                       ==>
+56                 end
+                   MISSING_ELSE
+                   ==>
+
+Branches:
+
+-1- -2- -3- Status      
+1   -   -   Covered     
+0   1   1   Not Covered 
+0   1   0   Covered     
+0   0   -   Covered     
+
+
+64             if (!i_prstn) begin
+               -1-  
+65                 count_pready <= '0;
+                   ==>
+66                 o_pready     <= 1'b0;
+67                 o_prdata     <= '0;
+68             end
+69             // APB Setup Phase
+70             else if (i_psel && !i_penable) begin
+                    -2-  
+71                 count_pready <= '0;
+72                 if (i_pwrite && WAIT_WRITE == 0) begin         // Write command, no wait states
+                   -3-  
+73                     o_pready <= 1'b1;
+                       ==>
+74                 end 
+75                 else if (!i_pwrite && WAIT_READ == 0) begin    // Read command, no wait states
+                        -4-  
+76                     o_pready <= 1'b1;
+77                     o_prdata <= (timer_idx < num_timers) ? t_reg[timer_idx] : '0;
+                                                            -5-  
+                                                            ==>  
+                                                            ==>  
+78                 end 
+79                 else begin
+80                     o_pready <= 1'b0;
+                       ==>
+81                 end
+82             end
+83             // APB Access Phase - Write with Wait States
+84             else if (i_pwrite && i_psel) begin
+                    -6-  
+85                 if (count_pready == $bits(count_pready)'(WAIT_WRITE-1)) begin
+                   -7-  
+86                     o_pready     <= 1'b1;
+                       ==>
+87                     count_pready <= count_pready + $bits(count_pready)'(1);	  
+88                 end 
+89                 else if (count_pready == $bits(count_pready)'(WAIT_WRITE)) begin
+                        -8-  
+90                     o_pready <= 1'b0;
+                       ==>
+91                 end 
+92                 else begin
+93                     count_pready <= count_pready + $bits(count_pready)'(1);
+                       ==>
+94                 end
+95             end
+96             // APB Access Phase - Read with Wait States
+97             else if (!i_pwrite && i_psel) begin
+                    -9-  
+98                 if (count_pready == $bits(count_pready)'(WAIT_READ-1)) begin                    
+                   -10-  
+99                     o_pready     <= 1'b1;
+100                    o_prdata     <= (timer_idx < num_timers) ? t_reg[timer_idx] : '0;
+                                                                -11-  
+                                                                ==>  
+                                                                ==>  
+101                    count_pready <= count_pready + $bits(count_pready)'(1);
+102                end 
+103                else if (count_pready == $bits(count_pready)'(WAIT_READ)) begin
+                        -12-  
+104                    o_pready <= 1'b0;
+                       ==>
+105                end 
+106                else begin
+107                    count_pready <= count_pready + $bits(count_pready)'(1);
+                       ==>
+108                end
+109            end
+               MISSING_ELSE
+               ==>
+
+Branches:
+
+-1- -2- -3- -4- -5- -6- -7- -8- -9- -10- -11- -12- Status      
+1   -   -   -   -   -   -   -   -   -    -    -    Covered     
+0   1   1   -   -   -   -   -   -   -    -    -    Covered     
+0   1   0   1   1   -   -   -   -   -    -    -    Not Covered 
+0   1   0   1   0   -   -   -   -   -    -    -    Covered     
+0   1   0   0   -   -   -   -   -   -    -    -    Not Covered 
+0   0   -   -   -   1   1   -   -   -    -    -    Not Covered 
+0   0   -   -   -   1   0   1   -   -    -    -    Covered     
+0   0   -   -   -   1   0   0   -   -    -    -    Not Covered 
+0   0   -   -   -   0   -   -   1   1    1    -    Not Covered 
+0   0   -   -   -   0   -   -   1   1    0    -    Not Covered 
+0   0   -   -   -   0   -   -   1   0    -    1    Covered     
+0   0   -   -   -   0   -   -   1   0    -    0    Not Covered 
+0   0   -   -   -   0   -   -   0   -    -    -    Covered     
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.timer0
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 55.33  72.22  58.82  37.32 --      52.94 
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 55.33  72.22  58.82  37.32 --      52.94 
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
+ 55.33  72.22  58.82  37.32 --      52.94 APB_Timer 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.
+===============================================================================
+Module : apb_external_if
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 74.27 --     --      74.27 --     --     
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_IF.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME           
+ 74.27 --     --      74.27 --     --     APB_TOP.ext_if 
+
+
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : apb_external_if
+                Total Covered Percent 
+Totals          10    7       70.00   
+Total Bits      206   153     74.27   
+Total Bits 0->1 103   77      74.76   
+Total Bits 1->0 103   76      73.79   
+
+                          
+Ports          2 1 50.00  
+Port Bits      4 3 75.00  
+Port Bits 0->1 2 2 100.00 
+Port Bits 1->0 2 1 50.00  
+
+                                
+Signals          8   6   75.00  
+Signal Bits      202 150 74.26  
+Signal Bits 0->1 101 75  74.26  
+Signal Bits 1->0 101 75  74.26  
+
+Port Details
+      Toggle Toggle 1->0 Toggle 0->1 Direction 
+clk   Yes    Yes         Yes         INPUT     
+rst_n No     No          Yes         INPUT     
+
+Signal Details
+                Toggle Toggle 1->0 Toggle 0->1 
+start           Yes    Yes         Yes         
+rw              Yes    Yes         Yes         
+data_in[31:0]   Yes    Yes         Yes         
+addr[1:0]       No     No          No          
+addr[8:2]       Yes    Yes         Yes         
+addr[31:9]      No     No          No          
+data_out[31:0]  Yes    Yes         Yes         
+transfer_status No     No          No          
+valid           Yes    Yes         Yes         
+ready           Yes    Yes         Yes         
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.ext_if
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 74.27 --     --      74.27 --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 74.27 --     --      74.27 --     --     
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME            
+ 74.27 --     --      74.27 --     --     apb_external_if 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+ 87.50 100.00 --      75.00 --     --     APB_TOP 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.
+===============================================================================
+Module : apb_bus_if
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 74.76 --     --      74.76 --     --     
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_IF.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                   
+ 74.76 --     --      74.76 --     --     APB_TOP.apb_sys.bus_if 
+
+
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : apb_bus_if
+                Total Covered Percent 
+Totals          10    7       70.00   
+Total Bits      210   157     74.76   
+Total Bits 0->1 105   79      75.24   
+Total Bits 1->0 105   78      74.29   
+
+                          
+Ports          2 1 50.00  
+Port Bits      4 3 75.00  
+Port Bits 0->1 2 2 100.00 
+Port Bits 1->0 2 1 50.00  
+
+                                
+Signals          8   6   75.00  
+Signal Bits      206 154 74.76  
+Signal Bits 0->1 103 77  74.76  
+Signal Bits 1->0 103 77  74.76  
+
+Port Details
+      Toggle Toggle 1->0 Toggle 0->1 Direction 
+clk   Yes    Yes         Yes         INPUT     
+rst_n No     No          Yes         INPUT     
+
+Signal Details
+             Toggle Toggle 1->0 Toggle 0->1 
+paddr[1:0]   No     No          No          
+paddr[8:2]   Yes    Yes         Yes         
+paddr[31:9]  No     No          No          
+pwrite       Yes    Yes         Yes         
+psel[2:0]    Yes    Yes         Yes         
+penable      Yes    Yes         Yes         
+pwdata[31:0] Yes    Yes         Yes         
+prdata[31:0] Yes    Yes         Yes         
+pready       Yes    Yes         Yes         
+pslverr      No     No          No          
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.bus_if
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 74.76 --     --      74.76 --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 74.76 --     --      74.76 --     --     
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME       
+ 74.76 --     --      74.76 --     --     apb_bus_if 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.
+===============================================================================
+Module : APB_Master
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 80.62 100.00  84.21  75.00  60.00  83.87 
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_Master.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME               
+ 80.62 100.00  84.21  75.00  60.00  83.87 APB_TOP.apb_sys.m0 
+
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Module : APB_Master
+
+             Line No.   Total   Covered  Percent
+TOTAL                       40       40   100.00
+ALWAYS             49        3        3   100.00
+ALWAYS             56        4        4   100.00
+ALWAYS             64       28       28   100.00
+ALWAYS            115        5        5   100.00
+
+48                      always @(posedge i_pclk or negedge i_prstn)
+49         1/1            if (!i_prstn)
+50         1/1              state<=IDLE;
+51                        else
+52         1/1              state<=next_state; 
+53                      
+54                      //Calculating next state
+55                      always @(*)
+56         1/1            case(state)
+57         1/1              IDLE: next_state = (i_start) ? SETUP : IDLE;
+58         1/1              SETUP: next_state = ACCESS;
+59         1/1              ACCESS: next_state = (i_pready) ? ((i_start) ? SETUP : IDLE) : ACCESS;
+                   ==>  MISSING_DEFAULT
+60                        endcase
+61                      
+62                      //Generating and sampling APB related signals
+63                      always @(posedge i_pclk or negedge i_prstn)
+64         1/1            if (!i_prstn) begin
+65         1/1              o_paddr<='0; 
+66         1/1              o_psel<='0;	  
+67         1/1              o_pwrite<=1'b0;
+68         1/1              o_penable<=1'b0;
+69         1/1              o_pwdata<='0;
+70         1/1              o_transfer_status<=1'b0;
+71         1/1              o_data_out<='0;
+72                        end
+73                        else begin
+74         1/1              case (state)
+75                      
+76                          IDLE: begin
+77         1/1              if (i_start) begin
+78         1/1                o_paddr<=i_addr_in;                                      //Sample the slave address		
+79         1/1                o_pwrite<=i_command;                                     //Sample the command, i.e. read/write
+80                      
+81         1/1                case (i_addr_in[(ADDR_WIDTH-1)-:ADDR_MSB_len])
+82         1/1                ADDR_SLAVE_0: o_psel<=3'b001;
+83         1/1                ADDR_SLAVE_1: o_psel<=3'b010;
+84         1/1                ADDR_SLAVE_2: o_psel<=3'b100;
+                   ==>  MISSING_DEFAULT
+85                            endcase
+86                               
+87         1/1                o_pwdata<=(i_command) ? i_data_in : o_pwdata;            //Update the write bus for a write operation
+88         1/1                o_penable<=1'b0;                                         //PENABLE signal rises to logic high during the ENABLE phase of the transmission 	
+89                          end
+90                          else begin
+91         1/1                o_psel<='0;
+92         1/1                o_penable<=1'b0;  
+93                          end
+94                          end
+95                      
+96                          SETUP: 
+97         1/1              o_penable<=1'b1;                                           //PENABLE signal rises to logic high during the ENABLE phase of the transmission 
+98                      
+99                          ACCESS: begin
+100        1/1              o_transfer_status<=(i_pready) ? i_pslverr : o_transfer_status;    //Updating the transfer status according to the pslverr signal generated by the slave
+101        1/1              if (i_pready) begin                                               //The 'penable' signal goes low when 'pready' is logic high 
+102        1/1                o_penable<=1'b0;
+103        1/1                if (!i_start)                                                   //The pselx goes low unless the transfer is immidiately followed by another to the same peripheral
+104        1/1                  o_psel<='0;
+                   ==>  MISSING_ELSE
+105        1/1                if (!i_command)                                                 //Update the output date at the end of a read command
+106        1/1                  o_data_out<=i_prdata;
+                        MISSING_ELSE
+107                         end
+                        MISSING_ELSE
+108                         end
+                   ==>  MISSING_DEFAULT
+109                     
+110                         endcase
+111                       end
+112                      
+113                     //Generate 'o_valid' signal - rises to logic high for one clock cycle after a 'read' transfer
+114                     always @(posedge i_pclk or negedge i_prstn)
+115        1/1            if (!i_prstn)
+116        1/1              o_valid<=1'b0;
+117        1/1            else if (|o_psel&o_penable&i_pready&~o_pwrite)                          //'valid' signal is generated for read commands only
+118        1/1              o_valid<=1'b1;
+119        1/1            else o_valid<=1'b0;
+
+-------------------------------------------------------------------------------
+Cond Coverage for Module : APB_Master
+
+               Total   Covered  Percent
+Conditions         19       16    84.21
+Logical            19       16    84.21
+Non-Logical         0        0
+Event               0        0
+
+ LINE       57
+ EXPRESSION (i_start ? SETUP : IDLE)
+             ---1---
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       59
+ EXPRESSION (i_pready ? (i_start ? SETUP : IDLE) : ACCESS)
+             ----1---
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       59
+ SUB-EXPRESSION (i_start ? SETUP : IDLE)
+                 ---1---
+
+-1- Status
+ 0  Covered
+ 1  Not Covered
+
+ LINE       87
+ EXPRESSION (i_command ? i_data_in : o_pwdata)
+             ----1----
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       100
+ EXPRESSION (i_pready ? i_pslverr : o_transfer_status)
+             ----1---
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       117
+ EXPRESSION (((|o_psel)) & o_penable & i_pready & ((~o_pwrite)))
+             -----1-----   ----2----   ----3---   ------4------
+
+-1- -2- -3- -4- Status
+ 0   1   1   1  Not Covered
+ 1   0   1   1  Not Covered
+ 1   1   0   1  Covered
+ 1   1   1   0  Covered
+ 1   1   1   1  Covered
+
+ LINE       121
+ EXPRESSION ((state == IDLE) ? 1'b1 : 1'b0)
+             -------1-------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       121
+ SUB-EXPRESSION (state == IDLE)
+                -------1-------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : APB_Master
+                Total Covered Percent 
+Totals          20    15      75.00   
+Total Bits      420   315     75.00   
+Total Bits 0->1 210   158     75.24   
+Total Bits 1->0 210   157     74.76   
+
+                              
+Ports          18  13  72.22  
+Port Bits      412 307 74.51  
+Port Bits 0->1 206 154 74.76  
+Port Bits 1->0 206 153 74.27  
+
+                            
+Signals          2 2 100.00 
+Signal Bits      8 8 100.00 
+Signal Bits 0->1 4 4 100.00 
+Signal Bits 1->0 4 4 100.00 
+
+Port Details
+                  Toggle Toggle 1->0 Toggle 0->1 Direction 
+i_prstn           No     No          Yes         INPUT     
+i_pclk            Yes    Yes         Yes         INPUT     
+i_command         Yes    Yes         Yes         INPUT     
+i_start           Yes    Yes         Yes         INPUT     
+i_data_in[31:0]   Yes    Yes         Yes         INPUT     
+i_addr_in[1:0]    No     No          No          INPUT     
+i_addr_in[8:2]    Yes    Yes         Yes         INPUT     
+i_addr_in[31:9]   No     No          No          INPUT     
+i_prdata[31:0]    Yes    Yes         Yes         INPUT     
+i_pready          Yes    Yes         Yes         INPUT     
+i_pslverr         No     No          No          INPUT     
+o_paddr[1:0]      No     No          No          OUTPUT    
+o_paddr[8:2]      Yes    Yes         Yes         OUTPUT    
+o_paddr[31:9]     No     No          No          OUTPUT    
+o_pwrite          Yes    Yes         Yes         OUTPUT    
+o_psel[2:0]       Yes    Yes         Yes         OUTPUT    
+o_penable         Yes    Yes         Yes         OUTPUT    
+o_pwdata[31:0]    Yes    Yes         Yes         OUTPUT    
+o_data_out[31:0]  Yes    Yes         Yes         OUTPUT    
+o_transfer_status No     No          No          OUTPUT    
+o_valid           Yes    Yes         Yes         OUTPUT    
+o_ready           Yes    Yes         Yes         OUTPUT    
+
+Signal Details
+                Toggle Toggle 1->0 Toggle 0->1 
+state[1:0]      Yes    Yes         Yes         
+next_state[1:0] Yes    Yes         Yes         
+
+
+-------------------------------------------------------------------------------
+FSM Coverage for Module : APB_Master
+Summary for FSM :: state
+            Total Covered Percent                         
+States      3     3       100.00  (Not included in score) 
+Transitions 5     3       60.00                           
+Sequences   0     0                                       
+
+State, Transition and Sequence Details for FSM :: state
+-------------------------------------------------------------------------------
+states Line No. Covered 
+ACCESS 58       Covered 
+IDLE   50       Covered 
+SETUP  57       Covered 
+
+transitions   Line No. Covered     
+ACCESS->IDLE  50       Covered     
+ACCESS->SETUP 59       Not Covered 
+IDLE->SETUP   57       Covered     
+SETUP->ACCESS 58       Covered     
+SETUP->IDLE   50       Not Covered 
+
+
+-------------------------------------------------------------------------------
+Branch Coverage for Module : APB_Master
+         Line No. Total Covered Percent 
+Branches          31    26      83.87   
+TERNARY  121      2     2       100.00  
+IF       49       2     2       100.00  
+CASE     56       7     5       71.43   
+IF       64       17    14      82.35   
+IF       115      3     3       100.00  
+
+
+121         assign o_ready = (state==IDLE) ? 1'b1 : 1'b0;                           //'ready' signal indicates the bus is free to initiate a new trasfer           
+                                           -1-  
+                                           ==>  
+                                           ==>  
+
+Branches:
+
+-1- Status  
+1   Covered 
+0   Covered 
+
+
+49           if (!i_prstn)
+             -1-  
+50             state<=IDLE;
+               ==>
+51           else
+52             state<=next_state; 
+               ==>
+
+Branches:
+
+-1- Status  
+1   Covered 
+0   Covered 
+
+
+56           case(state)
+             -1-  
+57             IDLE: next_state = (i_start) ? SETUP : IDLE;
+                                            -2-  
+                                            ==>  
+                                            ==>  
+58             SETUP: next_state = ACCESS;
+               ==>
+59             ACCESS: next_state = (i_pready) ? ((i_start) ? SETUP : IDLE) : ACCESS;
+                                               -3-          -4-   
+                                                            ==>  
+                                               ==>          ==>   
+               MISSING_DEFAULT
+               ==>
+
+Branches:
+
+-1-             -2- -3- -4- Status      
+IDLE            1   -   -   Covered     
+IDLE            0   -   -   Covered     
+SETUP           -   -   -   Covered     
+ACCESS          -   1   1   Not Covered 
+ACCESS          -   1   0   Covered     
+ACCESS          -   0   -   Covered     
+MISSING_DEFAULT -   -   -   Not Covered 
+
+
+64           if (!i_prstn) begin
+             -1-  
+65             o_paddr<='0; 
+               ==>
+66             o_psel<='0;	  
+67             o_pwrite<=1'b0;
+68             o_penable<=1'b0;
+69             o_pwdata<='0;
+70             o_transfer_status<=1'b0;
+71             o_data_out<='0;
+72           end
+73           else begin
+74             case (state)
+               -2-  
+75         
+76             IDLE: begin
+77             if (i_start) begin
+               -3-  
+78               o_paddr<=i_addr_in;                                      //Sample the slave address		
+79               o_pwrite<=i_command;                                     //Sample the command, i.e. read/write
+80         
+81               case (i_addr_in[(ADDR_WIDTH-1)-:ADDR_MSB_len])
+                 -4-  
+82               ADDR_SLAVE_0: o_psel<=3'b001;
+                 ==>
+83               ADDR_SLAVE_1: o_psel<=3'b010;
+                 ==>
+84               ADDR_SLAVE_2: o_psel<=3'b100;
+                 ==>
+                 MISSING_DEFAULT
+                 ==>
+85               endcase
+86                  
+87               o_pwdata<=(i_command) ? i_data_in : o_pwdata;            //Update the write bus for a write operation
+                                       -5-  
+                                       ==>  
+                                       ==>  
+88               o_penable<=1'b0;                                         //PENABLE signal rises to logic high during the ENABLE phase of the transmission 	
+89             end
+90             else begin
+91               o_psel<='0;
+                 ==>
+92               o_penable<=1'b0;  
+93             end
+94             end
+95         
+96             SETUP: 
+97             o_penable<=1'b1;                                           //PENABLE signal rises to logic high during the ENABLE phase of the transmission 
+               ==>
+98         
+99             ACCESS: begin
+100            o_transfer_status<=(i_pready) ? i_pslverr : o_transfer_status;    //Updating the transfer status according to the pslverr signal generated by the slave
+                                             -6-  
+                                             ==>  
+                                             ==>  
+101            if (i_pready) begin                                               //The 'penable' signal goes low when 'pready' is logic high 
+               -7-  
+102              o_penable<=1'b0;
+103              if (!i_start)                                                   //The pselx goes low unless the transfer is immidiately followed by another to the same peripheral
+                 -8-  
+104                o_psel<='0;
+                   ==>
+                   MISSING_ELSE
+                   ==>
+105              if (!i_command)                                                 //Update the output date at the end of a read command
+                 -9-  
+106                o_data_out<=i_prdata;
+                   ==>
+                   MISSING_ELSE
+                   ==>
+107            end
+               MISSING_ELSE
+               ==>
+108            end
+               MISSING_DEFAULT
+               ==>
+
+Branches:
+
+-1- -2-             -3- -4-             -5- -6- -7- -8- -9- Status      
+1   -               -   -               -   -   -   -   -   Covered     
+0   IDLE            1   ADDR_SLAVE_0    -   -   -   -   -   Covered     
+0   IDLE            1   ADDR_SLAVE_1    -   -   -   -   -   Covered     
+0   IDLE            1   ADDR_SLAVE_2    -   -   -   -   -   Covered     
+0   IDLE            1   MISSING_DEFAULT -   -   -   -   -   Not Covered 
+0   IDLE            1   -               1   -   -   -   -   Covered     
+0   IDLE            1   -               0   -   -   -   -   Covered     
+0   IDLE            0   -               -   -   -   -   -   Covered     
+0   SETUP           -   -               -   -   -   -   -   Covered     
+0   ACCESS          -   -               -   1   -   -   -   Covered     
+0   ACCESS          -   -               -   0   -   -   -   Covered     
+0   ACCESS          -   -               -   -   1   1   -   Covered     
+0   ACCESS          -   -               -   -   1   0   -   Not Covered 
+0   ACCESS          -   -               -   -   1   -   1   Covered     
+0   ACCESS          -   -               -   -   1   -   0   Covered     
+0   ACCESS          -   -               -   -   0   -   -   Covered     
+0   MISSING_DEFAULT -   -               -   -   -   -   -   Not Covered 
+
+
+115          if (!i_prstn)
+             -1-  
+116            o_valid<=1'b0;
+               ==>
+117          else if (|o_psel&o_penable&i_pready&~o_pwrite)                          //'valid' signal is generated for read commands only
+                  -2-  
+118            o_valid<=1'b1;
+               ==>
+119          else o_valid<=1'b0;
+             ==>
+
+Branches:
+
+-1- -2- Status  
+1   -   Covered 
+0   1   Covered 
+0   0   Covered 
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.m0
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 80.62 100.00  84.21  75.00  60.00  83.87 
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 80.62 100.00  84.21  75.00  60.00  83.87 
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME       
+ 80.62 100.00  84.21  75.00  60.00  83.87 APB_Master 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.
+===============================================================================
+Module : APB_TOP
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 87.50 100.00 --      75.00 --     --     
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/CLASS_TB/APB_TOP.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+ 87.50 100.00 --      75.00 --     --     APB_TOP 
+
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Module : APB_TOP
+
+             Line No.   Total   Covered  Percent
+TOTAL                        9        9   100.00
+INITIAL             9        5        5   100.00
+INITIAL            16        4        4   100.00
+
+8                       	initial begin
+9          1/1          		prstn = 0;
+10         1/1          		@(posedge pclk)
+11         1/1          		prstn = 1; // Release reset
+12         2/2          		@(posedge pclk);
+13                      
+14                      	end
+15                      	initial begin
+16         1/1          		pclk = 0;
+17         3/3          		forever #5 pclk = ~pclk;
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : APB_TOP
+                Total Covered Percent 
+Totals          2     1       50.00   
+Total Bits      4     3       75.00   
+Total Bits 0->1 2     2       100.00  
+Total Bits 1->0 2     1       50.00   
+
+                            
+Signals          2 1 50.00  
+Signal Bits      4 3 75.00  
+Signal Bits 0->1 2 2 100.00 
+Signal Bits 1->0 2 1 50.00  
+
+Signal Details
+      Toggle Toggle 1->0 Toggle 0->1 
+pclk  Yes    Yes         Yes         
+prstn No     No          Yes         
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 87.50 100.00 --      75.00 --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 75.78  86.67  80.62  73.82  60.00  77.78 
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+ 87.50 100.00 --      75.00 --     --     APB_TOP 
+
+
+Parent : 
+
+none
+----------------
+
+
+Subtrees :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+ 75.58  85.71  80.62  73.80  60.00  77.78 apb_sys 
+ 74.27 --     --      74.27 --     --     ext_if  
+100.00 100.00 --     --     --     --     test    
+
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.
+===============================================================================
+Module : APB_Slave
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 88.75  90.62  86.62  91.11 --      86.67 
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_Slave.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                 
+ 78.50  81.25  80.65  78.76 --      73.33 APB_TOP.apb_sys.mem1 
+ 83.45  87.50  92.59  73.72 --      80.00 APB_TOP.apb_sys.mem0 
+
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Module : APB_Slave
+
+             Line No.   Total   Covered  Percent
+TOTAL                       32       29    90.62
+ALWAYS             39        5        5   100.00
+ALWAYS             47       27       24    88.89
+
+38                      always @(posedge i_pclk or negedge i_prstn)
+39         1/1            if (!i_prstn)
+40         1/1              mem<='0;
+41         1/1            else if ((i_psel)&&(i_penable))
+42         1/1              if ((i_pwrite)&&(o_pready))
+43         1/1                mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
+                        MISSING_ELSE
+                        MISSING_ELSE
+44                      
+45                      //pready signal generation and o_prdata update for a 'read' command
+46                      always @(posedge i_pclk or negedge i_prstn)
+47         1/1            if (!i_prstn) begin
+48         1/1              count_pready<='0;
+49         1/1              o_pready<=1'b0;
+50         1/1              o_prdata<='0;
+51                        end
+52         1/1            else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
+53         1/1              count_pready<='0; 
+54         1/1              if ((i_pwrite)&&(WAIT_WRITE=='0)) begin                                //Write commnad and no wait states
+55         1/1              o_pready<=1'b1;
+56                          end
+57         1/1              else if ((~i_pwrite)&&(WAIT_READ=='0)) begin                           //Read commnad and no wait states
+58         0/1     ==>        o_pready<=1'b1;
+59         0/1     ==>        o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata together with the rising edge of pready
+60                          end
+61         1/1              else o_pready<=1'b0;
+62                        end
+63                        
+64         1/1            else if ((i_pwrite)&&(i_psel))	                                       //Write commnad with 'WAIT_WRITE' wait states
+65         1/1              if (count_pready==$bits(count_pready)'(WAIT_WRITE-1)) begin
+66         1/1                o_pready<=1'b1;
+67         1/1                count_pready<=count_pready+$bits(count_pready)'(1);	  
+68                          end
+69         1/1              else if (count_pready==$bits(count_pready)'(WAIT_WRITE))
+70         1/1                o_pready<=1'b0;	
+71                          else
+72         0/1     ==>        count_pready<=count_pready+$bits(count_pready)'(1);
+73                      
+74         1/1            else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+75         1/1              if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
+76         1/1                o_pready<=1'b1;
+77         1/1                o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
+78         1/1                count_pready<=count_pready+$bits(count_pready)'(1);
+79                          end
+80         1/1              else if (count_pready==$bits(count_pready)'(WAIT_READ))
+81         1/1                o_pready<=1'b0;
+82                          else
+83         1/1                count_pready<=count_pready+$bits(count_pready)'(1);
+                        MISSING_ELSE
+
+-------------------------------------------------------------------------------
+Cond Coverage for Module : APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=1,WAIT_READ=2,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 ) 
+Cond Coverage for Module self-instances : 
+APB_TOP.apb_sys.mem0
+----------------
+SCORE  COND   
+ 83.45  92.59 
+
+
+               Total   Covered  Percent
+Conditions         27       25    92.59
+Logical            27       25    92.59
+Non-Logical         0        0
+Event               0        0
+
+ LINE       41
+ EXPRESSION (i_psel && i_penable)
+             ---1--    ----2----
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       42
+ EXPRESSION (i_pwrite && o_pready)
+             ----1---    ----2---
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       52
+ EXPRESSION ((i_psel == 1'b1) && (i_penable == 1'b0))
+             --------1-------    ---------2---------
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_psel == 1'b1)
+                --------1-------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_penable == 1'b0)
+                ---------1---------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       64
+ EXPRESSION (i_pwrite && i_psel)
+             ----1---    ---2--
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       65
+ EXPRESSION (count_pready == 3'((WAIT_WRITE - 1)))
+            -------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       69
+ EXPRESSION (count_pready == 3'(WAIT_WRITE))
+            ----------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       74
+ EXPRESSION (((~i_pwrite)) && i_psel)
+             ------1------    ---2--
+
+-1- -2- Status
+ 0   1  Not Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       75
+ EXPRESSION (count_pready == 3'((WAIT_READ - 1)))
+            ------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       80
+ EXPRESSION (count_pready == 3'(WAIT_READ))
+            ---------------1---------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Cond Coverage for Module : APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=0,WAIT_READ=1,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 ) 
+Cond Coverage for Module self-instances : 
+APB_TOP.apb_sys.mem1
+----------------
+SCORE  COND   
+ 78.50  80.65 
+
+
+               Total   Covered  Percent
+Conditions         31       25    80.65
+Logical            31       25    80.65
+Non-Logical         0        0
+Event               0        0
+
+ LINE       41
+ EXPRESSION (i_psel && i_penable)
+             ---1--    ----2----
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       42
+ EXPRESSION (i_pwrite && o_pready)
+             ----1---    ----2---
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Not Covered
+ 1   1  Covered
+
+ LINE       52
+ EXPRESSION ((i_psel == 1'b1) && (i_penable == 1'b0))
+             --------1-------    ---------2---------
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_psel == 1'b1)
+                --------1-------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_penable == 1'b0)
+                ---------1---------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       54
+ EXPRESSION (i_pwrite && (WAIT_WRITE == '0))
+             ----1---    ---------2--------
+
+-1- -2- Status
+ 0   -  Covered
+ 1   -  Covered
+
+ LINE       54
+ SUB-EXPRESSION (WAIT_WRITE == '0)
+                ---------1--------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       64
+ EXPRESSION (i_pwrite && i_psel)
+             ----1---    ---2--
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       65
+ EXPRESSION (count_pready == 3'((WAIT_WRITE - 1)))
+            -------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Not Covered
+
+ LINE       69
+ EXPRESSION (count_pready == 3'(WAIT_WRITE))
+            ----------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       74
+ EXPRESSION (((~i_pwrite)) && i_psel)
+             ------1------    ---2--
+
+-1- -2- Status
+ 0   1  Not Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       75
+ EXPRESSION (count_pready == 3'((WAIT_READ - 1)))
+            ------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       80
+ EXPRESSION (count_pready == 3'(WAIT_READ))
+            ---------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : APB_Slave
+                Total Covered Percent 
+Totals          12    7       58.33   
+Total Bits      2260  2059    91.11   
+Total Bits 0->1 1130  1096    96.99   
+Total Bits 1->0 1130  963     85.22   
+
+                              
+Ports          10  7   70.00  
+Port Bits      206 153 74.27  
+Port Bits 0->1 103 77  74.76  
+Port Bits 1->0 103 76  73.79  
+
+                                  
+Signals          2    0    0.00   
+Signal Bits      2054 1906 92.79  
+Signal Bits 0->1 1027 1019 99.22  
+Signal Bits 1->0 1027 887  86.37  
+
+Port Details
+               Toggle Toggle 1->0 Toggle 0->1 Direction 
+i_prstn        No     No          Yes         INPUT     
+i_pclk         Yes    Yes         Yes         INPUT     
+i_paddr[1:0]   No     No          No          INPUT     
+i_paddr[8:2]   Yes    Yes         Yes         INPUT     
+i_paddr[31:9]  No     No          No          INPUT     
+i_pwrite       Yes    Yes         Yes         INPUT     
+i_psel         Yes    Yes         Yes         INPUT     
+i_penable      Yes    Yes         Yes         INPUT     
+i_pwdata[31:0] Yes    Yes         Yes         INPUT     
+o_prdata[31:0] Yes    Yes         Yes         OUTPUT    
+o_pready       Yes    Yes         Yes         OUTPUT    
+o_pslverr      No     No          No          OUTPUT    
+
+Signal Details
+                              Toggle Toggle 1->0 Toggle 0->1 
+mem[0][31:0]                  Yes    Yes         Yes         
+mem[1][10:0]                  Yes    Yes         Yes         
+mem[1][11]                    No     No          Yes         
+mem[1][31:12]                 Yes    Yes         Yes         
+mem[2][2:0]                   Yes    Yes         Yes         
+mem[2][3]                     No     No          Yes         
+mem[2][25:4]                  Yes    Yes         Yes         
+mem[2][26]                    No     No          Yes         
+mem[2][31:27]                 Yes    Yes         Yes         
+mem[3][4:0]                   Yes    Yes         Yes         
+mem[3][5]                     No     No          Yes         
+mem[3][16:6]                  Yes    Yes         Yes         
+mem[3][17]                    No     No          Yes         
+mem[3][31:18]                 Yes    Yes         Yes         
+mem[4][2:0]                   No     No          Yes         
+mem[4][3]                     Yes    Yes         Yes         
+mem[4][6:5]                   Yes    Yes         Yes         
+mem[4][11:7]                  No     No          Yes         
+mem[4][12]                    Yes    Yes         Yes         
+mem[4][17:13]                 No     No          Yes         
+mem[4][18]                    Yes    Yes         Yes         
+mem[4][20:19]                 No     No          Yes         
+mem[4][21]                    Yes    Yes         Yes         
+mem[4][23:22]                 No     No          Yes         
+mem[4][26:24]                 Yes    Yes         Yes         
+mem[4][31:27]                 No     No          Yes         
+mem[5][15:0]                  Yes    Yes         Yes         
+mem[5][17]                    Yes    Yes         Yes         
+mem[5][18]                    No     No          Yes         
+mem[5][31:19]                 Yes    Yes         Yes         
+mem[6][0]                     No     No          Yes         
+mem[6][7:1]                   Yes    Yes         Yes         
+mem[6][8]                     No     No          Yes         
+mem[6][15:9]                  Yes    Yes         Yes         
+mem[6][16]                    No     No          Yes         
+mem[6][17]                    Yes    Yes         Yes         
+mem[6][19:18]                 No     No          Yes         
+mem[6][24:20]                 Yes    Yes         Yes         
+mem[6][25]                    No     No          Yes         
+mem[6][28:26]                 Yes    Yes         Yes         
+mem[6][29]                    No     No          Yes         
+mem[6][31:30]                 Yes    Yes         Yes         
+mem[7][31:0]                  Yes    Yes         Yes         
+mem[8][7:0]                   Yes    Yes         Yes         
+mem[8][8]                     No     No          Yes         
+mem[8][19:9]                  Yes    Yes         Yes         
+mem[8][20]                    No     No          Yes         
+mem[8][31:21]                 Yes    Yes         Yes         
+mem[9][16:0]                  Yes    Yes         Yes         
+mem[9][17]                    No     No          Yes         
+mem[9][21:18]                 Yes    Yes         Yes         
+mem[9][22]                    No     No          Yes         
+mem[9][24:23]                 Yes    Yes         Yes         
+mem[9][25]                    No     No          Yes         
+mem[9][28:26]                 Yes    Yes         Yes         
+mem[9][29]                    No     No          Yes         
+mem[9][31:30]                 Yes    Yes         Yes         
+mem[10][26:0]                 Yes    Yes         Yes         
+mem[10][27]                   No     No          Yes         
+mem[10][31:28]                Yes    Yes         Yes         
+mem[11][1:0]                  Yes    Yes         Yes         
+mem[11][3:2]                  No     No          Yes         
+mem[11][4]                    Yes    Yes         Yes         
+mem[11][6:5]                  No     No          Yes         
+mem[11][10:7]                 Yes    Yes         Yes         
+mem[11][11]                   No     No          Yes         
+mem[11][21:12]                Yes    Yes         Yes         
+mem[11][22]                   No     No          Yes         
+mem[11][26:23]                Yes    Yes         Yes         
+mem[11][27]                   No     No          Yes         
+mem[11][29:28]                Yes    Yes         Yes         
+mem[11][30]                   No     No          Yes         
+mem[11][31]                   Yes    Yes         Yes         
+mem[12][1]                    No     No          Yes         
+mem[12][3:2]                  Yes    Yes         Yes         
+mem[12][6:5]                  Yes    Yes         Yes         
+mem[12][9:7]                  No     No          Yes         
+mem[12][10]                   Yes    Yes         Yes         
+mem[12][11]                   No     No          Yes         
+mem[12][13:12]                Yes    Yes         Yes         
+mem[12][14]                   No     No          Yes         
+mem[12][15]                   Yes    Yes         Yes         
+mem[12][16]                   No     No          Yes         
+mem[12][17]                   Yes    Yes         Yes         
+mem[12][21:18]                No     No          Yes         
+mem[12][26:22]                Yes    Yes         Yes         
+mem[12][29:27]                No     No          Yes         
+mem[12][30]                   Yes    Yes         Yes         
+mem[12][31]                   No     No          Yes         
+mem[13][31:0]                 Yes    Yes         Yes         
+mem[14][0]                    Yes    Yes         Yes         
+mem[14][1]                    No     No          Yes         
+mem[14][7:2]                  Yes    Yes         Yes         
+mem[14][11:8]                 No     No          Yes         
+mem[14][12]                   Yes    Yes         Yes         
+mem[14][17:13]                No     No          Yes         
+mem[14][18]                   Yes    Yes         Yes         
+mem[14][19]                   No     No          Yes         
+mem[14][20]                   Yes    Yes         Yes         
+mem[14][24:21]                No     No          Yes         
+mem[14][25]                   Yes    Yes         Yes         
+mem[14][26]                   No     No          Yes         
+mem[14][30:27]                Yes    Yes         Yes         
+mem[14][31]                   No     No          Yes         
+mem[15][3:0]                  Yes    Yes         Yes         
+mem[15][4]                    No     No          Yes         
+mem[15][6:5]                  Yes    Yes         Yes         
+mem[15][7]                    No     No          Yes         
+mem[15][9:8]                  Yes    Yes         Yes         
+mem[15][10]                   No     No          Yes         
+mem[15][14:11]                Yes    Yes         Yes         
+mem[15][15]                   No     No          Yes         
+mem[15][16]                   Yes    Yes         Yes         
+mem[15][18:17]                No     No          Yes         
+mem[15][24:19]                Yes    Yes         Yes         
+mem[15][25]                   No     No          Yes         
+mem[15][30:26]                Yes    Yes         Yes         
+mem[15][31]                   No     No          Yes         
+mem[16][0]                    Yes    Yes         Yes         
+mem[16][1]                    No     No          Yes         
+mem[16][3:2]                  Yes    Yes         Yes         
+mem[16][4]                    No     No          Yes         
+mem[16][18:5]                 Yes    Yes         Yes         
+mem[16][19]                   No     No          Yes         
+mem[16][31:20]                Yes    Yes         Yes         
+mem[17][2:0]                  Yes    Yes         Yes         
+mem[17][4:3]                  No     No          Yes         
+mem[17][10:5]                 Yes    Yes         Yes         
+mem[17][12:11]                No     No          Yes         
+mem[17][17:13]                Yes    Yes         Yes         
+mem[17][18]                   No     No          Yes         
+mem[17][21:19]                Yes    Yes         Yes         
+mem[17][22]                   No     No          Yes         
+mem[17][27:23]                Yes    Yes         Yes         
+mem[17][28]                   No     No          Yes         
+mem[17][30:29]                Yes    Yes         Yes         
+mem[17][31]                   No     No          Yes         
+mem[18][21:0]                 Yes    Yes         Yes         
+mem[18][31:23]                Yes    Yes         Yes         
+mem[19][31:0]                 Yes    Yes         Yes         
+mem[20][14:0]                 Yes    Yes         Yes         
+mem[20][15]                   No     No          Yes         
+mem[20][31:16]                Yes    Yes         Yes         
+mem[21][7:0]                  Yes    Yes         Yes         
+mem[21][8]                    No     No          Yes         
+mem[21][19:9]                 Yes    Yes         Yes         
+mem[21][22:21]                Yes    Yes         Yes         
+mem[21][23]                   No     No          Yes         
+mem[21][26:24]                Yes    Yes         Yes         
+mem[21][27]                   No     No          Yes         
+mem[21][31:28]                Yes    Yes         Yes         
+mem[22][8:0]                  Yes    Yes         Yes         
+mem[22][9]                    No     No          Yes         
+mem[22][15:10]                Yes    Yes         Yes         
+mem[22][16]                   No     No          Yes         
+mem[22][27:17]                Yes    Yes         Yes         
+mem[22][28]                   No     No          Yes         
+mem[22][29]                   Yes    Yes         Yes         
+mem[22][30]                   No     No          Yes         
+mem[22][31]                   Yes    Yes         Yes         
+mem[23][4:0]                  Yes    Yes         Yes         
+mem[23][5]                    No     No          Yes         
+mem[23][6]                    Yes    Yes         Yes         
+mem[23][7]                    No     No          Yes         
+mem[23][10:8]                 Yes    Yes         Yes         
+mem[23][11]                   No     No          Yes         
+mem[23][15:12]                Yes    Yes         Yes         
+mem[23][16]                   No     No          Yes         
+mem[23][18:17]                Yes    Yes         Yes         
+mem[23][19]                   No     No          Yes         
+mem[23][21:20]                Yes    Yes         Yes         
+mem[23][22]                   No     No          Yes         
+mem[23][30:23]                Yes    Yes         Yes         
+mem[24][2:0]                  Yes    Yes         Yes         
+mem[24][3]                    No     No          Yes         
+mem[24][31:4]                 Yes    Yes         Yes         
+mem[25][6:0]                  Yes    Yes         Yes         
+mem[25][7]                    No     No          Yes         
+mem[25][23:8]                 Yes    Yes         Yes         
+mem[25][24]                   No     No          Yes         
+mem[25][25]                   Yes    Yes         Yes         
+mem[25][26]                   No     No          Yes         
+mem[25][31:27]                Yes    Yes         Yes         
+mem[26][31:0]                 Yes    Yes         Yes         
+mem[27][7:0]                  Yes    Yes         Yes         
+mem[27][8]                    No     No          Yes         
+mem[27][17:9]                 Yes    Yes         Yes         
+mem[27][18]                   No     No          Yes         
+mem[27][20:19]                Yes    Yes         Yes         
+mem[27][21]                   No     No          Yes         
+mem[27][26:22]                Yes    Yes         Yes         
+mem[27][27]                   No     No          Yes         
+mem[27][28]                   Yes    Yes         Yes         
+mem[27][29]                   No     No          Yes         
+mem[27][31:30]                Yes    Yes         Yes         
+mem[28][31:0]                 Yes    Yes         Yes         
+mem[29][2:0]                  Yes    Yes         Yes         
+mem[29][3]                    No     No          Yes         
+mem[29][26:4]                 Yes    Yes         Yes         
+mem[29][27]                   No     No          Yes         
+mem[29][31:28]                Yes    Yes         Yes         
+mem[30][0]                    Yes    Yes         Yes         
+mem[30][1]                    No     No          Yes         
+mem[30][7:2]                  Yes    Yes         Yes         
+mem[30][8]                    No     No          Yes         
+mem[30][9]                    Yes    Yes         Yes         
+mem[30][10]                   No     No          Yes         
+mem[30][20:11]                Yes    Yes         Yes         
+mem[30][22:21]                No     No          Yes         
+mem[30][31:23]                Yes    Yes         Yes         
+mem[31][26:0]                 Yes    Yes         Yes         
+mem[31][27]                   No     No          Yes         
+mem[31][31:28]                Yes    Yes         Yes         
+Other bits of mem[31:0][31:0] No     No          No          
+count_pready[1:0]             Yes    Yes         Yes         
+count_pready[2]               No     No          No          
+
+
+-------------------------------------------------------------------------------
+Branch Coverage for Module : APB_Slave
+         Line No. Total Covered Percent 
+Branches          15    13      86.67   
+IF       39       4     4       100.00  
+IF       47       11    9       81.82   
+
+
+39           if (!i_prstn)
+             -1-  
+40             mem<='0;
+               ==>
+41           else if ((i_psel)&&(i_penable))
+                  -2-  
+42             if ((i_pwrite)&&(o_pready))
+               -3-  
+               MISSING_ELSE
+               ==>
+43               mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
+                 ==>
+                 MISSING_ELSE
+                 ==>
+
+Branches:
+
+-1- -2- -3- Status  
+1   -   -   Covered 
+0   1   1   Covered 
+0   1   0   Covered 
+0   0   -   Covered 
+
+
+47           if (!i_prstn) begin
+             -1-  
+48             count_pready<='0;
+               ==>
+49             o_pready<=1'b0;
+50             o_prdata<='0;
+51           end
+52           else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
+                  -2-  
+53             count_pready<='0; 
+54             if ((i_pwrite)&&(WAIT_WRITE=='0)) begin                                //Write commnad and no wait states
+               -3-  
+55             o_pready<=1'b1;
+               ==>
+56             end
+57             else if ((~i_pwrite)&&(WAIT_READ=='0)) begin                           //Read commnad and no wait states
+                    -4-  
+58               o_pready<=1'b1;
+                 ==>
+59               o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata together with the rising edge of pready
+60             end
+61             else o_pready<=1'b0;
+               ==>
+62           end
+63           
+64           else if ((i_pwrite)&&(i_psel))	                                       //Write commnad with 'WAIT_WRITE' wait states
+                  -5-  
+65             if (count_pready==$bits(count_pready)'(WAIT_WRITE-1)) begin
+               -6-  
+66               o_pready<=1'b1;
+                 ==>
+67               count_pready<=count_pready+$bits(count_pready)'(1);	  
+68             end
+69             else if (count_pready==$bits(count_pready)'(WAIT_WRITE))
+                    -7-  
+70               o_pready<=1'b0;	
+                 ==>
+71             else
+72               count_pready<=count_pready+$bits(count_pready)'(1);
+                 ==>
+73         
+74           else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+                  -8-  
+75             if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
+               -9-  
+               MISSING_ELSE
+               ==>
+76               o_pready<=1'b1;
+                 ==>
+77               o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
+78               count_pready<=count_pready+$bits(count_pready)'(1);
+79             end
+80             else if (count_pready==$bits(count_pready)'(WAIT_READ))
+                    -10-  
+81               o_pready<=1'b0;
+                 ==>
+82             else
+83               count_pready<=count_pready+$bits(count_pready)'(1);
+                 ==>
+
+Branches:
+
+-1- -2- -3- -4- -5- -6- -7- -8- -9- -10- Status      
+1   -   -   -   -   -   -   -   -   -    Covered     
+0   1   1   -   -   -   -   -   -   -    Covered     
+0   1   0   1   -   -   -   -   -   -    Not Covered 
+0   1   0   0   -   -   -   -   -   -    Covered     
+0   0   -   -   1   1   -   -   -   -    Covered     
+0   0   -   -   1   0   1   -   -   -    Covered     
+0   0   -   -   1   0   0   -   -   -    Not Covered 
+0   0   -   -   0   -   -   1   1   -    Covered     
+0   0   -   -   0   -   -   1   0   1    Covered     
+0   0   -   -   0   -   -   1   0   0    Covered     
+0   0   -   -   0   -   -   0   -   -    Covered     
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.mem1
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 78.50  81.25  80.65  78.76 --      73.33 
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 78.50  81.25  80.65  78.76 --      73.33 
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
+ 88.75  90.62  86.62  91.11 --      86.67 APB_Slave 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Instance : APB_TOP.apb_sys.mem1
+
+             Line No.   Total   Covered  Percent
+TOTAL                       32       26    81.25
+ALWAYS             39        5        5   100.00
+ALWAYS             47       27       21    77.78
+
+38                      always @(posedge i_pclk or negedge i_prstn)
+39         1/1            if (!i_prstn)
+40         1/1              mem<='0;
+41         1/1            else if ((i_psel)&&(i_penable))
+42         1/1              if ((i_pwrite)&&(o_pready))
+43         1/1                mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
+                        MISSING_ELSE
+                        MISSING_ELSE
+44                      
+45                      //pready signal generation and o_prdata update for a 'read' command
+46                      always @(posedge i_pclk or negedge i_prstn)
+47         1/1            if (!i_prstn) begin
+48         1/1              count_pready<='0;
+49         1/1              o_pready<=1'b0;
+50         1/1              o_prdata<='0;
+51                        end
+52         1/1            else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
+53         1/1              count_pready<='0; 
+54         1/1              if ((i_pwrite)&&(WAIT_WRITE=='0)) begin                                //Write commnad and no wait states
+55         1/1              o_pready<=1'b1;
+56                          end
+57         1/1              else if ((~i_pwrite)&&(WAIT_READ=='0)) begin                           //Read commnad and no wait states
+58         0/1     ==>        o_pready<=1'b1;
+59         0/1     ==>        o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata together with the rising edge of pready
+60                          end
+61         1/1              else o_pready<=1'b0;
+62                        end
+63                        
+64         1/1            else if ((i_pwrite)&&(i_psel))	                                       //Write commnad with 'WAIT_WRITE' wait states
+65         1/1              if (count_pready==$bits(count_pready)'(WAIT_WRITE-1)) begin
+66         0/1     ==>        o_pready<=1'b1;
+67         0/1     ==>        count_pready<=count_pready+$bits(count_pready)'(1);	  
+68                          end
+69         1/1              else if (count_pready==$bits(count_pready)'(WAIT_WRITE))
+70         1/1                o_pready<=1'b0;	
+71                          else
+72         0/1     ==>        count_pready<=count_pready+$bits(count_pready)'(1);
+73                      
+74         1/1            else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+75         1/1              if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
+76         1/1                o_pready<=1'b1;
+77         1/1                o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
+78         1/1                count_pready<=count_pready+$bits(count_pready)'(1);
+79                          end
+80         1/1              else if (count_pready==$bits(count_pready)'(WAIT_READ))
+81         1/1                o_pready<=1'b0;
+82                          else
+83         0/1     ==>        count_pready<=count_pready+$bits(count_pready)'(1);
+                        MISSING_ELSE
+
+-------------------------------------------------------------------------------
+Cond Coverage for Instance : APB_TOP.apb_sys.mem1
+
+               Total   Covered  Percent
+Conditions         31       25    80.65
+Logical            31       25    80.65
+Non-Logical         0        0
+Event               0        0
+
+ LINE       41
+ EXPRESSION (i_psel && i_penable)
+             ---1--    ----2----
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       42
+ EXPRESSION (i_pwrite && o_pready)
+             ----1---    ----2---
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Not Covered
+ 1   1  Covered
+
+ LINE       52
+ EXPRESSION ((i_psel == 1'b1) && (i_penable == 1'b0))
+             --------1-------    ---------2---------
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_psel == 1'b1)
+                --------1-------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_penable == 1'b0)
+                ---------1---------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       54
+ EXPRESSION (i_pwrite && (WAIT_WRITE == '0))
+             ----1---    ---------2--------
+
+-1- -2- Status
+ 0   -  Covered
+ 1   -  Covered
+
+ LINE       54
+ SUB-EXPRESSION (WAIT_WRITE == '0)
+                ---------1--------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       64
+ EXPRESSION (i_pwrite && i_psel)
+             ----1---    ---2--
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       65
+ EXPRESSION (count_pready == 3'((WAIT_WRITE - 1)))
+            -------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Not Covered
+
+ LINE       69
+ EXPRESSION (count_pready == 3'(WAIT_WRITE))
+            ----------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       74
+ EXPRESSION (((~i_pwrite)) && i_psel)
+             ------1------    ---2--
+
+-1- -2- Status
+ 0   1  Not Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       75
+ EXPRESSION (count_pready == 3'((WAIT_READ - 1)))
+            ------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       80
+ EXPRESSION (count_pready == 3'(WAIT_READ))
+            ---------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Instance : APB_TOP.apb_sys.mem1
+                Total Covered Percent 
+Totals          12    7       58.33   
+Total Bits      2260  1780    78.76   
+Total Bits 0->1 1130  1010    89.38   
+Total Bits 1->0 1130  770     68.14   
+
+                              
+Ports          10  7   70.00  
+Port Bits      206 153 74.27  
+Port Bits 0->1 103 77  74.76  
+Port Bits 1->0 103 76  73.79  
+
+                                  
+Signals          2    0    0.00   
+Signal Bits      2054 1627 79.21  
+Signal Bits 0->1 1027 933  90.85  
+Signal Bits 1->0 1027 694  67.58  
+
+Port Details
+               Toggle Toggle 1->0 Toggle 0->1 Direction 
+i_prstn        No     No          Yes         INPUT     
+i_pclk         Yes    Yes         Yes         INPUT     
+i_paddr[1:0]   No     No          No          INPUT     
+i_paddr[8:2]   Yes    Yes         Yes         INPUT     
+i_paddr[31:9]  No     No          No          INPUT     
+i_pwrite       Yes    Yes         Yes         INPUT     
+i_psel         Yes    Yes         Yes         INPUT     
+i_penable      Yes    Yes         Yes         INPUT     
+i_pwdata[31:0] Yes    Yes         Yes         INPUT     
+o_prdata[31:0] Yes    Yes         Yes         OUTPUT    
+o_pready       Yes    Yes         Yes         OUTPUT    
+o_pslverr      No     No          No          OUTPUT    
+
+Signal Details
+                              Toggle Toggle 1->0 Toggle 0->1 
+mem[0][3:0]                   Yes    Yes         Yes         
+mem[0][20:5]                  Yes    Yes         Yes         
+mem[0][21]                    No     No          Yes         
+mem[0][22]                    Yes    Yes         Yes         
+mem[0][27:24]                 Yes    Yes         Yes         
+mem[0][28]                    No     No          Yes         
+mem[0][29]                    Yes    Yes         Yes         
+mem[0][30]                    No     No          Yes         
+mem[0][31]                    Yes    Yes         Yes         
+mem[1][10:0]                  Yes    Yes         Yes         
+mem[1][11]                    No     No          Yes         
+mem[1][16:12]                 Yes    Yes         Yes         
+mem[1][17]                    No     No          Yes         
+mem[1][31:18]                 Yes    Yes         Yes         
+mem[2][0]                     Yes    Yes         Yes         
+mem[2][2]                     Yes    Yes         Yes         
+mem[2][5:4]                   Yes    Yes         Yes         
+mem[2][6]                     No     No          Yes         
+mem[2][7]                     Yes    Yes         Yes         
+mem[2][8]                     No     No          Yes         
+mem[2][9]                     Yes    Yes         Yes         
+mem[2][10]                    No     No          Yes         
+mem[2][12:11]                 Yes    Yes         Yes         
+mem[2][13]                    No     No          Yes         
+mem[2][14]                    Yes    Yes         Yes         
+mem[2][16:15]                 No     No          Yes         
+mem[2][19]                    Yes    Yes         Yes         
+mem[2][20]                    No     No          Yes         
+mem[2][24:21]                 Yes    Yes         Yes         
+mem[2][28:25]                 No     No          Yes         
+mem[2][30:29]                 Yes    Yes         Yes         
+mem[3][1:0]                   Yes    Yes         Yes         
+mem[3][2]                     No     No          Yes         
+mem[3][4:3]                   Yes    Yes         Yes         
+mem[3][5]                     No     No          Yes         
+mem[3][9:6]                   Yes    Yes         Yes         
+mem[3][10]                    No     No          Yes         
+mem[3][13:11]                 Yes    Yes         Yes         
+mem[3][14]                    No     No          Yes         
+mem[3][16:15]                 Yes    Yes         Yes         
+mem[3][19:18]                 Yes    Yes         Yes         
+mem[3][21:20]                 No     No          Yes         
+mem[3][31:22]                 Yes    Yes         Yes         
+mem[4][1:0]                   No     No          Yes         
+mem[4][3]                     No     No          Yes         
+mem[4][10]                    No     No          Yes         
+mem[4][12]                    No     No          Yes         
+mem[4][14]                    No     No          Yes         
+mem[4][17]                    No     No          Yes         
+mem[4][21:20]                 No     No          Yes         
+mem[4][24:23]                 No     No          Yes         
+mem[4][31:27]                 No     No          Yes         
+mem[5][15:0]                  Yes    Yes         Yes         
+mem[5][17]                    Yes    Yes         Yes         
+mem[5][18]                    No     No          Yes         
+mem[5][31:19]                 Yes    Yes         Yes         
+mem[6][0]                     No     No          Yes         
+mem[6][4:1]                   Yes    Yes         Yes         
+mem[6][5]                     No     No          Yes         
+mem[6][6]                     Yes    Yes         Yes         
+mem[6][8:7]                   No     No          Yes         
+mem[6][11:9]                  Yes    Yes         Yes         
+mem[6][12]                    No     No          Yes         
+mem[6][15:13]                 Yes    Yes         Yes         
+mem[6][17]                    Yes    Yes         Yes         
+mem[6][22:19]                 No     No          Yes         
+mem[6][23]                    Yes    Yes         Yes         
+mem[6][25]                    No     No          Yes         
+mem[6][26]                    Yes    Yes         Yes         
+mem[6][27]                    No     No          Yes         
+mem[6][28]                    Yes    Yes         Yes         
+mem[6][29]                    No     No          Yes         
+mem[6][31:30]                 Yes    Yes         Yes         
+mem[7][0]                     Yes    Yes         Yes         
+mem[7][31:2]                  Yes    Yes         Yes         
+mem[8][0]                     Yes    Yes         Yes         
+mem[8][1]                     No     No          Yes         
+mem[8][7:2]                   Yes    Yes         Yes         
+mem[8][8]                     No     No          Yes         
+mem[8][12:9]                  Yes    Yes         Yes         
+mem[8][13]                    No     No          Yes         
+mem[8][15:14]                 Yes    Yes         Yes         
+mem[8][19:17]                 Yes    Yes         Yes         
+mem[8][20]                    No     No          Yes         
+mem[8][29:21]                 Yes    Yes         Yes         
+mem[8][30]                    No     No          Yes         
+mem[8][31]                    Yes    Yes         Yes         
+mem[9][3:0]                   Yes    Yes         Yes         
+mem[9][4]                     No     No          Yes         
+mem[9][6:5]                   Yes    Yes         Yes         
+mem[9][7]                     No     No          Yes         
+mem[9][9:8]                   Yes    Yes         Yes         
+mem[9][10]                    No     No          Yes         
+mem[9][11]                    Yes    Yes         Yes         
+mem[9][12]                    No     No          Yes         
+mem[9][15:13]                 Yes    Yes         Yes         
+mem[9][17:16]                 No     No          Yes         
+mem[9][19:18]                 Yes    Yes         Yes         
+mem[9][21]                    Yes    Yes         Yes         
+mem[9][22]                    No     No          Yes         
+mem[9][23]                    Yes    Yes         Yes         
+mem[9][24]                    No     No          Yes         
+mem[9][26]                    No     No          Yes         
+mem[9][28:27]                 Yes    Yes         Yes         
+mem[9][29]                    No     No          Yes         
+mem[9][31:30]                 Yes    Yes         Yes         
+mem[10][0]                    Yes    Yes         Yes         
+mem[10][1]                    No     No          Yes         
+mem[10][14:2]                 Yes    Yes         Yes         
+mem[10][17:15]                No     No          Yes         
+mem[10][26:18]                Yes    Yes         Yes         
+mem[10][29:27]                No     No          Yes         
+mem[10][31:30]                Yes    Yes         Yes         
+mem[11][1:0]                  Yes    Yes         Yes         
+mem[11][2]                    No     No          Yes         
+mem[11][4]                    Yes    Yes         Yes         
+mem[11][7:5]                  No     No          Yes         
+mem[11][10:8]                 Yes    Yes         Yes         
+mem[11][12:11]                No     No          Yes         
+mem[11][15:13]                Yes    Yes         Yes         
+mem[11][17:16]                No     No          Yes         
+mem[11][19]                   No     No          Yes         
+mem[11][21:20]                Yes    Yes         Yes         
+mem[11][22]                   No     No          Yes         
+mem[11][26:23]                Yes    Yes         Yes         
+mem[11][28:27]                No     No          Yes         
+mem[11][29]                   Yes    Yes         Yes         
+mem[11][30]                   No     No          Yes         
+mem[11][31]                   Yes    Yes         Yes         
+mem[12][1]                    No     No          Yes         
+mem[12][3:2]                  Yes    Yes         Yes         
+mem[12][6:5]                  Yes    Yes         Yes         
+mem[12][9:7]                  No     No          Yes         
+mem[12][10]                   Yes    Yes         Yes         
+mem[12][11]                   No     No          Yes         
+mem[12][13:12]                Yes    Yes         Yes         
+mem[12][14]                   No     No          Yes         
+mem[12][15]                   Yes    Yes         Yes         
+mem[12][17]                   Yes    Yes         Yes         
+mem[12][18]                   No     No          Yes         
+mem[12][21:20]                No     No          Yes         
+mem[12][26:22]                Yes    Yes         Yes         
+mem[12][29:28]                No     No          Yes         
+mem[12][30]                   Yes    Yes         Yes         
+mem[12][31]                   No     No          Yes         
+mem[13][4:0]                  Yes    Yes         Yes         
+mem[13][5]                    No     No          Yes         
+mem[13][9:6]                  Yes    Yes         Yes         
+mem[13][16:11]                Yes    Yes         Yes         
+mem[13][17]                   No     No          Yes         
+mem[13][18]                   Yes    Yes         Yes         
+mem[13][19]                   No     No          Yes         
+mem[13][31:20]                Yes    Yes         Yes         
+mem[14][0]                    Yes    Yes         Yes         
+mem[14][7:2]                  Yes    Yes         Yes         
+mem[14][9:8]                  No     No          Yes         
+mem[14][11]                   No     No          Yes         
+mem[14][12]                   Yes    Yes         Yes         
+mem[14][13]                   No     No          Yes         
+mem[14][17:15]                No     No          Yes         
+mem[14][18]                   Yes    Yes         Yes         
+mem[14][19]                   No     No          Yes         
+mem[14][20]                   Yes    Yes         Yes         
+mem[14][24:22]                No     No          Yes         
+mem[14][25]                   Yes    Yes         Yes         
+mem[14][26]                   No     No          Yes         
+mem[14][30:27]                Yes    Yes         Yes         
+mem[14][31]                   No     No          Yes         
+mem[15][3:0]                  Yes    Yes         Yes         
+mem[15][4]                    No     No          Yes         
+mem[15][5]                    Yes    Yes         Yes         
+mem[15][7]                    No     No          Yes         
+mem[15][9:8]                  Yes    Yes         Yes         
+mem[15][10]                   No     No          Yes         
+mem[15][14:12]                Yes    Yes         Yes         
+mem[15][15]                   No     No          Yes         
+mem[15][16]                   Yes    Yes         Yes         
+mem[15][18:17]                No     No          Yes         
+mem[15][20:19]                Yes    Yes         Yes         
+mem[15][21]                   No     No          Yes         
+mem[15][24:22]                Yes    Yes         Yes         
+mem[15][25]                   No     No          Yes         
+mem[15][27:26]                Yes    Yes         Yes         
+mem[15][29]                   Yes    Yes         Yes         
+mem[15][31:30]                No     No          Yes         
+mem[16][0]                    Yes    Yes         Yes         
+mem[16][1]                    No     No          Yes         
+mem[16][3:2]                  Yes    Yes         Yes         
+mem[16][4]                    No     No          Yes         
+mem[16][9:5]                  Yes    Yes         Yes         
+mem[16][11:10]                No     No          Yes         
+mem[16][13:12]                Yes    Yes         Yes         
+mem[16][15:14]                No     No          Yes         
+mem[16][16]                   Yes    Yes         Yes         
+mem[16][20:17]                No     No          Yes         
+mem[16][24:22]                Yes    Yes         Yes         
+mem[16][28:25]                No     No          Yes         
+mem[16][29]                   Yes    Yes         Yes         
+mem[16][30]                   No     No          Yes         
+mem[16][31]                   Yes    Yes         Yes         
+mem[17][2:0]                  Yes    Yes         Yes         
+mem[17][4:3]                  No     No          Yes         
+mem[17][10:5]                 Yes    Yes         Yes         
+mem[17][12:11]                No     No          Yes         
+mem[17][16:13]                Yes    Yes         Yes         
+mem[17][18:17]                No     No          Yes         
+mem[17][21:19]                Yes    Yes         Yes         
+mem[17][22]                   No     No          Yes         
+mem[17][27:23]                Yes    Yes         Yes         
+mem[17][28]                   No     No          Yes         
+mem[17][30:29]                Yes    Yes         Yes         
+mem[17][31]                   No     No          Yes         
+mem[18][7:0]                  Yes    Yes         Yes         
+mem[18][10:9]                 Yes    Yes         Yes         
+mem[18][11]                   No     No          Yes         
+mem[18][21:12]                Yes    Yes         Yes         
+mem[18][23]                   Yes    Yes         Yes         
+mem[18][24]                   No     No          Yes         
+mem[18][26:25]                Yes    Yes         Yes         
+mem[18][27]                   No     No          Yes         
+mem[18][29:28]                Yes    Yes         Yes         
+mem[18][30]                   No     No          Yes         
+mem[18][31]                   Yes    Yes         Yes         
+mem[19][31:0]                 Yes    Yes         Yes         
+mem[20][0]                    No     No          Yes         
+mem[20][3:1]                  Yes    Yes         Yes         
+mem[20][5:4]                  No     No          Yes         
+mem[20][9:7]                  No     No          Yes         
+mem[20][10]                   Yes    Yes         Yes         
+mem[20][11]                   No     No          Yes         
+mem[20][12]                   Yes    Yes         Yes         
+mem[20][13]                   No     No          Yes         
+mem[20][15]                   No     No          Yes         
+mem[20][18:17]                Yes    Yes         Yes         
+mem[20][24:19]                No     No          Yes         
+mem[20][27]                   No     No          Yes         
+mem[20][29]                   No     No          Yes         
+mem[20][31:30]                Yes    Yes         Yes         
+mem[21][4:1]                  Yes    Yes         Yes         
+mem[21][5]                    No     No          Yes         
+mem[21][7:6]                  Yes    Yes         Yes         
+mem[21][8]                    No     No          Yes         
+mem[21][11:9]                 Yes    Yes         Yes         
+mem[21][12]                   No     No          Yes         
+mem[21][19:13]                Yes    Yes         Yes         
+mem[21][22:21]                Yes    Yes         Yes         
+mem[21][23]                   No     No          Yes         
+mem[21][26:24]                Yes    Yes         Yes         
+mem[21][27]                   No     No          Yes         
+mem[21][30:28]                Yes    Yes         Yes         
+mem[21][31]                   No     No          Yes         
+mem[22][4:0]                  Yes    Yes         Yes         
+mem[22][5]                    No     No          Yes         
+mem[22][8:6]                  Yes    Yes         Yes         
+mem[22][9]                    No     No          Yes         
+mem[22][13:10]                Yes    Yes         Yes         
+mem[22][14]                   No     No          Yes         
+mem[22][16]                   No     No          Yes         
+mem[22][26:17]                Yes    Yes         Yes         
+mem[22][27]                   No     No          Yes         
+mem[22][29]                   Yes    Yes         Yes         
+mem[22][31]                   Yes    Yes         Yes         
+mem[23][1:0]                  No     No          Yes         
+mem[23][9:6]                  No     No          Yes         
+mem[23][12:11]                No     No          Yes         
+mem[23][14]                   No     No          Yes         
+mem[23][16]                   No     No          Yes         
+mem[23][18]                   No     No          Yes         
+mem[23][23:22]                No     No          Yes         
+mem[23][25]                   No     No          Yes         
+mem[23][27]                   No     No          Yes         
+mem[24][2:0]                  Yes    Yes         Yes         
+mem[24][3]                    No     No          Yes         
+mem[24][6:4]                  Yes    Yes         Yes         
+mem[24][8:7]                  No     No          Yes         
+mem[24][12:9]                 Yes    Yes         Yes         
+mem[24][13]                   No     No          Yes         
+mem[24][19:14]                Yes    Yes         Yes         
+mem[24][20]                   No     No          Yes         
+mem[24][22:21]                Yes    Yes         Yes         
+mem[24][23]                   No     No          Yes         
+mem[24][28:24]                Yes    Yes         Yes         
+mem[24][29]                   No     No          Yes         
+mem[24][31:30]                Yes    Yes         Yes         
+mem[25][0]                    No     No          Yes         
+mem[25][1]                    Yes    Yes         Yes         
+mem[25][2]                    No     No          Yes         
+mem[25][5:4]                  Yes    Yes         Yes         
+mem[25][6]                    No     No          Yes         
+mem[25][9:8]                  No     No          Yes         
+mem[25][11:10]                Yes    Yes         Yes         
+mem[25][14:12]                No     No          Yes         
+mem[25][17:16]                Yes    Yes         Yes         
+mem[25][18]                   No     No          Yes         
+mem[25][21]                   No     No          Yes         
+mem[25][24:23]                No     No          Yes         
+mem[25][26]                   No     No          Yes         
+mem[25][30]                   Yes    Yes         Yes         
+mem[26][31:0]                 Yes    Yes         Yes         
+mem[27][7:0]                  Yes    Yes         Yes         
+mem[27][8]                    No     No          Yes         
+mem[27][17:9]                 Yes    Yes         Yes         
+mem[27][20:19]                Yes    Yes         Yes         
+mem[27][21]                   No     No          Yes         
+mem[27][26:22]                Yes    Yes         Yes         
+mem[27][27]                   No     No          Yes         
+mem[27][28]                   Yes    Yes         Yes         
+mem[27][29]                   No     No          Yes         
+mem[27][31:30]                Yes    Yes         Yes         
+mem[28][31:0]                 Yes    Yes         Yes         
+mem[29][1:0]                  Yes    Yes         Yes         
+mem[29][3:2]                  No     No          Yes         
+mem[29][4]                    Yes    Yes         Yes         
+mem[29][5]                    No     No          Yes         
+mem[29][11:6]                 Yes    Yes         Yes         
+mem[29][14:12]                No     No          Yes         
+mem[29][15]                   Yes    Yes         Yes         
+mem[29][16]                   No     No          Yes         
+mem[29][19:17]                Yes    Yes         Yes         
+mem[29][20]                   No     No          Yes         
+mem[29][26:21]                Yes    Yes         Yes         
+mem[29][27]                   No     No          Yes         
+mem[29][28]                   Yes    Yes         Yes         
+mem[29][29]                   No     No          Yes         
+mem[29][31:30]                Yes    Yes         Yes         
+mem[30][0]                    Yes    Yes         Yes         
+mem[30][7:2]                  Yes    Yes         Yes         
+mem[30][8]                    No     No          Yes         
+mem[30][9]                    Yes    Yes         Yes         
+mem[30][10]                   No     No          Yes         
+mem[30][11]                   Yes    Yes         Yes         
+mem[30][13:12]                No     No          Yes         
+mem[30][20:14]                Yes    Yes         Yes         
+mem[30][22:21]                No     No          Yes         
+mem[30][31:23]                Yes    Yes         Yes         
+mem[31][8:0]                  Yes    Yes         Yes         
+mem[31][9]                    No     No          Yes         
+mem[31][11:10]                Yes    Yes         Yes         
+mem[31][12]                   No     No          Yes         
+mem[31][13]                   Yes    Yes         Yes         
+mem[31][17:15]                Yes    Yes         Yes         
+mem[31][18]                   No     No          Yes         
+mem[31][26:19]                Yes    Yes         Yes         
+mem[31][27]                   No     No          Yes         
+mem[31][31:28]                Yes    Yes         Yes         
+Other bits of mem[31:0][31:0] No     No          No          
+count_pready[0]               Yes    Yes         Yes         
+count_pready[2:1]             No     No          No          
+
+
+-------------------------------------------------------------------------------
+Branch Coverage for Instance : APB_TOP.apb_sys.mem1
+         Line No. Total Covered Percent 
+Branches          15    11      73.33   
+IF       39       4     4       100.00  
+IF       47       11    7       63.64   
+
+
+39           if (!i_prstn)
+             -1-  
+40             mem<='0;
+               ==>
+41           else if ((i_psel)&&(i_penable))
+                  -2-  
+42             if ((i_pwrite)&&(o_pready))
+               -3-  
+               MISSING_ELSE
+               ==>
+43               mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
+                 ==>
+                 MISSING_ELSE
+                 ==>
+
+Branches:
+
+-1- -2- -3- Status  
+1   -   -   Covered 
+0   1   1   Covered 
+0   1   0   Covered 
+0   0   -   Covered 
+
+
+47           if (!i_prstn) begin
+             -1-  
+48             count_pready<='0;
+               ==>
+49             o_pready<=1'b0;
+50             o_prdata<='0;
+51           end
+52           else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
+                  -2-  
+53             count_pready<='0; 
+54             if ((i_pwrite)&&(WAIT_WRITE=='0)) begin                                //Write commnad and no wait states
+               -3-  
+55             o_pready<=1'b1;
+               ==>
+56             end
+57             else if ((~i_pwrite)&&(WAIT_READ=='0)) begin                           //Read commnad and no wait states
+                    -4-  
+58               o_pready<=1'b1;
+                 ==>
+59               o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata together with the rising edge of pready
+60             end
+61             else o_pready<=1'b0;
+               ==>
+62           end
+63           
+64           else if ((i_pwrite)&&(i_psel))	                                       //Write commnad with 'WAIT_WRITE' wait states
+                  -5-  
+65             if (count_pready==$bits(count_pready)'(WAIT_WRITE-1)) begin
+               -6-  
+66               o_pready<=1'b1;
+                 ==>
+67               count_pready<=count_pready+$bits(count_pready)'(1);	  
+68             end
+69             else if (count_pready==$bits(count_pready)'(WAIT_WRITE))
+                    -7-  
+70               o_pready<=1'b0;	
+                 ==>
+71             else
+72               count_pready<=count_pready+$bits(count_pready)'(1);
+                 ==>
+73         
+74           else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+                  -8-  
+75             if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
+               -9-  
+               MISSING_ELSE
+               ==>
+76               o_pready<=1'b1;
+                 ==>
+77               o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
+78               count_pready<=count_pready+$bits(count_pready)'(1);
+79             end
+80             else if (count_pready==$bits(count_pready)'(WAIT_READ))
+                    -10-  
+81               o_pready<=1'b0;
+                 ==>
+82             else
+83               count_pready<=count_pready+$bits(count_pready)'(1);
+                 ==>
+
+Branches:
+
+-1- -2- -3- -4- -5- -6- -7- -8- -9- -10- Status      
+1   -   -   -   -   -   -   -   -   -    Covered     
+0   1   1   -   -   -   -   -   -   -    Covered     
+0   1   0   1   -   -   -   -   -   -    Not Covered 
+0   1   0   0   -   -   -   -   -   -    Covered     
+0   0   -   -   1   1   -   -   -   -    Not Covered 
+0   0   -   -   1   0   1   -   -   -    Covered     
+0   0   -   -   1   0   0   -   -   -    Not Covered 
+0   0   -   -   0   -   -   1   1   -    Covered     
+0   0   -   -   0   -   -   1   0   1    Covered     
+0   0   -   -   0   -   -   1   0   0    Not Covered 
+0   0   -   -   0   -   -   0   -   -    Covered     
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.mem0
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 83.45  87.50  92.59  73.72 --      80.00 
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 83.45  87.50  92.59  73.72 --      80.00 
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
+ 88.75  90.62  86.62  91.11 --      86.67 APB_Slave 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Instance : APB_TOP.apb_sys.mem0
+
+             Line No.   Total   Covered  Percent
+TOTAL                       32       28    87.50
+ALWAYS             39        5        5   100.00
+ALWAYS             47       27       23    85.19
+
+38                      always @(posedge i_pclk or negedge i_prstn)
+39         1/1            if (!i_prstn)
+40         1/1              mem<='0;
+41         1/1            else if ((i_psel)&&(i_penable))
+42         1/1              if ((i_pwrite)&&(o_pready))
+43         1/1                mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
+                        MISSING_ELSE
+                        MISSING_ELSE
+44                      
+45                      //pready signal generation and o_prdata update for a 'read' command
+46                      always @(posedge i_pclk or negedge i_prstn)
+47         1/1            if (!i_prstn) begin
+48         1/1              count_pready<='0;
+49         1/1              o_pready<=1'b0;
+50         1/1              o_prdata<='0;
+51                        end
+52         1/1            else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
+53         1/1              count_pready<='0; 
+54         1/1              if ((i_pwrite)&&(WAIT_WRITE=='0)) begin                                //Write commnad and no wait states
+55         0/1     ==>      o_pready<=1'b1;
+56                          end
+57         1/1              else if ((~i_pwrite)&&(WAIT_READ=='0)) begin                           //Read commnad and no wait states
+58         0/1     ==>        o_pready<=1'b1;
+59         0/1     ==>        o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata together with the rising edge of pready
+60                          end
+61         1/1              else o_pready<=1'b0;
+62                        end
+63                        
+64         1/1            else if ((i_pwrite)&&(i_psel))	                                       //Write commnad with 'WAIT_WRITE' wait states
+65         1/1              if (count_pready==$bits(count_pready)'(WAIT_WRITE-1)) begin
+66         1/1                o_pready<=1'b1;
+67         1/1                count_pready<=count_pready+$bits(count_pready)'(1);	  
+68                          end
+69         1/1              else if (count_pready==$bits(count_pready)'(WAIT_WRITE))
+70         1/1                o_pready<=1'b0;	
+71                          else
+72         0/1     ==>        count_pready<=count_pready+$bits(count_pready)'(1);
+73                      
+74         1/1            else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+75         1/1              if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
+76         1/1                o_pready<=1'b1;
+77         1/1                o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
+78         1/1                count_pready<=count_pready+$bits(count_pready)'(1);
+79                          end
+80         1/1              else if (count_pready==$bits(count_pready)'(WAIT_READ))
+81         1/1                o_pready<=1'b0;
+82                          else
+83         1/1                count_pready<=count_pready+$bits(count_pready)'(1);
+                        MISSING_ELSE
+
+-------------------------------------------------------------------------------
+Cond Coverage for Instance : APB_TOP.apb_sys.mem0
+
+               Total   Covered  Percent
+Conditions         27       25    92.59
+Logical            27       25    92.59
+Non-Logical         0        0
+Event               0        0
+
+ LINE       41
+ EXPRESSION (i_psel && i_penable)
+             ---1--    ----2----
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       42
+ EXPRESSION (i_pwrite && o_pready)
+             ----1---    ----2---
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       52
+ EXPRESSION ((i_psel == 1'b1) && (i_penable == 1'b0))
+             --------1-------    ---------2---------
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_psel == 1'b1)
+                --------1-------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       52
+ SUB-EXPRESSION (i_penable == 1'b0)
+                ---------1---------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       64
+ EXPRESSION (i_pwrite && i_psel)
+             ----1---    ---2--
+
+-1- -2- Status
+ 0   1  Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       65
+ EXPRESSION (count_pready == 3'((WAIT_WRITE - 1)))
+            -------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       69
+ EXPRESSION (count_pready == 3'(WAIT_WRITE))
+            ----------------1---------------
+
+-1- Status
+ 0  Not Covered
+ 1  Covered
+
+ LINE       74
+ EXPRESSION (((~i_pwrite)) && i_psel)
+             ------1------    ---2--
+
+-1- -2- Status
+ 0   1  Not Covered
+ 1   0  Covered
+ 1   1  Covered
+
+ LINE       75
+ EXPRESSION (count_pready == 3'((WAIT_READ - 1)))
+            ------------------1------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       80
+ EXPRESSION (count_pready == 3'(WAIT_READ))
+            ---------------1---------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Instance : APB_TOP.apb_sys.mem0
+                Total Covered Percent 
+Totals          12    7       58.33   
+Total Bits      2260  1666    73.72   
+Total Bits 0->1 1130  989     87.52   
+Total Bits 1->0 1130  677     59.91   
+
+                              
+Ports          10  7   70.00  
+Port Bits      206 153 74.27  
+Port Bits 0->1 103 77  74.76  
+Port Bits 1->0 103 76  73.79  
+
+                                  
+Signals          2    0    0.00   
+Signal Bits      2054 1513 73.66  
+Signal Bits 0->1 1027 912  88.80  
+Signal Bits 1->0 1027 601  58.52  
+
+Port Details
+               Toggle Toggle 1->0 Toggle 0->1 Direction 
+i_prstn        No     No          Yes         INPUT     
+i_pclk         Yes    Yes         Yes         INPUT     
+i_paddr[1:0]   No     No          No          INPUT     
+i_paddr[8:2]   Yes    Yes         Yes         INPUT     
+i_paddr[31:9]  No     No          No          INPUT     
+i_pwrite       Yes    Yes         Yes         INPUT     
+i_psel         Yes    Yes         Yes         INPUT     
+i_penable      Yes    Yes         Yes         INPUT     
+i_pwdata[31:0] Yes    Yes         Yes         INPUT     
+o_prdata[31:0] Yes    Yes         Yes         OUTPUT    
+o_pready       Yes    Yes         Yes         OUTPUT    
+o_pslverr      No     No          No          OUTPUT    
+
+Signal Details
+                              Toggle Toggle 1->0 Toggle 0->1 
+mem[0][5:0]                   Yes    Yes         Yes         
+mem[0][6]                     No     No          Yes         
+mem[0][7]                     Yes    Yes         Yes         
+mem[0][8]                     No     No          Yes         
+mem[0][31:9]                  Yes    Yes         Yes         
+mem[1][2:0]                   Yes    Yes         Yes         
+mem[1][5:4]                   Yes    Yes         Yes         
+mem[1][8:7]                   No     No          Yes         
+mem[1][9]                     Yes    Yes         Yes         
+mem[1][12:11]                 No     No          Yes         
+mem[1][15:13]                 Yes    Yes         Yes         
+mem[1][16]                    No     No          Yes         
+mem[1][22:17]                 Yes    Yes         Yes         
+mem[1][23]                    No     No          Yes         
+mem[1][31:25]                 Yes    Yes         Yes         
+mem[2][0]                     No     No          Yes         
+mem[2][1]                     Yes    Yes         Yes         
+mem[2][4:2]                   No     No          Yes         
+mem[2][25:5]                  Yes    Yes         Yes         
+mem[2][26]                    No     No          Yes         
+mem[2][28:27]                 Yes    Yes         Yes         
+mem[2][29]                    No     No          Yes         
+mem[2][31:30]                 Yes    Yes         Yes         
+mem[3][4:0]                   Yes    Yes         Yes         
+mem[3][11:6]                  Yes    Yes         Yes         
+mem[3][12]                    No     No          Yes         
+mem[3][16:13]                 Yes    Yes         Yes         
+mem[3][17]                    No     No          Yes         
+mem[3][27:18]                 Yes    Yes         Yes         
+mem[3][29]                    No     No          Yes         
+mem[3][31:30]                 Yes    Yes         Yes         
+mem[4][2:1]                   No     No          Yes         
+mem[4][3]                     Yes    Yes         Yes         
+mem[4][6:5]                   Yes    Yes         Yes         
+mem[4][11:7]                  No     No          Yes         
+mem[4][12]                    Yes    Yes         Yes         
+mem[4][17:13]                 No     No          Yes         
+mem[4][18]                    Yes    Yes         Yes         
+mem[4][19]                    No     No          Yes         
+mem[4][21]                    Yes    Yes         Yes         
+mem[4][23:22]                 No     No          Yes         
+mem[4][26:24]                 Yes    Yes         Yes         
+mem[4][31:28]                 No     No          Yes         
+mem[5][0]                     No     No          Yes         
+mem[5][2]                     No     No          Yes         
+mem[5][5:4]                   No     No          Yes         
+mem[5][7:6]                   Yes    Yes         Yes         
+mem[5][8]                     No     No          Yes         
+mem[5][10]                    No     No          Yes         
+mem[5][12]                    No     No          Yes         
+mem[5][13]                    Yes    Yes         Yes         
+mem[5][14]                    No     No          Yes         
+mem[5][18:17]                 No     No          Yes         
+mem[5][20]                    Yes    Yes         Yes         
+mem[5][21]                    No     No          Yes         
+mem[5][24:23]                 No     No          Yes         
+mem[5][25]                    Yes    Yes         Yes         
+mem[5][26]                    No     No          Yes         
+mem[5][31:30]                 No     No          Yes         
+mem[6][1:0]                   No     No          Yes         
+mem[6][2]                     Yes    Yes         Yes         
+mem[6][3]                     No     No          Yes         
+mem[6][7:5]                   Yes    Yes         Yes         
+mem[6][8]                     No     No          Yes         
+mem[6][10]                    Yes    Yes         Yes         
+mem[6][11]                    No     No          Yes         
+mem[6][14:12]                 Yes    Yes         Yes         
+mem[6][16:15]                 No     No          Yes         
+mem[6][17]                    Yes    Yes         Yes         
+mem[6][18]                    No     No          Yes         
+mem[6][22:20]                 Yes    Yes         Yes         
+mem[6][23]                    No     No          Yes         
+mem[6][24]                    Yes    Yes         Yes         
+mem[6][25]                    No     No          Yes         
+mem[6][28:26]                 Yes    Yes         Yes         
+mem[6][29]                    No     No          Yes         
+mem[6][31:30]                 Yes    Yes         Yes         
+mem[7][1:0]                   Yes    Yes         Yes         
+mem[7][6:3]                   Yes    Yes         Yes         
+mem[7][13:8]                  Yes    Yes         Yes         
+mem[7][15]                    No     No          Yes         
+mem[7][21:16]                 Yes    Yes         Yes         
+mem[7][22]                    No     No          Yes         
+mem[7][24:23]                 Yes    Yes         Yes         
+mem[7][25]                    No     No          Yes         
+mem[7][31:26]                 Yes    Yes         Yes         
+mem[8][3:0]                   Yes    Yes         Yes         
+mem[8][8:4]                   No     No          Yes         
+mem[8][10]                    Yes    Yes         Yes         
+mem[8][11]                    No     No          Yes         
+mem[8][19:12]                 Yes    Yes         Yes         
+mem[8][21]                    No     No          Yes         
+mem[8][22]                    Yes    Yes         Yes         
+mem[8][23]                    No     No          Yes         
+mem[8][24]                    Yes    Yes         Yes         
+mem[8][25]                    No     No          Yes         
+mem[8][27]                    No     No          Yes         
+mem[8][28]                    Yes    Yes         Yes         
+mem[8][29]                    No     No          Yes         
+mem[8][30]                    Yes    Yes         Yes         
+mem[8][31]                    No     No          Yes         
+mem[9][2:0]                   No     No          Yes         
+mem[9][14:3]                  Yes    Yes         Yes         
+mem[9][15]                    No     No          Yes         
+mem[9][16]                    Yes    Yes         Yes         
+mem[9][17]                    No     No          Yes         
+mem[9][20:18]                 Yes    Yes         Yes         
+mem[9][24:23]                 Yes    Yes         Yes         
+mem[9][25]                    No     No          Yes         
+mem[9][28:26]                 Yes    Yes         Yes         
+mem[9][29]                    No     No          Yes         
+mem[9][30]                    Yes    Yes         Yes         
+mem[9][31]                    No     No          Yes         
+mem[10][5:0]                  Yes    Yes         Yes         
+mem[10][6]                    No     No          Yes         
+mem[10][25:7]                 Yes    Yes         Yes         
+mem[10][27:26]                No     No          Yes         
+mem[10][31:28]                Yes    Yes         Yes         
+mem[11][1:0]                  Yes    Yes         Yes         
+mem[11][3:2]                  No     No          Yes         
+mem[11][4]                    Yes    Yes         Yes         
+mem[11][6:5]                  No     No          Yes         
+mem[11][8:7]                  Yes    Yes         Yes         
+mem[11][9]                    No     No          Yes         
+mem[11][10]                   Yes    Yes         Yes         
+mem[11][11]                   No     No          Yes         
+mem[11][12]                   Yes    Yes         Yes         
+mem[11][13]                   No     No          Yes         
+mem[11][14]                   Yes    Yes         Yes         
+mem[11][15]                   No     No          Yes         
+mem[11][21:16]                Yes    Yes         Yes         
+mem[11][23:22]                No     No          Yes         
+mem[11][24]                   Yes    Yes         Yes         
+mem[11][27:25]                No     No          Yes         
+mem[11][28]                   Yes    Yes         Yes         
+mem[11][31]                   No     No          Yes         
+mem[12][5]                    No     No          Yes         
+mem[12][7]                    No     No          Yes         
+mem[12][13:10]                No     No          Yes         
+mem[12][17:15]                No     No          Yes         
+mem[12][20:19]                No     No          Yes         
+mem[12][24]                   No     No          Yes         
+mem[12][27:26]                No     No          Yes         
+mem[12][31:30]                No     No          Yes         
+mem[13][0]                    Yes    Yes         Yes         
+mem[13][1]                    No     No          Yes         
+mem[13][31:2]                 Yes    Yes         Yes         
+mem[14][2:0]                  No     No          Yes         
+mem[14][5:4]                  No     No          Yes         
+mem[14][8:7]                  No     No          Yes         
+mem[14][10]                   No     No          Yes         
+mem[14][16:12]                No     No          Yes         
+mem[14][19:18]                No     No          Yes         
+mem[14][24:21]                No     No          Yes         
+mem[14][27:26]                No     No          Yes         
+mem[14][31]                   No     No          Yes         
+mem[15][0]                    No     No          Yes         
+mem[15][4:2]                  No     No          Yes         
+mem[15][6]                    Yes    Yes         Yes         
+mem[15][9:8]                  Yes    Yes         Yes         
+mem[15][10]                   No     No          Yes         
+mem[15][11]                   Yes    Yes         Yes         
+mem[15][15:12]                No     No          Yes         
+mem[15][16]                   Yes    Yes         Yes         
+mem[15][18]                   No     No          Yes         
+mem[15][21:20]                Yes    Yes         Yes         
+mem[15][22]                   No     No          Yes         
+mem[15][24:23]                Yes    Yes         Yes         
+mem[15][27:25]                No     No          Yes         
+mem[15][30:28]                Yes    Yes         Yes         
+mem[15][31]                   No     No          Yes         
+mem[16][1]                    No     No          Yes         
+mem[16][3:2]                  Yes    Yes         Yes         
+mem[16][4]                    No     No          Yes         
+mem[16][5]                    Yes    Yes         Yes         
+mem[16][15:7]                 Yes    Yes         Yes         
+mem[16][16]                   No     No          Yes         
+mem[16][18:17]                Yes    Yes         Yes         
+mem[16][19]                   No     No          Yes         
+mem[16][31:20]                Yes    Yes         Yes         
+mem[17][0]                    No     No          Yes         
+mem[17][4:2]                  No     No          Yes         
+mem[17][6]                    Yes    Yes         Yes         
+mem[17][7]                    No     No          Yes         
+mem[17][9:8]                  Yes    Yes         Yes         
+mem[17][16:10]                No     No          Yes         
+mem[17][17]                   Yes    Yes         Yes         
+mem[17][20:18]                No     No          Yes         
+mem[17][24:22]                No     No          Yes         
+mem[17][25]                   Yes    Yes         Yes         
+mem[17][27:26]                No     No          Yes         
+mem[17][29]                   Yes    Yes         Yes         
+mem[17][31:30]                No     No          Yes         
+mem[18][4:0]                  Yes    Yes         Yes         
+mem[18][5]                    No     No          Yes         
+mem[18][12:6]                 Yes    Yes         Yes         
+mem[18][13]                   No     No          Yes         
+mem[18][19:14]                Yes    Yes         Yes         
+mem[18][20]                   No     No          Yes         
+mem[18][21]                   Yes    Yes         Yes         
+mem[18][23]                   No     No          Yes         
+mem[18][30:24]                Yes    Yes         Yes         
+mem[18][31]                   No     No          Yes         
+mem[19][1:0]                  Yes    Yes         Yes         
+mem[19][4:2]                  No     No          Yes         
+mem[19][5]                    Yes    Yes         Yes         
+mem[19][6]                    No     No          Yes         
+mem[19][7]                    Yes    Yes         Yes         
+mem[19][9:8]                  No     No          Yes         
+mem[19][12:10]                Yes    Yes         Yes         
+mem[19][13]                   No     No          Yes         
+mem[19][14]                   Yes    Yes         Yes         
+mem[19][16:15]                No     No          Yes         
+mem[19][17]                   Yes    Yes         Yes         
+mem[19][19]                   Yes    Yes         Yes         
+mem[19][20]                   No     No          Yes         
+mem[19][22]                   No     No          Yes         
+mem[19][23]                   Yes    Yes         Yes         
+mem[19][25:24]                No     No          Yes         
+mem[19][28:26]                Yes    Yes         Yes         
+mem[19][30:29]                No     No          Yes         
+mem[20][14:0]                 Yes    Yes         Yes         
+mem[20][15]                   No     No          Yes         
+mem[20][31:16]                Yes    Yes         Yes         
+mem[21][0]                    Yes    Yes         Yes         
+mem[21][2:1]                  No     No          Yes         
+mem[21][7:3]                  Yes    Yes         Yes         
+mem[21][8]                    No     No          Yes         
+mem[21][9]                    Yes    Yes         Yes         
+mem[21][11:10]                No     No          Yes         
+mem[21][14:12]                Yes    Yes         Yes         
+mem[21][15]                   No     No          Yes         
+mem[21][16]                   Yes    Yes         Yes         
+mem[21][17]                   No     No          Yes         
+mem[21][19:18]                Yes    Yes         Yes         
+mem[21][21]                   No     No          Yes         
+mem[21][22]                   Yes    Yes         Yes         
+mem[21][23]                   No     No          Yes         
+mem[21][25:24]                Yes    Yes         Yes         
+mem[21][28:27]                No     No          Yes         
+mem[21][31:29]                Yes    Yes         Yes         
+mem[22][5:0]                  Yes    Yes         Yes         
+mem[22][8:7]                  Yes    Yes         Yes         
+mem[22][13:10]                No     No          Yes         
+mem[22][15:14]                Yes    Yes         Yes         
+mem[22][16]                   No     No          Yes         
+mem[22][21:17]                Yes    Yes         Yes         
+mem[22][22]                   No     No          Yes         
+mem[22][27:23]                Yes    Yes         Yes         
+mem[22][28]                   No     No          Yes         
+mem[22][29]                   Yes    Yes         Yes         
+mem[22][30]                   No     No          Yes         
+mem[22][31]                   Yes    Yes         Yes         
+mem[23][4:0]                  Yes    Yes         Yes         
+mem[23][5]                    No     No          Yes         
+mem[23][6]                    Yes    Yes         Yes         
+mem[23][7]                    No     No          Yes         
+mem[23][10:8]                 Yes    Yes         Yes         
+mem[23][11]                   No     No          Yes         
+mem[23][15:12]                Yes    Yes         Yes         
+mem[23][16]                   No     No          Yes         
+mem[23][18:17]                Yes    Yes         Yes         
+mem[23][19]                   No     No          Yes         
+mem[23][21:20]                Yes    Yes         Yes         
+mem[23][22]                   No     No          Yes         
+mem[23][30:23]                Yes    Yes         Yes         
+mem[24][0]                    No     No          Yes         
+mem[24][1]                    Yes    Yes         Yes         
+mem[24][3:2]                  No     No          Yes         
+mem[24][9:4]                  Yes    Yes         Yes         
+mem[24][10]                   No     No          Yes         
+mem[24][11]                   Yes    Yes         Yes         
+mem[24][14:13]                Yes    Yes         Yes         
+mem[24][15]                   No     No          Yes         
+mem[24][16]                   Yes    Yes         Yes         
+mem[24][17]                   No     No          Yes         
+mem[24][21:18]                Yes    Yes         Yes         
+mem[24][22]                   No     No          Yes         
+mem[24][26:23]                Yes    Yes         Yes         
+mem[24][27]                   No     No          Yes         
+mem[24][30:28]                Yes    Yes         Yes         
+mem[24][31]                   No     No          Yes         
+mem[25][6:0]                  Yes    Yes         Yes         
+mem[25][7]                    No     No          Yes         
+mem[25][23:8]                 Yes    Yes         Yes         
+mem[25][24]                   No     No          Yes         
+mem[25][25]                   Yes    Yes         Yes         
+mem[25][26]                   No     No          Yes         
+mem[25][31:27]                Yes    Yes         Yes         
+mem[26][0]                    No     No          Yes         
+mem[26][2]                    No     No          Yes         
+mem[26][3]                    Yes    Yes         Yes         
+mem[26][5]                    Yes    Yes         Yes         
+mem[26][6]                    No     No          Yes         
+mem[26][15:10]                Yes    Yes         Yes         
+mem[26][16]                   No     No          Yes         
+mem[26][19:17]                Yes    Yes         Yes         
+mem[26][22:20]                No     No          Yes         
+mem[26][25:23]                Yes    Yes         Yes         
+mem[26][26]                   No     No          Yes         
+mem[26][30:27]                Yes    Yes         Yes         
+mem[26][31]                   No     No          Yes         
+mem[27][3:1]                  No     No          Yes         
+mem[27][5]                    No     No          Yes         
+mem[27][8:7]                  No     No          Yes         
+mem[27][12:11]                No     No          Yes         
+mem[27][15]                   No     No          Yes         
+mem[27][18:17]                No     No          Yes         
+mem[27][21:20]                No     No          Yes         
+mem[27][23]                   No     No          Yes         
+mem[27][25]                   No     No          Yes         
+mem[27][28:27]                No     No          Yes         
+mem[28][3:1]                  No     No          Yes         
+mem[28][5:4]                  Yes    Yes         Yes         
+mem[28][7:6]                  No     No          Yes         
+mem[28][8]                    Yes    Yes         Yes         
+mem[28][11:10]                Yes    Yes         Yes         
+mem[28][12]                   No     No          Yes         
+mem[28][13]                   Yes    Yes         Yes         
+mem[28][15:14]                No     No          Yes         
+mem[28][16]                   Yes    Yes         Yes         
+mem[28][17]                   No     No          Yes         
+mem[28][20:18]                Yes    Yes         Yes         
+mem[28][23:21]                No     No          Yes         
+mem[28][26:24]                Yes    Yes         Yes         
+mem[28][30]                   Yes    Yes         Yes         
+mem[28][31]                   No     No          Yes         
+mem[29][0]                    No     No          Yes         
+mem[29][2:1]                  Yes    Yes         Yes         
+mem[29][4:3]                  No     No          Yes         
+mem[29][10:5]                 Yes    Yes         Yes         
+mem[29][11]                   No     No          Yes         
+mem[29][14:12]                Yes    Yes         Yes         
+mem[29][15]                   No     No          Yes         
+mem[29][25:16]                Yes    Yes         Yes         
+mem[29][27:26]                No     No          Yes         
+mem[29][30:28]                Yes    Yes         Yes         
+mem[29][31]                   No     No          Yes         
+mem[30][1]                    No     No          Yes         
+mem[30][2]                    Yes    Yes         Yes         
+mem[30][3]                    No     No          Yes         
+mem[30][5:4]                  Yes    Yes         Yes         
+mem[30][7]                    No     No          Yes         
+mem[30][11:9]                 No     No          Yes         
+mem[30][14:12]                Yes    Yes         Yes         
+mem[30][16]                   Yes    Yes         Yes         
+mem[30][17]                   No     No          Yes         
+mem[30][18]                   Yes    Yes         Yes         
+mem[30][22:19]                No     No          Yes         
+mem[30][23]                   Yes    Yes         Yes         
+mem[30][24]                   No     No          Yes         
+mem[30][26:25]                Yes    Yes         Yes         
+mem[30][29:28]                No     No          Yes         
+mem[30][31:30]                Yes    Yes         Yes         
+mem[31][1:0]                  Yes    Yes         Yes         
+mem[31][2]                    No     No          Yes         
+mem[31][9:4]                  Yes    Yes         Yes         
+mem[31][10]                   No     No          Yes         
+mem[31][15:11]                Yes    Yes         Yes         
+mem[31][16]                   No     No          Yes         
+mem[31][18:17]                Yes    Yes         Yes         
+mem[31][20]                   Yes    Yes         Yes         
+mem[31][24:21]                No     No          Yes         
+mem[31][26:25]                Yes    Yes         Yes         
+mem[31][29:28]                No     No          Yes         
+mem[31][31:30]                Yes    Yes         Yes         
+Other bits of mem[31:0][31:0] No     No          No          
+count_pready[1:0]             Yes    Yes         Yes         
+count_pready[2]               No     No          No          
+
+
+-------------------------------------------------------------------------------
+Branch Coverage for Instance : APB_TOP.apb_sys.mem0
+         Line No. Total Covered Percent 
+Branches          15    12      80.00   
+IF       39       4     4       100.00  
+IF       47       11    8       72.73   
+
+
+39           if (!i_prstn)
+             -1-  
+40             mem<='0;
+               ==>
+41           else if ((i_psel)&&(i_penable))
+                  -2-  
+42             if ((i_pwrite)&&(o_pready))
+               -3-  
+               MISSING_ELSE
+               ==>
+43               mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
+                 ==>
+                 MISSING_ELSE
+                 ==>
+
+Branches:
+
+-1- -2- -3- Status  
+1   -   -   Covered 
+0   1   1   Covered 
+0   1   0   Covered 
+0   0   -   Covered 
+
+
+47           if (!i_prstn) begin
+             -1-  
+48             count_pready<='0;
+               ==>
+49             o_pready<=1'b0;
+50             o_prdata<='0;
+51           end
+52           else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
+                  -2-  
+53             count_pready<='0; 
+54             if ((i_pwrite)&&(WAIT_WRITE=='0)) begin                                //Write commnad and no wait states
+               -3-  
+55             o_pready<=1'b1;
+               ==>
+56             end
+57             else if ((~i_pwrite)&&(WAIT_READ=='0)) begin                           //Read commnad and no wait states
+                    -4-  
+58               o_pready<=1'b1;
+                 ==>
+59               o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata together with the rising edge of pready
+60             end
+61             else o_pready<=1'b0;
+               ==>
+62           end
+63           
+64           else if ((i_pwrite)&&(i_psel))	                                       //Write commnad with 'WAIT_WRITE' wait states
+                  -5-  
+65             if (count_pready==$bits(count_pready)'(WAIT_WRITE-1)) begin
+               -6-  
+66               o_pready<=1'b1;
+                 ==>
+67               count_pready<=count_pready+$bits(count_pready)'(1);	  
+68             end
+69             else if (count_pready==$bits(count_pready)'(WAIT_WRITE))
+                    -7-  
+70               o_pready<=1'b0;	
+                 ==>
+71             else
+72               count_pready<=count_pready+$bits(count_pready)'(1);
+                 ==>
+73         
+74           else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+                  -8-  
+75             if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
+               -9-  
+               MISSING_ELSE
+               ==>
+76               o_pready<=1'b1;
+                 ==>
+77               o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
+78               count_pready<=count_pready+$bits(count_pready)'(1);
+79             end
+80             else if (count_pready==$bits(count_pready)'(WAIT_READ))
+                    -10-  
+81               o_pready<=1'b0;
+                 ==>
+82             else
+83               count_pready<=count_pready+$bits(count_pready)'(1);
+                 ==>
+
+Branches:
+
+-1- -2- -3- -4- -5- -6- -7- -8- -9- -10- Status      
+1   -   -   -   -   -   -   -   -   -    Covered     
+0   1   1   -   -   -   -   -   -   -    Not Covered 
+0   1   0   1   -   -   -   -   -   -    Not Covered 
+0   1   0   0   -   -   -   -   -   -    Covered     
+0   0   -   -   1   1   -   -   -   -    Covered     
+0   0   -   -   1   0   1   -   -   -    Covered     
+0   0   -   -   1   0   0   -   -   -    Not Covered 
+0   0   -   -   0   -   -   1   1   -    Covered     
+0   0   -   -   0   -   -   1   0   1    Covered     
+0   0   -   -   0   -   -   1   0   0    Covered     
+0   0   -   -   0   -   -   0   -   -    Covered     
+
+
+===============================================================================
+Module : apb_slave_if
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 95.83 --     --      95.83 --     --     
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_IF.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                      
+  6.94 --     --       6.94 --     --     APB_TOP.apb_sys.slave2_if 
+ 95.83 --     --      95.83 --     --     APB_TOP.apb_sys.slave0_if 
+ 95.83 --     --      95.83 --     --     APB_TOP.apb_sys.slave1_if 
+
+
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Module : apb_slave_if
+                Total Covered Percent 
+Totals          5     3       60.00   
+Total Bits      72    69      95.83   
+Total Bits 0->1 36    35      97.22   
+Total Bits 1->0 36    34      94.44   
+
+                          
+Ports          2 1 50.00  
+Port Bits      4 3 75.00  
+Port Bits 0->1 2 2 100.00 
+Port Bits 1->0 2 1 50.00  
+
+                              
+Signals          3  2  66.67  
+Signal Bits      68 66 97.06  
+Signal Bits 0->1 34 33 97.06  
+Signal Bits 1->0 34 33 97.06  
+
+Port Details
+      Toggle Toggle 1->0 Toggle 0->1 Direction 
+clk   Yes    Yes         Yes         INPUT     
+rst_n No     No          Yes         INPUT     
+
+Signal Details
+             Toggle Toggle 1->0 Toggle 0->1 
+prdata[31:0] Yes    Yes         Yes         
+pready       Yes    Yes         Yes         
+pslverr      No     No          No          
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.slave2_if
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+  6.94 --     --       6.94 --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+  6.94 --     --       6.94 --     --     
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
+ 95.83 --     --      95.83 --     --     apb_slave_if 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Instance : APB_TOP.apb_sys.slave2_if
+                Total Covered Percent 
+Totals          5     2       40.00   
+Total Bits      72    5       6.94    
+Total Bits 0->1 36    3       8.33    
+Total Bits 1->0 36    2       5.56    
+
+                          
+Ports          2 1 50.00  
+Port Bits      4 3 75.00  
+Port Bits 0->1 2 2 100.00 
+Port Bits 1->0 2 1 50.00  
+
+                             
+Signals          3  1 33.33  
+Signal Bits      68 2 2.94   
+Signal Bits 0->1 34 1 2.94   
+Signal Bits 1->0 34 1 2.94   
+
+Port Details
+      Toggle Toggle 1->0 Toggle 0->1 Direction 
+clk   Yes    Yes         Yes         INPUT     
+rst_n No     No          Yes         INPUT     
+
+Signal Details
+             Toggle Toggle 1->0 Toggle 0->1 
+prdata[31:0] No     No          No          
+pready       Yes    Yes         Yes         
+pslverr      No     No          No          
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.slave0_if
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 95.83 --     --      95.83 --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 95.83 --     --      95.83 --     --     
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
+ 95.83 --     --      95.83 --     --     apb_slave_if 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Instance : APB_TOP.apb_sys.slave0_if
+                Total Covered Percent 
+Totals          5     3       60.00   
+Total Bits      72    69      95.83   
+Total Bits 0->1 36    35      97.22   
+Total Bits 1->0 36    34      94.44   
+
+                          
+Ports          2 1 50.00  
+Port Bits      4 3 75.00  
+Port Bits 0->1 2 2 100.00 
+Port Bits 1->0 2 1 50.00  
+
+                              
+Signals          3  2  66.67  
+Signal Bits      68 66 97.06  
+Signal Bits 0->1 34 33 97.06  
+Signal Bits 1->0 34 33 97.06  
+
+Port Details
+      Toggle Toggle 1->0 Toggle 0->1 Direction 
+clk   Yes    Yes         Yes         INPUT     
+rst_n No     No          Yes         INPUT     
+
+Signal Details
+             Toggle Toggle 1->0 Toggle 0->1 
+prdata[31:0] Yes    Yes         Yes         
+pready       Yes    Yes         Yes         
+pslverr      No     No          No          
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys.slave1_if
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 95.83 --     --      95.83 --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 95.83 --     --      95.83 --     --     
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
+ 95.83 --     --      95.83 --     --     apb_slave_if 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+100.00 --     100.00 --     --     100.00 apb_sys 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Toggle Coverage for Instance : APB_TOP.apb_sys.slave1_if
+                Total Covered Percent 
+Totals          5     3       60.00   
+Total Bits      72    69      95.83   
+Total Bits 0->1 36    35      97.22   
+Total Bits 1->0 36    34      94.44   
+
+                          
+Ports          2 1 50.00  
+Port Bits      4 3 75.00  
+Port Bits 0->1 2 2 100.00 
+Port Bits 1->0 2 1 50.00  
+
+                              
+Signals          3  2  66.67  
+Signal Bits      68 66 97.06  
+Signal Bits 0->1 34 33 97.06  
+Signal Bits 1->0 34 33 97.06  
+
+Port Details
+      Toggle Toggle 1->0 Toggle 0->1 Direction 
+clk   Yes    Yes         Yes         INPUT     
+rst_n No     No          Yes         INPUT     
+
+Signal Details
+             Toggle Toggle 1->0 Toggle 0->1 
+prdata[31:0] Yes    Yes         Yes         
+pready       Yes    Yes         Yes         
+pslverr      No     No          No          
+
+
+===============================================================================
+Module : APB_SYS_DUT
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+100.00 --     100.00 --     --     100.00 
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/rtl/APB/APB_SYS_DUT.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME            
+100.00 --     100.00 --     --     100.00 APB_TOP.apb_sys 
+
+
+
+-------------------------------------------------------------------------------
+Cond Coverage for Module : APB_SYS_DUT
+
+               Total   Covered  Percent
+Conditions         18       18   100.00
+Logical            18       18   100.00
+Non-Logical         0        0
+Event               0        0
+
+ LINE       34
+ EXPRESSION (bus_if.psel[0] ? slave0_if.prdata : (bus_if.psel[1] ? slave1_if.prdata : (bus_if.psel[2] ? slave2_if.prdata : '0)))
+             -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       34
+ SUB-EXPRESSION (bus_if.psel[1] ? slave1_if.prdata : (bus_if.psel[2] ? slave2_if.prdata : '0))
+                 -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       34
+ SUB-EXPRESSION (bus_if.psel[2] ? slave2_if.prdata : '0)
+                 -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       38
+ EXPRESSION (bus_if.psel[0] ? slave0_if.pready : (bus_if.psel[1] ? slave1_if.pready : (bus_if.psel[2] ? slave2_if.pready : 1'b0)))
+             -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       38
+ SUB-EXPRESSION (bus_if.psel[1] ? slave1_if.pready : (bus_if.psel[2] ? slave2_if.pready : 1'b0))
+                 -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       38
+ SUB-EXPRESSION (bus_if.psel[2] ? slave2_if.pready : 1'b0)
+                 -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       42
+ EXPRESSION (bus_if.psel[0] ? slave0_if.pslverr : (bus_if.psel[1] ? slave1_if.pslverr : (bus_if.psel[2] ? slave2_if.pslverr : 1'b0)))
+             -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       42
+ SUB-EXPRESSION (bus_if.psel[1] ? slave1_if.pslverr : (bus_if.psel[2] ? slave2_if.pslverr : 1'b0))
+                 -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       42
+ SUB-EXPRESSION (bus_if.psel[2] ? slave2_if.pslverr : 1'b0)
+                 -------1------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+-------------------------------------------------------------------------------
+Branch Coverage for Module : APB_SYS_DUT
+         Line No. Total Covered Percent 
+Branches          12    12      100.00  
+TERNARY  34       4     4       100.00  
+TERNARY  38       4     4       100.00  
+TERNARY  42       4     4       100.00  
+
+
+34         assign bus_if.prdata = (bus_if.psel[0]) ? slave0_if.prdata :
+                                                   -1-  
+                                                   ==>  
+35         					   (bus_if.psel[1]) ? slave1_if.prdata : 
+           					                    -2-  
+           					                    ==>  
+36                                (bus_if.psel[2]) ? slave2_if.prdata : '0;
+                                                   -3-  
+                                                   ==>  
+                                                   ==>  
+
+Branches:
+
+-1- -2- -3- Status  
+1   -   -   Covered 
+0   1   -   Covered 
+0   0   1   Covered 
+0   0   0   Covered 
+
+
+38         assign bus_if.pready = (bus_if.psel[0]) ? slave0_if.pready :
+                                                   -1-  
+                                                   ==>  
+39         					   (bus_if.psel[1]) ? slave1_if.pready : 
+           					                    -2-  
+           					                    ==>  
+40                                (bus_if.psel[2]) ? slave2_if.pready : 1'b0;
+                                                   -3-  
+                                                   ==>  
+                                                   ==>  
+
+Branches:
+
+-1- -2- -3- Status  
+1   -   -   Covered 
+0   1   -   Covered 
+0   0   1   Covered 
+0   0   0   Covered 
+
+
+42         assign bus_if.pslverr= (bus_if.psel[0]) ? slave0_if.pslverr :
+                                                   -1-  
+                                                   ==>  
+43         					   (bus_if.psel[1]) ? slave1_if.pslverr : 
+           					                    -2-  
+           					                    ==>  
+44                                (bus_if.psel[2]) ? slave2_if.pslverr : 1'b0;
+                                                   -3-  
+                                                   ==>  
+                                                   ==>  
+
+Branches:
+
+-1- -2- -3- Status  
+1   -   -   Covered 
+0   1   -   Covered 
+0   0   1   Covered 
+0   0   0   Covered 
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.apb_sys
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+100.00 --     100.00 --     --     100.00 
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+ 75.58  85.71  80.62  73.80  60.00  77.78 
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME        
+100.00 --     100.00 --     --     100.00 APB_SYS_DUT 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+ 87.50 100.00 --      75.00 --     --     APB_TOP 
+
+
+Subtrees :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
+ 74.76 --     --      74.76 --     --     bus_if    
+ 80.62 100.00  84.21  75.00  60.00  83.87 m0        
+ 83.45  87.50  92.59  73.72 --      80.00 mem0      
+ 78.50  81.25  80.65  78.76 --      73.33 mem1      
+ 95.83 --     --      95.83 --     --     slave0_if 
+ 95.83 --     --      95.83 --     --     slave1_if 
+  6.94 --     --       6.94 --     --     slave2_if 
+ 55.33  72.22  58.82  37.32 --      52.94 timer0    
+
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.
+===============================================================================
+Module : TEST
+===============================================================================
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+100.00 100.00 --     --     --     --     
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/CLASS_TB/TEST.sv
+
+Module self-instances :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
+100.00 100.00 --     --     --     --     APB_TOP.test 
+
+
+
+-------------------------------------------------------------------------------
+Line Coverage for Module : TEST
+
+             Line No.   Total   Covered  Percent
+TOTAL                        1        1   100.00
+INITIAL            77        1        1   100.00
+
+76                      		ENV env = new(ext_if, NUM_TESTS);
+77         1/1          		env.run();
+
+-------------------------------------------------------------------------------
+===============================================================================
+Module Instance : APB_TOP.test
+===============================================================================
+
+Instance :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+100.00 100.00 --     --     --     --     
+
+
+Instance's subtree :
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH 
+100.00 100.00 --     --     --     --     
+
+
+Module : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME 
+100.00 100.00 --     --     --     --     TEST 
+
+
+Parent : 
+
+SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
+ 87.50 100.00 --      75.00 --     --     APB_TOP 
+
+
+Subtrees :
+
+
+no children
+----------------
+
+
+-------------------------------------------------------------------------------
+Since this is the module's only instance, the coverage report is the same as for the module.

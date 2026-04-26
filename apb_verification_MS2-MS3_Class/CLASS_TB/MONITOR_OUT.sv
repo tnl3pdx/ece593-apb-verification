@@ -21,6 +21,7 @@ class MONITOR_OUT;
 				tx.data_out = vif.data_out;
 				tx.rw = vif.rw;
 				tx.valid = vif.valid;
+				tx.transfer_status = vif.transfer_status;
 				$display("[MONITOR_OUT] Observed completed transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx_count + 1, tx.addr, tx.data_out, tx.rw);
 				mon_out2scb.put(tx);
 				tx_count++;

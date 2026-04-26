@@ -1,0 +1,37 @@
+<session version="1.1" release="V-2023.12-SP2" timestp="2026-04-26 04:12:06 GMT">
+  <info>
+    <attr name="datetime" value="Sat Apr 25 21:12:07 2026
+"/>
+    <attr name="command" value="urg -dir simv.vdb -format both -report urgReport"/>
+    <attr name="top_instance" value="APB_TOP"/>
+  </info>
+  <hvp>
+    <datadef>
+      <metdef name="Line" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Cond" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Toggle" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="FSM" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Branch" type="ratio" aggregator="average" builtin="1" />
+      <metdef name="Group" type="percent" aggregator="average" builtin="1" />
+    </datadef>
+  </hvp>
+  <old_coverage>
+  <scope type="top" name="top">
+    <metric name="Line" value="130/150" />
+    <metric name="Cond" value="104/129" />
+    <metric name="Toggle" value="4320/5852" />
+    <metric name="FSM" value="3/5" />
+    <metric name="Branch" value="70/90" />
+    <metric name="Group" value="100%" />
+  </scope>
+  <scope type="instance" name="top">
+  </scope>
+  <scope type="group" name="top">
+    <scope type="group" name="$unit::MONITOR_IN::apb_cg">
+      <metric name="Group" value="100%" />
+    </scope>
+  </scope>
+  <scope type="assert" name="Statistics">
+  </scope>
+  </old_coverage>
+</session>

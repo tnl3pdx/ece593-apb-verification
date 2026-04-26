@@ -1,0 +1,214 @@
+Group : $unit::MONITOR_IN::apb_cg
+
+===============================================================================
+Group : $unit::MONITOR_IN::apb_cg
+===============================================================================
+SCORE  INSTANCES WEIGHT GOAL   AT LEAST PER INSTANCE AUTO BIN MAX PRINT MISSING 
+100.00 100.00    1      100    1        1            64           64            
+
+
+Source File(s) : 
+
+/home/marcom/common/Documents/ECE593/FinalM2_3/ece593-apb-verification/apb_verification_MS2-MS3_Class/CLASS_TB/MONITOR_IN.sv
+
+1 Instances:
+
+SCORE  WEIGHT GOAL   AT LEAST AUTO BIN MAX PRINT MISSING NAME                    
+100.00 1      100    1        64           64            APB_Functional_Coverage 
+
+
+
+
+-------------------------------------------------------------------------------
+
+Summary for Group   $unit::MONITOR_IN::apb_cg
+
+
+
+CATEGORY  EXPECTED UNCOVERED COVERED PERCENT 
+Variables 5        0         5       100.00  
+Crosses   6        0         6       100.00  
+
+
+Variables for Group  $unit::MONITOR_IN::apb_cg
+
+
+VARIABLE EXPECTED UNCOVERED COVERED PERCENT GOAL WEIGHT AT LEAST AUTO BIN MAX COMMENT 
+cp_rw    2        0         2       100.00  100  1      1        0                    
+cp_slave 3        0         3       100.00  100  1      1        0                    
+
+
+Crosses for Group  $unit::MONITOR_IN::apb_cg
+
+
+CROSS       EXPECTED UNCOVERED COVERED PERCENT GOAL WEIGHT AT LEAST PRINT MISSING COMMENT 
+cx_slave_rw 6        0         6       100.00  100  1      1        0                     
+
+
+-------------------------------------------------------------------------------
+
+Summary for Variable cp_rw
+
+
+CATEGORY          EXPECTED UNCOVERED COVERED PERCENT 
+User Defined Bins 2        0         2       100.00  
+
+
+User Defined Bins for cp_rw
+
+
+Bins
+
+NAME  COUNT AT LEAST 
+write 411   1        
+read  289   1        
+
+
+-------------------------------------------------------------------------------
+
+Summary for Variable cp_slave
+
+
+CATEGORY          EXPECTED UNCOVERED COVERED PERCENT 
+User Defined Bins 3        0         3       100.00  
+
+
+User Defined Bins for cp_slave
+
+
+Bins
+
+NAME         COUNT AT LEAST 
+slave2_timer 247   1        
+slave1_mem   242   1        
+slave0_mem   211   1        
+
+
+-------------------------------------------------------------------------------
+
+Summary for Cross cx_slave_rw
+
+
+Samples crossed: cp_slave cp_rw
+CATEGORY                           EXPECTED UNCOVERED COVERED PERCENT MISSING 
+Automatically Generated Cross Bins 6        0         6       100.00          
+
+
+Automatically Generated Cross Bins for cx_slave_rw
+
+
+Bins
+
+cp_slave     cp_rw COUNT AT LEAST 
+slave2_timer write 143   1        
+slave2_timer read  104   1        
+slave1_mem   write 147   1        
+slave1_mem   read  95    1        
+slave0_mem   write 121   1        
+slave0_mem   read  90    1        
+
+
+-------------------------------------------------------------------------------
+===============================================================================
+Group Instance : APB_Functional_Coverage
+===============================================================================
+SCORE  WEIGHT GOAL   AT LEAST AUTO BIN MAX PRINT MISSING 
+100.00 1      100    1        64           64            
+
+
+Group:
+
+SCORE  INSTANCES WEIGHT GOAL   AT LEAST PER INSTANCE AUTO BIN MAX PRINT MISSING COMMENT NAME                      
+100.00 100.00    1      100    1        1            64           64                    $unit::MONITOR_IN::apb_cg 
+
+
+
+-------------------------------------------------------------------------------
+
+Summary for Group Instance   APB_Functional_Coverage
+
+
+
+CATEGORY  EXPECTED UNCOVERED COVERED PERCENT 
+Variables 5        0         5       100.00  
+Crosses   6        0         6       100.00  
+
+
+Variables for Group Instance  APB_Functional_Coverage
+
+
+VARIABLE EXPECTED UNCOVERED COVERED PERCENT GOAL WEIGHT AT LEAST AUTO BIN MAX COMMENT 
+cp_rw    2        0         2       100.00  100  1      1        0                    
+cp_slave 3        0         3       100.00  100  1      1        0                    
+
+
+Crosses for Group Instance  APB_Functional_Coverage
+
+
+CROSS       EXPECTED UNCOVERED COVERED PERCENT GOAL WEIGHT AT LEAST PRINT MISSING COMMENT 
+cx_slave_rw 6        0         6       100.00  100  1      1        0                     
+
+
+-------------------------------------------------------------------------------
+
+Summary for Variable cp_rw
+
+
+CATEGORY          EXPECTED UNCOVERED COVERED PERCENT 
+User Defined Bins 2        0         2       100.00  
+
+
+User Defined Bins for cp_rw
+
+
+Bins
+
+NAME  COUNT AT LEAST 
+write 411   1        
+read  289   1        
+
+
+-------------------------------------------------------------------------------
+
+Summary for Variable cp_slave
+
+
+CATEGORY          EXPECTED UNCOVERED COVERED PERCENT 
+User Defined Bins 3        0         3       100.00  
+
+
+User Defined Bins for cp_slave
+
+
+Bins
+
+NAME         COUNT AT LEAST 
+slave2_timer 247   1        
+slave1_mem   242   1        
+slave0_mem   211   1        
+
+
+-------------------------------------------------------------------------------
+
+Summary for Cross cx_slave_rw
+
+
+Samples crossed: cp_slave cp_rw
+CATEGORY                           EXPECTED UNCOVERED COVERED PERCENT MISSING 
+Automatically Generated Cross Bins 6        0         6       100.00          
+
+
+Automatically Generated Cross Bins for cx_slave_rw
+
+
+Bins
+
+cp_slave     cp_rw COUNT AT LEAST 
+slave2_timer write 143   1        
+slave2_timer read  104   1        
+slave1_mem   write 147   1        
+slave1_mem   read  95    1        
+slave0_mem   write 121   1        
+slave0_mem   read  90    1        
+
+
