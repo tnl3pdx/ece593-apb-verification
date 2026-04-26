@@ -1,6 +1,6 @@
-<session version="1.1" release="V-2023.12-SP2" timestp="2026-04-26 06:59:55 GMT">
+<session version="1.1" release="V-2023.12-SP2" timestp="2026-04-26 07:03:13 GMT">
   <info>
-    <attr name="datetime" value="Sat Apr 25 23:59:56 2026
+    <attr name="datetime" value="Sun Apr 26 00:03:14 2026
 "/>
     <attr name="command" value="urg -dir simv.vdb -format both -report urgReport"/>
     <attr name="top_instance" value="APB_TOP"/>
@@ -18,18 +18,15 @@
   <old_coverage>
   <scope type="top" name="top">
     <metric name="Line" value="130/150" />
-    <metric name="Cond" value="110/135" />
-    <metric name="Toggle" value="4208/5852" />
+    <metric name="Cond" value="128/153" />
+    <metric name="Toggle" value="4224/5852" />
     <metric name="FSM" value="3/5" />
-    <metric name="Branch" value="70/90" />
-    <metric name="Group" value="90.4861%" />
+    <metric name="Branch" value="74/94" />
+    <metric name="Group" value="96.0417%" />
   </scope>
   <scope type="instance" name="top">
   </scope>
   <scope type="group" name="top">
-    <scope type="group" name="$unit::MONITOR_OUT::cg_protocol">
-      <metric name="Group" value="72.2222%" />
-    </scope>
     <scope type="group" name="$unit::PROTOCOL_COVERAGE::cg_APB_phases">
       <metric name="Group" value="83.3333%" />
     </scope>
@@ -37,6 +34,9 @@
       <metric name="Group" value="96.875%" />
     </scope>
     <scope type="group" name="$unit::MONITOR_IN::apb_cg">
+      <metric name="Group" value="100%" />
+    </scope>
+    <scope type="group" name="$unit::MONITOR_OUT::cg_protocol">
       <metric name="Group" value="100%" />
     </scope>
     <scope type="group" name="$unit::SCOREBOARD::cg_reset">

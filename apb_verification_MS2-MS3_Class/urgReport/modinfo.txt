@@ -449,7 +449,7 @@ Since this is the module's only instance, the coverage report is the same as for
 Module : apb_external_if
 ===============================================================================
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 74.27 --     --      74.27 --     --     
+ 75.24 --     --      75.24 --     --     
 
 Source File(s) : 
 
@@ -458,17 +458,17 @@ Source File(s) :
 Module self-instances :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME           
- 74.27 --     --      74.27 --     --     APB_TOP.ext_if 
+ 75.24 --     --      75.24 --     --     APB_TOP.ext_if 
 
 
 
 -------------------------------------------------------------------------------
 Toggle Coverage for Module : apb_external_if
                 Total Covered Percent 
-Totals          10    7       70.00   
-Total Bits      206   153     74.27   
-Total Bits 0->1 103   77      74.76   
-Total Bits 1->0 103   76      73.79   
+Totals          10    8       80.00   
+Total Bits      206   155     75.24   
+Total Bits 0->1 103   78      75.73   
+Total Bits 1->0 103   77      74.76   
 
                           
 Ports          2 1 50.00  
@@ -477,10 +477,10 @@ Port Bits 0->1 2 2 100.00
 Port Bits 1->0 2 1 50.00  
 
                                 
-Signals          8   6   75.00  
-Signal Bits      202 150 74.26  
-Signal Bits 0->1 101 75  74.26  
-Signal Bits 1->0 101 75  74.26  
+Signals          8   7   87.50  
+Signal Bits      202 152 75.25  
+Signal Bits 0->1 101 76  75.25  
+Signal Bits 1->0 101 76  75.25  
 
 Port Details
       Toggle Toggle 1->0 Toggle 0->1 Direction 
@@ -496,7 +496,7 @@ addr[1:0]       No     No          No
 addr[8:2]       Yes    Yes         Yes         
 addr[31:9]      No     No          No          
 data_out[31:0]  Yes    Yes         Yes         
-transfer_status No     No          No          
+transfer_status Yes    Yes         Yes         
 valid           Yes    Yes         Yes         
 ready           Yes    Yes         Yes         
 
@@ -509,19 +509,19 @@ Module Instance : APB_TOP.ext_if
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 74.27 --     --      74.27 --     --     
+ 75.24 --     --      75.24 --     --     
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 74.27 --     --      74.27 --     --     
+ 75.24 --     --      75.24 --     --     
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME            
- 74.27 --     --      74.27 --     --     apb_external_if 
+ 75.24 --     --      75.24 --     --     apb_external_if 
 
 
 Parent : 
@@ -543,7 +543,7 @@ Since this is the module's only instance, the coverage report is the same as for
 Module : apb_bus_if
 ===============================================================================
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 74.76 --     --      74.76 --     --     
+ 75.71 --     --      75.71 --     --     
 
 Source File(s) : 
 
@@ -552,17 +552,17 @@ Source File(s) :
 Module self-instances :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                   
- 74.76 --     --      74.76 --     --     APB_TOP.apb_sys.bus_if 
+ 75.71 --     --      75.71 --     --     APB_TOP.apb_sys.bus_if 
 
 
 
 -------------------------------------------------------------------------------
 Toggle Coverage for Module : apb_bus_if
                 Total Covered Percent 
-Totals          10    7       70.00   
-Total Bits      210   157     74.76   
-Total Bits 0->1 105   79      75.24   
-Total Bits 1->0 105   78      74.29   
+Totals          10    8       80.00   
+Total Bits      210   159     75.71   
+Total Bits 0->1 105   80      76.19   
+Total Bits 1->0 105   79      75.24   
 
                           
 Ports          2 1 50.00  
@@ -571,10 +571,10 @@ Port Bits 0->1 2 2 100.00
 Port Bits 1->0 2 1 50.00  
 
                                 
-Signals          8   6   75.00  
-Signal Bits      206 154 74.76  
-Signal Bits 0->1 103 77  74.76  
-Signal Bits 1->0 103 77  74.76  
+Signals          8   7   87.50  
+Signal Bits      206 156 75.73  
+Signal Bits 0->1 103 78  75.73  
+Signal Bits 1->0 103 78  75.73  
 
 Port Details
       Toggle Toggle 1->0 Toggle 0->1 Direction 
@@ -592,7 +592,7 @@ penable      Yes    Yes         Yes
 pwdata[31:0] Yes    Yes         Yes         
 prdata[31:0] Yes    Yes         Yes         
 pready       Yes    Yes         Yes         
-pslverr      No     No          No          
+pslverr      Yes    Yes         Yes         
 
 
 -------------------------------------------------------------------------------
@@ -603,19 +603,19 @@ Module Instance : APB_TOP.apb_sys.bus_if
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 74.76 --     --      74.76 --     --     
+ 75.71 --     --      75.71 --     --     
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 74.76 --     --      74.76 --     --     
+ 75.71 --     --      75.71 --     --     
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME       
- 74.76 --     --      74.76 --     --     apb_bus_if 
+ 75.71 --     --      75.71 --     --     apb_bus_if 
 
 
 Parent : 
@@ -637,7 +637,7 @@ Since this is the module's only instance, the coverage report is the same as for
 Module : APB_Master
 ===============================================================================
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 80.62 100.00  84.21  75.00  60.00  83.87 
+ 80.81 100.00  84.21  75.95  60.00  83.87 
 
 Source File(s) : 
 
@@ -646,7 +646,7 @@ Source File(s) :
 Module self-instances :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME               
- 80.62 100.00  84.21  75.00  60.00  83.87 APB_TOP.apb_sys.m0 
+ 80.81 100.00  84.21  75.95  60.00  83.87 APB_TOP.apb_sys.m0 
 
 
 
@@ -818,16 +818,16 @@ Event               0        0
 -------------------------------------------------------------------------------
 Toggle Coverage for Module : APB_Master
                 Total Covered Percent 
-Totals          20    15      75.00   
-Total Bits      420   315     75.00   
-Total Bits 0->1 210   158     75.24   
-Total Bits 1->0 210   157     74.76   
+Totals          20    17      85.00   
+Total Bits      420   319     75.95   
+Total Bits 0->1 210   160     76.19   
+Total Bits 1->0 210   159     75.71   
 
                               
-Ports          18  13  72.22  
-Port Bits      412 307 74.51  
-Port Bits 0->1 206 154 74.76  
-Port Bits 1->0 206 153 74.27  
+Ports          18  15  83.33  
+Port Bits      412 311 75.49  
+Port Bits 0->1 206 156 75.73  
+Port Bits 1->0 206 155 75.24  
 
                             
 Signals          2 2 100.00 
@@ -847,7 +847,7 @@ i_addr_in[8:2]    Yes    Yes         Yes         INPUT
 i_addr_in[31:9]   No     No          No          INPUT     
 i_prdata[31:0]    Yes    Yes         Yes         INPUT     
 i_pready          Yes    Yes         Yes         INPUT     
-i_pslverr         No     No          No          INPUT     
+i_pslverr         Yes    Yes         Yes         INPUT     
 o_paddr[1:0]      No     No          No          OUTPUT    
 o_paddr[8:2]      Yes    Yes         Yes         OUTPUT    
 o_paddr[31:9]     No     No          No          OUTPUT    
@@ -856,7 +856,7 @@ o_psel[2:0]       Yes    Yes         Yes         OUTPUT
 o_penable         Yes    Yes         Yes         OUTPUT    
 o_pwdata[31:0]    Yes    Yes         Yes         OUTPUT    
 o_data_out[31:0]  Yes    Yes         Yes         OUTPUT    
-o_transfer_status No     No          No          OUTPUT    
+o_transfer_status Yes    Yes         Yes         OUTPUT    
 o_valid           Yes    Yes         Yes         OUTPUT    
 o_ready           Yes    Yes         Yes         OUTPUT    
 
@@ -1080,19 +1080,19 @@ Module Instance : APB_TOP.apb_sys.m0
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 80.62 100.00  84.21  75.00  60.00  83.87 
+ 80.81 100.00  84.21  75.95  60.00  83.87 
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 80.62 100.00  84.21  75.00  60.00  83.87 
+ 80.81 100.00  84.21  75.95  60.00  83.87 
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME       
- 80.62 100.00  84.21  75.00  60.00  83.87 APB_Master 
+ 80.81 100.00  84.21  75.95  60.00  83.87 APB_Master 
 
 
 Parent : 
@@ -1180,7 +1180,7 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 75.57  86.67  81.48  71.91  60.00  77.78 
+ 76.25  86.67  83.66  72.18  60.00  78.72 
 
 
 Module : 
@@ -1198,8 +1198,8 @@ none
 Subtrees :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
- 75.36  85.71  81.48  71.82  60.00  77.78 apb_sys 
- 74.27 --     --      74.27 --     --     ext_if  
+ 76.03  85.71  83.66  72.07  60.00  78.72 apb_sys 
+ 75.24 --     --      75.24 --     --     ext_if  
 100.00 100.00 --     --     --     --     test    
 
 
@@ -1210,7 +1210,7 @@ Since this is the module's only instance, the coverage report is the same as for
 Module : APB_Slave
 ===============================================================================
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 88.89  90.62  87.84  90.44 --      86.67 
+ 89.96  90.62  90.46  90.53 --      88.24 
 
 Source File(s) : 
 
@@ -1219,8 +1219,8 @@ Source File(s) :
 Module self-instances :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                 
- 77.48  81.25  82.35  72.96 --      73.33 APB_TOP.apb_sys.mem1 
- 83.85  87.50  93.33  74.56 --      80.00 APB_TOP.apb_sys.mem0 
+ 79.21  81.25  86.05  73.05 --      76.47 APB_TOP.apb_sys.mem1 
+ 84.84  87.50  94.87  74.65 --      82.35 APB_TOP.apb_sys.mem0 
 
 
 
@@ -1289,12 +1289,12 @@ Cond Coverage for Module self-instances :
 APB_TOP.apb_sys.mem0
 ----------------
 SCORE  COND   
- 83.85  93.33 
+ 84.84  94.87 
 
 
                Total   Covered  Percent
-Conditions         30       28    93.33
-Logical            30       28    93.33
+Conditions         39       37    94.87
+Logical            39       37    94.87
 Non-Logical         0        0
 Event               0        0
 
@@ -1400,18 +1400,45 @@ Event               0        0
  0  Covered
  1  Covered
 
+ LINE       88
+ EXPRESSION ((i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))) ? 1'b1 : 1'b0)
+             -----------------------------------------------------1-----------------------------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1)))
+                 ---1--    ----2----    ----3---    -----------------------------------4----------------------------------
+
+-1- -2- -3- -4- Status
+ 0   1   1   1  Covered
+ 1   0   1   1  Covered
+ 1   1   0   1  Covered
+ 1   1   1   0  Covered
+ 1   1   1   1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))
+                -----------------------------------1----------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
 -------------------------------------------------------------------------------
 Cond Coverage for Module : APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=0,WAIT_READ=1,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 ) 
 Cond Coverage for Module self-instances : 
 APB_TOP.apb_sys.mem1
 ----------------
 SCORE  COND   
- 77.48  82.35 
+ 79.21  86.05 
 
 
                Total   Covered  Percent
-Conditions         34       28    82.35
-Logical            34       28    82.35
+Conditions         43       37    86.05
+Logical            43       37    86.05
 Non-Logical         0        0
 Event               0        0
 
@@ -1533,19 +1560,46 @@ Event               0        0
  0  Not Covered
  1  Covered
 
+ LINE       88
+ EXPRESSION ((i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))) ? 1'b1 : 1'b0)
+             -----------------------------------------------------1-----------------------------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1)))
+                 ---1--    ----2----    ----3---    -----------------------------------4----------------------------------
+
+-1- -2- -3- -4- Status
+ 0   1   1   1  Covered
+ 1   0   1   1  Covered
+ 1   1   0   1  Covered
+ 1   1   1   0  Covered
+ 1   1   1   1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))
+                -----------------------------------1----------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
 -------------------------------------------------------------------------------
 Toggle Coverage for Module : APB_Slave
                 Total Covered Percent 
-Totals          12    7       58.33   
-Total Bits      2260  2044    90.44   
-Total Bits 0->1 1130  1061    93.89   
-Total Bits 1->0 1130  983     86.99   
+Totals          12    8       66.67   
+Total Bits      2260  2046    90.53   
+Total Bits 0->1 1130  1062    93.98   
+Total Bits 1->0 1130  984     87.08   
 
                               
-Ports          10  7   70.00  
-Port Bits      206 153 74.27  
-Port Bits 0->1 103 77  74.76  
-Port Bits 1->0 103 76  73.79  
+Ports          10  8   80.00  
+Port Bits      206 155 75.24  
+Port Bits 0->1 103 78  75.73  
+Port Bits 1->0 103 77  74.76  
 
                                   
 Signals          2    0    0.00   
@@ -1566,7 +1620,7 @@ i_penable      Yes    Yes         Yes         INPUT
 i_pwdata[31:0] Yes    Yes         Yes         INPUT     
 o_prdata[31:0] Yes    Yes         Yes         OUTPUT    
 o_pready       Yes    Yes         Yes         OUTPUT    
-o_pslverr      No     No          No          OUTPUT    
+o_pslverr      Yes    Yes         Yes         OUTPUT    
 
 Signal Details
                               Toggle Toggle 1->0 Toggle 0->1 
@@ -1724,9 +1778,22 @@ count_pready[2]               No     No          No
 -------------------------------------------------------------------------------
 Branch Coverage for Module : APB_Slave
          Line No. Total Covered Percent 
-Branches          15    13      86.67   
+Branches          17    15      88.24   
+TERNARY  88       2     2       100.00  
 IF       39       4     4       100.00  
 IF       48       11    9       81.82   
+
+
+88         assign o_pslverr = (i_psel && i_penable && i_pwrite && (i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN] == ((1<<REG_NUM)-1))) ? 1'b1 : 1'b0;
+                                                                                                                              -1-  
+                                                                                                                              ==>  
+                                                                                                                              ==>  
+
+Branches:
+
+-1- Status  
+1   Covered 
+0   Covered 
 
 
 39           if (!i_prstn)
@@ -1838,19 +1905,19 @@ Module Instance : APB_TOP.apb_sys.mem1
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 77.48  81.25  82.35  72.96 --      73.33 
+ 79.21  81.25  86.05  73.05 --      76.47 
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 77.48  81.25  82.35  72.96 --      73.33 
+ 79.21  81.25  86.05  73.05 --      76.47 
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
- 88.89  90.62  87.84  90.44 --      86.67 APB_Slave 
+ 89.96  90.62  90.46  90.53 --      88.24 APB_Slave 
 
 
 Parent : 
@@ -1929,8 +1996,8 @@ ALWAYS             48       27       21    77.78
 Cond Coverage for Instance : APB_TOP.apb_sys.mem1
 
                Total   Covered  Percent
-Conditions         34       28    82.35
-Logical            34       28    82.35
+Conditions         43       37    86.05
+Logical            43       37    86.05
 Non-Logical         0        0
 Event               0        0
 
@@ -2052,19 +2119,46 @@ Event               0        0
  0  Not Covered
  1  Covered
 
+ LINE       88
+ EXPRESSION ((i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))) ? 1'b1 : 1'b0)
+             -----------------------------------------------------1-----------------------------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1)))
+                 ---1--    ----2----    ----3---    -----------------------------------4----------------------------------
+
+-1- -2- -3- -4- Status
+ 0   1   1   1  Covered
+ 1   0   1   1  Covered
+ 1   1   0   1  Covered
+ 1   1   1   0  Covered
+ 1   1   1   1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))
+                -----------------------------------1----------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
 -------------------------------------------------------------------------------
 Toggle Coverage for Instance : APB_TOP.apb_sys.mem1
                 Total Covered Percent 
-Totals          12    7       58.33   
-Total Bits      2260  1649    72.96   
-Total Bits 0->1 1130  927     82.04   
-Total Bits 1->0 1130  722     63.89   
+Totals          12    8       66.67   
+Total Bits      2260  1651    73.05   
+Total Bits 0->1 1130  928     82.12   
+Total Bits 1->0 1130  723     63.98   
 
                               
-Ports          10  7   70.00  
-Port Bits      206 153 74.27  
-Port Bits 0->1 103 77  74.76  
-Port Bits 1->0 103 76  73.79  
+Ports          10  8   80.00  
+Port Bits      206 155 75.24  
+Port Bits 0->1 103 78  75.73  
+Port Bits 1->0 103 77  74.76  
 
                                   
 Signals          2    0    0.00   
@@ -2085,7 +2179,7 @@ i_penable      Yes    Yes         Yes         INPUT
 i_pwdata[31:0] Yes    Yes         Yes         INPUT     
 o_prdata[31:0] Yes    Yes         Yes         OUTPUT    
 o_pready       Yes    Yes         Yes         OUTPUT    
-o_pslverr      No     No          No          OUTPUT    
+o_pslverr      Yes    Yes         Yes         OUTPUT    
 
 Signal Details
                               Toggle Toggle 1->0 Toggle 0->1 
@@ -2399,9 +2493,22 @@ count_pready[2:1]             No     No          No
 -------------------------------------------------------------------------------
 Branch Coverage for Instance : APB_TOP.apb_sys.mem1
          Line No. Total Covered Percent 
-Branches          15    11      73.33   
+Branches          17    13      76.47   
+TERNARY  88       2     2       100.00  
 IF       39       4     4       100.00  
 IF       48       11    7       63.64   
+
+
+88         assign o_pslverr = (i_psel && i_penable && i_pwrite && (i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN] == ((1<<REG_NUM)-1))) ? 1'b1 : 1'b0;
+                                                                                                                              -1-  
+                                                                                                                              ==>  
+                                                                                                                              ==>  
+
+Branches:
+
+-1- Status  
+1   Covered 
+0   Covered 
 
 
 39           if (!i_prstn)
@@ -2513,19 +2620,19 @@ Module Instance : APB_TOP.apb_sys.mem0
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 83.85  87.50  93.33  74.56 --      80.00 
+ 84.84  87.50  94.87  74.65 --      82.35 
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 83.85  87.50  93.33  74.56 --      80.00 
+ 84.84  87.50  94.87  74.65 --      82.35 
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
- 88.89  90.62  87.84  90.44 --      86.67 APB_Slave 
+ 89.96  90.62  90.46  90.53 --      88.24 APB_Slave 
 
 
 Parent : 
@@ -2604,8 +2711,8 @@ ALWAYS             48       27       23    85.19
 Cond Coverage for Instance : APB_TOP.apb_sys.mem0
 
                Total   Covered  Percent
-Conditions         30       28    93.33
-Logical            30       28    93.33
+Conditions         39       37    94.87
+Logical            39       37    94.87
 Non-Logical         0        0
 Event               0        0
 
@@ -2711,19 +2818,46 @@ Event               0        0
  0  Covered
  1  Covered
 
+ LINE       88
+ EXPRESSION ((i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))) ? 1'b1 : 1'b0)
+             -----------------------------------------------------1-----------------------------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_psel && i_penable && i_pwrite && (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1)))
+                 ---1--    ----2----    ----3---    -----------------------------------4----------------------------------
+
+-1- -2- -3- -4- Status
+ 0   1   1   1  Covered
+ 1   0   1   1  Covered
+ 1   1   0   1  Covered
+ 1   1   1   0  Covered
+ 1   1   1   1  Covered
+
+ LINE       88
+ SUB-EXPRESSION (i_paddr[((REG_NUM + WORD_LEN) - 1):WORD_LEN] == ((1 << REG_NUM) - 1))
+                -----------------------------------1----------------------------------
+
+-1- Status
+ 0  Covered
+ 1  Covered
+
 -------------------------------------------------------------------------------
 Toggle Coverage for Instance : APB_TOP.apb_sys.mem0
                 Total Covered Percent 
-Totals          12    7       58.33   
-Total Bits      2260  1685    74.56   
-Total Bits 0->1 1130  954     84.42   
-Total Bits 1->0 1130  731     64.69   
+Totals          12    8       66.67   
+Total Bits      2260  1687    74.65   
+Total Bits 0->1 1130  955     84.51   
+Total Bits 1->0 1130  732     64.78   
 
                               
-Ports          10  7   70.00  
-Port Bits      206 153 74.27  
-Port Bits 0->1 103 77  74.76  
-Port Bits 1->0 103 76  73.79  
+Ports          10  8   80.00  
+Port Bits      206 155 75.24  
+Port Bits 0->1 103 78  75.73  
+Port Bits 1->0 103 77  74.76  
 
                                   
 Signals          2    0    0.00   
@@ -2744,7 +2878,7 @@ i_penable      Yes    Yes         Yes         INPUT
 i_pwdata[31:0] Yes    Yes         Yes         INPUT     
 o_prdata[31:0] Yes    Yes         Yes         OUTPUT    
 o_pready       Yes    Yes         Yes         OUTPUT    
-o_pslverr      No     No          No          OUTPUT    
+o_pslverr      Yes    Yes         Yes         OUTPUT    
 
 Signal Details
                               Toggle Toggle 1->0 Toggle 0->1 
@@ -3083,9 +3217,22 @@ count_pready[2]               No     No          No
 -------------------------------------------------------------------------------
 Branch Coverage for Instance : APB_TOP.apb_sys.mem0
          Line No. Total Covered Percent 
-Branches          15    12      80.00   
+Branches          17    14      82.35   
+TERNARY  88       2     2       100.00  
 IF       39       4     4       100.00  
 IF       48       11    8       72.73   
+
+
+88         assign o_pslverr = (i_psel && i_penable && i_pwrite && (i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN] == ((1<<REG_NUM)-1))) ? 1'b1 : 1'b0;
+                                                                                                                              -1-  
+                                                                                                                              ==>  
+                                                                                                                              ==>  
+
+Branches:
+
+-1- Status  
+1   Covered 
+0   Covered 
 
 
 39           if (!i_prstn)
@@ -3193,7 +3340,7 @@ Branches:
 Module : apb_slave_if
 ===============================================================================
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 95.83 --     --      95.83 --     --     
+ 98.61 --     --      98.61 --     --     
 
 Source File(s) : 
 
@@ -3203,18 +3350,18 @@ Module self-instances :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME                      
   6.94 --     --       6.94 --     --     APB_TOP.apb_sys.slave2_if 
- 95.83 --     --      95.83 --     --     APB_TOP.apb_sys.slave0_if 
- 95.83 --     --      95.83 --     --     APB_TOP.apb_sys.slave1_if 
+ 98.61 --     --      98.61 --     --     APB_TOP.apb_sys.slave0_if 
+ 98.61 --     --      98.61 --     --     APB_TOP.apb_sys.slave1_if 
 
 
 
 -------------------------------------------------------------------------------
 Toggle Coverage for Module : apb_slave_if
                 Total Covered Percent 
-Totals          5     3       60.00   
-Total Bits      72    69      95.83   
-Total Bits 0->1 36    35      97.22   
-Total Bits 1->0 36    34      94.44   
+Totals          5     4       80.00   
+Total Bits      72    71      98.61   
+Total Bits 0->1 36    36      100.00  
+Total Bits 1->0 36    35      97.22   
 
                           
 Ports          2 1 50.00  
@@ -3223,10 +3370,10 @@ Port Bits 0->1 2 2 100.00
 Port Bits 1->0 2 1 50.00  
 
                               
-Signals          3  2  66.67  
-Signal Bits      68 66 97.06  
-Signal Bits 0->1 34 33 97.06  
-Signal Bits 1->0 34 33 97.06  
+Signals          3  3  100.00 
+Signal Bits      68 68 100.00 
+Signal Bits 0->1 34 34 100.00 
+Signal Bits 1->0 34 34 100.00 
 
 Port Details
       Toggle Toggle 1->0 Toggle 0->1 Direction 
@@ -3237,7 +3384,7 @@ Signal Details
              Toggle Toggle 1->0 Toggle 0->1 
 prdata[31:0] Yes    Yes         Yes         
 pready       Yes    Yes         Yes         
-pslverr      No     No          No          
+pslverr      Yes    Yes         Yes         
 
 
 -------------------------------------------------------------------------------
@@ -3260,7 +3407,7 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
- 95.83 --     --      95.83 --     --     apb_slave_if 
+ 98.61 --     --      98.61 --     --     apb_slave_if 
 
 
 Parent : 
@@ -3316,19 +3463,19 @@ Module Instance : APB_TOP.apb_sys.slave0_if
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 95.83 --     --      95.83 --     --     
+ 98.61 --     --      98.61 --     --     
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 95.83 --     --      95.83 --     --     
+ 98.61 --     --      98.61 --     --     
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
- 95.83 --     --      95.83 --     --     apb_slave_if 
+ 98.61 --     --      98.61 --     --     apb_slave_if 
 
 
 Parent : 
@@ -3347,10 +3494,10 @@ no children
 -------------------------------------------------------------------------------
 Toggle Coverage for Instance : APB_TOP.apb_sys.slave0_if
                 Total Covered Percent 
-Totals          5     3       60.00   
-Total Bits      72    69      95.83   
-Total Bits 0->1 36    35      97.22   
-Total Bits 1->0 36    34      94.44   
+Totals          5     4       80.00   
+Total Bits      72    71      98.61   
+Total Bits 0->1 36    36      100.00  
+Total Bits 1->0 36    35      97.22   
 
                           
 Ports          2 1 50.00  
@@ -3359,10 +3506,10 @@ Port Bits 0->1 2 2 100.00
 Port Bits 1->0 2 1 50.00  
 
                               
-Signals          3  2  66.67  
-Signal Bits      68 66 97.06  
-Signal Bits 0->1 34 33 97.06  
-Signal Bits 1->0 34 33 97.06  
+Signals          3  3  100.00 
+Signal Bits      68 68 100.00 
+Signal Bits 0->1 34 34 100.00 
+Signal Bits 1->0 34 34 100.00 
 
 Port Details
       Toggle Toggle 1->0 Toggle 0->1 Direction 
@@ -3373,7 +3520,7 @@ Signal Details
              Toggle Toggle 1->0 Toggle 0->1 
 prdata[31:0] Yes    Yes         Yes         
 pready       Yes    Yes         Yes         
-pslverr      No     No          No          
+pslverr      Yes    Yes         Yes         
 
 
 -------------------------------------------------------------------------------
@@ -3384,19 +3531,19 @@ Module Instance : APB_TOP.apb_sys.slave1_if
 Instance :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 95.83 --     --      95.83 --     --     
+ 98.61 --     --      98.61 --     --     
 
 
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 95.83 --     --      95.83 --     --     
+ 98.61 --     --      98.61 --     --     
 
 
 Module : 
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME         
- 95.83 --     --      95.83 --     --     apb_slave_if 
+ 98.61 --     --      98.61 --     --     apb_slave_if 
 
 
 Parent : 
@@ -3415,10 +3562,10 @@ no children
 -------------------------------------------------------------------------------
 Toggle Coverage for Instance : APB_TOP.apb_sys.slave1_if
                 Total Covered Percent 
-Totals          5     3       60.00   
-Total Bits      72    69      95.83   
-Total Bits 0->1 36    35      97.22   
-Total Bits 1->0 36    34      94.44   
+Totals          5     4       80.00   
+Total Bits      72    71      98.61   
+Total Bits 0->1 36    36      100.00  
+Total Bits 1->0 36    35      97.22   
 
                           
 Ports          2 1 50.00  
@@ -3427,10 +3574,10 @@ Port Bits 0->1 2 2 100.00
 Port Bits 1->0 2 1 50.00  
 
                               
-Signals          3  2  66.67  
-Signal Bits      68 66 97.06  
-Signal Bits 0->1 34 33 97.06  
-Signal Bits 1->0 34 33 97.06  
+Signals          3  3  100.00 
+Signal Bits      68 68 100.00 
+Signal Bits 0->1 34 34 100.00 
+Signal Bits 1->0 34 34 100.00 
 
 Port Details
       Toggle Toggle 1->0 Toggle 0->1 Direction 
@@ -3441,7 +3588,7 @@ Signal Details
              Toggle Toggle 1->0 Toggle 0->1 
 prdata[31:0] Yes    Yes         Yes         
 pready       Yes    Yes         Yes         
-pslverr      No     No          No          
+pslverr      Yes    Yes         Yes         
 
 
 ===============================================================================
@@ -3625,7 +3772,7 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH
 Instance's subtree :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 75.36  85.71  81.48  71.82  60.00  77.78 
+ 76.03  85.71  83.66  72.07  60.00  78.72 
 
 
 Module : 
@@ -3643,12 +3790,12 @@ SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME
 Subtrees :
 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME      
- 74.76 --     --      74.76 --     --     bus_if    
- 80.62 100.00  84.21  75.00  60.00  83.87 m0        
- 83.85  87.50  93.33  74.56 --      80.00 mem0      
- 77.48  81.25  82.35  72.96 --      73.33 mem1      
- 95.83 --     --      95.83 --     --     slave0_if 
- 95.83 --     --      95.83 --     --     slave1_if 
+ 75.71 --     --      75.71 --     --     bus_if    
+ 80.81 100.00  84.21  75.95  60.00  83.87 m0        
+ 84.84  87.50  94.87  74.65 --      82.35 mem0      
+ 79.21  81.25  86.05  73.05 --      76.47 mem1      
+ 98.61 --     --      98.61 --     --     slave0_if 
+ 98.61 --     --      98.61 --     --     slave1_if 
   6.94 --     --       6.94 --     --     slave2_if 
  55.33  72.22  58.82  37.32 --      52.94 timer0    
 
