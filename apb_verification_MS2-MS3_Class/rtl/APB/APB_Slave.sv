@@ -39,7 +39,8 @@ always @(posedge i_pclk or negedge i_prstn)
   if (!i_prstn)
     mem<='0;
   else if ((i_psel)&&(i_penable))
-    if ((i_pwrite)&&(o_pready))
+    // Only write if it's NOT the last register (making the last reg Read-Only)
+    if ((i_pwrite)&&(o_pready) && (i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN] != ((1<<REG_NUM)-1)))
       mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]]<=i_pwdata;
 
 //pready signal generation and o_prdata update for a 'read' command

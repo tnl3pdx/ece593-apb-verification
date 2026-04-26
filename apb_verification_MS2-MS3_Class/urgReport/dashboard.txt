@@ -1,6 +1,6 @@
 Dashboard
 
-Date: Sat Apr 25 21:12:08 2026
+Date: Sat Apr 25 23:17:23 2026
 
 User: marcom
 
@@ -11,23 +11,23 @@ Number of tests: 1
 -------------------------------------------------------------------------------
 Total Coverage Summary 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH GROUP  
- 79.81  86.67  80.62  73.82  60.00  77.78 100.00 
+ 78.05  86.67  81.48  71.91  60.00  77.78  90.49 
 
 
 -------------------------------------------------------------------------------
 Hierarchical coverage data for top-level instances 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH NAME    
- 75.78  86.67  80.62  73.82  60.00  77.78 APB_TOP 
+ 75.57  86.67  81.48  71.91  60.00  77.78 APB_TOP 
 
 
 -------------------------------------------------------------------------------
 Total Module Definition Coverage Summary 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 78.50  88.98  80.62  82.92  60.00  80.00 
+ 78.59  88.98  81.48  82.48  60.00  80.00 
 
 
 -------------------------------------------------------------------------------
 Total Groups Coverage Summary 
 SCORE  INST SCORE WEIGHT 
-100.00 100.00     1      
+ 90.49  90.49     1      
 

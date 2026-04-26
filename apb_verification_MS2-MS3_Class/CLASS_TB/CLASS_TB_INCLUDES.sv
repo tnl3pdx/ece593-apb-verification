@@ -23,4 +23,5 @@
 `include "CLASS_TB/MONITOR_IN.sv"
 `include "CLASS_TB/MONITOR_OUT.sv"
 `include "CLASS_TB/SCOREBOARD.sv"
+`include "CLASS_TB/PROTOCOL_COVERAGE.sv"
 `include "CLASS_TB/TEST.sv"

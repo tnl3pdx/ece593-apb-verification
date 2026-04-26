@@ -2,11 +2,15 @@ Testbench Group List
 
 Total Groups Coverage Summary 
 SCORE  INST SCORE WEIGHT 
-100.00 100.00     1      
+ 90.49  90.49     1      
 
 
-Total groups in report: 1
+Total groups in report: 5
 -------------------------------------------------------------------------------
-SCORE  INSTANCES WEIGHT GOAL   AT LEAST PER INSTANCE AUTO BIN MAX PRINT MISSING COMMENT NAME                      
-100.00 100.00    1      100    1        1            64           64                    $unit::MONITOR_IN::apb_cg 
+SCORE  INSTANCES WEIGHT GOAL   AT LEAST PER INSTANCE AUTO BIN MAX PRINT MISSING COMMENT NAME                                    
+ 72.22  72.22    1      100    1        1            64           64                    $unit::MONITOR_OUT::cg_protocol         
+ 83.33  83.33    1      100    1        1            64           64                    $unit::PROTOCOL_COVERAGE::cg_APB_phases 
+ 96.88  96.88    1      100    1        1            64           64                    $unit::SCOREBOARD::cg_data_integrity    
+100.00 100.00    1      100    1        1            64           64                    $unit::MONITOR_IN::apb_cg               
+100.00 100.00    1      100    1        1            64           64                    $unit::SCOREBOARD::cg_reset             
 

@@ -112,10 +112,10 @@ $(document).ready(function () {
 <table align=left>
 <tr class="sortablehead">
 <td>SCORE</td><td>LINE</td><td>COND</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td></tr><tr>
-<td class="s7 cl rt"> 75.78</td>
+<td class="s7 cl rt"> 75.57</td>
 <td class="s8 cl rt"> 86.67</td>
-<td class="s8 cl rt"> 80.62</td>
-<td class="s7 cl rt"> 73.82</td>
+<td class="s8 cl rt"> 81.48</td>
+<td class="s7 cl rt"> 71.91</td>
 <td class="s6 cl rt"> 60.00</td>
 <td class="s7 cl rt"> 77.78</td>
 </tr></table><br clear=all>
@@ -131,10 +131,10 @@ $(document).ready(function () {
 <tr class="sortablehead">
 <td class="alfsrt">NAME</td><td>SCORE</td><td>LINE</td><td>COND</td><td>TOGGLE</td><td>FSM</td><td>BRANCH</td></tr><tr>
 <td class="wht cl wordwrap"><a href="mod6.html#inst_tag_8" id="tag_urg_inst_8">apb_sys</a></td>
-<td class="s7 cl rt"> 75.58</td>
+<td class="s7 cl rt"> 75.36</td>
 <td class="s8 cl rt"> 85.71</td>
-<td class="s8 cl rt"> 80.62</td>
-<td class="s7 cl rt"> 73.80</td>
+<td class="s8 cl rt"> 81.48</td>
+<td class="s7 cl rt"> 71.82</td>
 <td class="s6 cl rt"> 60.00</td>
 <td class="s7 cl rt"> 77.78</td>
 </tr><tr>
@@ -172,16 +172,16 @@ Line Coverage for Module : <a href="mod8.html" >APB_TOP</a><br clear=all>
 <tr class="s10"><td class="lf">INITIAL</td><td>16</td><td>4</td><td>4</td><td>100.00</td></tr>
 </table>
 <pre class="code"><br clear=all>
-8                       	initial begin
-9          1/1          		prstn = 0;
-10         1/1          		@(posedge pclk)
-11         1/1          		prstn = 1; // Release reset
-12         2/2          		@(posedge pclk);
+8                           initial begin
+9          1/1                  prstn = 0;
+10         1/1                  @(posedge pclk)
+11         1/1                  prstn = 1; // Release reset
+12         2/2                  @(posedge pclk);
 13                      
-14                      	end
-15                      	initial begin
-16         1/1          		pclk = 0;
-17         3/3          		forever #5 pclk = ~pclk;
+14                          end
+15                          initial begin
+16         1/1                  pclk = 0;
+17         3/3                  forever #5 pclk = ~pclk;
 </pre>
 <hr>
 <a name="Toggle"></a>

@@ -2,7 +2,7 @@ Design Module List
 
 Total Module Definition Coverage Summary 
 SCORE  LINE   COND   TOGGLE FSM    BRANCH 
- 78.50  88.98  80.62  82.92  60.00  80.00 
+ 78.59  88.98  81.48  82.48  60.00  80.00 
 
 
 Total modules in report: 9
@@ -13,13 +13,13 @@ SCORE              LINE     COND     TOGGLE   FSM      BRANCH   NAME
  74.76             --       --        74.76   --       --       apb_bus_if                                                                                                      
  80.62             100.00    84.21    75.00    60.00    83.87   APB_Master                                                                                                      
  87.50             100.00   --        75.00   --       --       APB_TOP                                                                                                         
- 88.75              90.62    86.62    91.11   --        86.67   APB_Slave                                                                                                       
+ 88.89              90.62    87.84    90.44   --        86.67   APB_Slave                                                                                                       
                    
   ---------------- 
   SCORE              LINE     COND     TOGGLE   FSM      BRANCH   NAME                                                                                                          
-   89.47              90.62   --        91.11   --        86.67   APB_Slave                                                                                                     
-   80.65             --        80.65   --       --       --       APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=0,WAIT_READ=1,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 )  
-   92.59             --        92.59   --       --       --       APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=1,WAIT_READ=2,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 )  
+   89.24              90.62   --        90.44   --        86.67   APB_Slave                                                                                                     
+   82.35             --        82.35   --       --       --       APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=0,WAIT_READ=1,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 )  
+   93.33             --        93.33   --       --       --       APB_Slave ( parameter DATA_WIDTH=32,ADDR_WIDTH=32,WAIT_WRITE=1,WAIT_READ=2,WAIT_MAX=3,REG_NUM=5,WORD_LEN=2 )  
                    
 ----------------   
 SCORE              LINE     COND     TOGGLE   FSM      BRANCH   NAME                                                                                                            

@@ -1,25 +1,34 @@
 class TRANSACTION;
-	// Inputs of transaction
-	randc bit [PARAMS::ADDR_WIDTH-1:0] addr;
+	rand bit [PARAMS::ADDR_WIDTH-1:0] addr;
 	rand bit [PARAMS::DATA_WIDTH-1:0] data_in;
-	rand bit rw; // 1=write, 0=read
+	rand bit rw;
 
-	// Outputs of transaction
 	bit [PARAMS::DATA_WIDTH-1:0] data_out;
-	bit valid;				// For read, indicates if data_out is valid (1) or not (0)
-	bit transfer_status; 	// 0=OK, 1=ERROR
+	bit transfer_status;
+	bit valid;
 
-	// Constraints
-	constraint addr_c { addr[1:0] == 2'b00; } // Word-aligned addresses
-	constraint rw_c { rw dist { 1 := 3, 0 := 2 }; } // Writes more likely (3:2 ratio)
-	constraint slave_sel_c { addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] inside {[0:PARAMS::SLAVE_COUNT-1]}; } // Slave select field, e.g. addr[31:7]
-	constraint reg_c { addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM] inside {[0:(1<<PARAMS::REG_NUM)-1]}; } // Register index field, e.g. addr[6:2]
-	constraint data_c { if (!rw) data_in == 32'h0000_0000; } // Don't care for read transactions}
+	// Ensure the random address targets a valid slave and is word-aligned
+	constraint c_valid_addr {
+		addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] inside {[0 : PARAMS::SLAVE_COUNT-1]};
+		addr[1:0] == 2'b00; // Word aligned for 32-bit bus
+	}
 
-	function new();
-		this.valid = 0; // Initialize valid to 0, a read transaction will set it to 1 after generation
-	endfunction
+	// PREVENT UNMAPPED ACCESS: Restrict Timer access to only valid registers (0 and 1)
+	constraint c_valid_timer_regs {
+		(addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] == 2) -> 
+			(addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM] inside {0, 1});
+	}
 
+	// Constrained Randomization for FV-004 Data Integrity
+	constraint c_data_patterns {
+		data_in dist {
+			32'h00000000 := 2, // Force All Zeros
+			32'hFFFFFFFF := 2, // Force All Ones
+			32'hAAAAAAAA := 2, // Force Alternating 1010
+			32'h55555555 := 2, // Force Alternating 0101
+			[32'h00000001 : 32'hFFFFFFFE] :/ 20 // Standard random values
+		};
+	}
 endclass : TRANSACTION
 
 class TIMER_TRANSACTION extends TRANSACTION;
