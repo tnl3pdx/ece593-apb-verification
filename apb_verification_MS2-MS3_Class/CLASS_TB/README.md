@@ -12,3 +12,4 @@ FV-003 (cg_protocol): implemented in MONITOR_OUT.sv. Tracks error versus no-erro
 
 FV-004 (cg_data_integrity): To verify data integrity, the covergroup cross references the data being written and data being read for specific patterns like 0xFFFFFFFF
 
+test write for git push
