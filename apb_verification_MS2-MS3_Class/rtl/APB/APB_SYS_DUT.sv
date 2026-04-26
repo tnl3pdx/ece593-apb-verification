@@ -21,26 +21,19 @@ localparam ADDR_MSB_len = ADDR_WIDTH-WORD_LEN-REG_NUM;               //Part of t
 
 parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_0 = 0;                       //Address of slave_0
 parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_1= 1;                        //Address of slave_1
-parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_2 = 2;						//Address of slave_2
 
 // Internal interface instances used to connect DUT submodules
 apb_bus_if #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .SLAVE_COUNT(SLAVE_COUNT)) bus_if (.clk(ext_if.clk), .rst_n(ext_if.rst_n));
 apb_slave_if #(.DATA_WIDTH(DATA_WIDTH)) slave0_if (.clk(ext_if.clk), .rst_n(ext_if.rst_n));
 apb_slave_if #(.DATA_WIDTH(DATA_WIDTH)) slave1_if (.clk(ext_if.clk), .rst_n(ext_if.rst_n));
-apb_slave_if #(.DATA_WIDTH(DATA_WIDTH)) slave2_if (.clk(ext_if.clk), .rst_n(ext_if.rst_n)); 					//Adding slave_2 interface
 
 // Interconnect response muxing on interface signals
 assign bus_if.prdata = (bus_if.psel[0]) ? slave0_if.prdata :
-                       (bus_if.psel[1]) ? slave1_if.prdata : 
-                       (bus_if.psel[2]) ? slave2_if.prdata : '0;
-
+					   (bus_if.psel[1]) ? slave1_if.prdata : '0;
 assign bus_if.pready = (bus_if.psel[0]) ? slave0_if.pready :
-                       (bus_if.psel[1]) ? slave1_if.pready : 
-                       (bus_if.psel[2]) ? slave2_if.pready : 1'b0;
-
-assign bus_if.pslverr= (bus_if.psel[0]) ? slave0_if.pslverr :
-                       (bus_if.psel[1]) ? slave1_if.pslverr : 
-                       (bus_if.psel[2]) ? slave2_if.pslverr : 1'b0;
+					   (bus_if.psel[1]) ? slave1_if.pready : 1'b0;
+assign bus_if.pslverr = (bus_if.psel[0]) ? slave0_if.pslverr :
+					    (bus_if.psel[1]) ? slave1_if.pslverr : 1'b0;
 
 APB_Master
 #(.DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH),
@@ -113,22 +106,4 @@ APB_Slave
 	.o_pslverr(slave1_if.pslverr)
 	);
 
-APB_Timer #(
-        .DATA_WIDTH(DATA_WIDTH), 
-        .ADDR_WIDTH(ADDR_WIDTH), 
-        .WAIT_WRITE(0), 
-        .WAIT_READ(0),
-        .num_timers(2)
-    ) timer0 (
-        .i_prstn(ext_if.rst_n),
-        .i_pclk(ext_if.clk),
-        .i_paddr(bus_if.paddr),
-        .i_pwrite(bus_if.pwrite),
-        .i_psel(bus_if.psel[2]),
-        .i_penable(bus_if.penable),
-        .i_pwdata(bus_if.pwdata),
-        .o_prdata(slave2_if.prdata),
-        .o_pready(slave2_if.pready),
-        .o_pslverr(slave2_if.pslverr)
-    );
 endmodule
