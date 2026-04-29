@@ -22,7 +22,7 @@ module APB_TOP;
 
     // Class Based Environment
     TEST #(
-        .NUM_TESTS(700)
+        .NUM_TESTS(1000)
     ) test (
         .ext_if(ext_if),
         .bus_if(apb_sys.bus_if)
@@ -42,5 +42,8 @@ module APB_TOP;
     ) apb_sys (
         .ext_if(ext_if)
     );
+
+    initial
+        $fsdbDumpvars();
 
 endmodule : APB_TOP

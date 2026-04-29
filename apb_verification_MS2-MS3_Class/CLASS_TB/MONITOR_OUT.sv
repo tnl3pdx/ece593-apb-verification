@@ -32,7 +32,7 @@ class MONITOR_OUT;
 		this.vif = ext_if;
 		this.mon_out2scb = mon_out2scb;
 		this.tx_count = 0;
-		this.prev_ready = ext_if.ready;
+		this.prev_ready = 1;
 		cg_protocol = new();
 	endfunction
 

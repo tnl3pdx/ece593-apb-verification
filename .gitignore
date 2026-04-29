@@ -7,3 +7,6 @@ ucli*
 novas*
 .vscode
 old/
+urgReport/
+vdCov*
+.fsm.*

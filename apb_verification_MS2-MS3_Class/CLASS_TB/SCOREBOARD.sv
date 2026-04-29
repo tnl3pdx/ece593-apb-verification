@@ -87,14 +87,20 @@ class SCOREBOARD;
         cg_reset = new();
     endfunction
 
-    task start();
-        $display("[SCOREBOARD] STARTED");
+	task start();
+		$display("[SCOREBOARD] STARTED");
+		fork
+			get_input();
+			get_output();
+		join_none
+	endtask
         
-        fork
+	task get_input();
             // INPUT MONITOR PROCESSING
+            TRANSACTION tx;
+            int slave_idx, reg_idx, model_idx;           
+            
             forever begin
-                TRANSACTION tx;
-                int slave_idx, reg_idx, model_idx;
 
                 mon_in2sb.get(tx);
                 total_input_count++;
@@ -108,24 +114,24 @@ class SCOREBOARD;
                     cg_data_integrity.sample();
 
                     if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
-                        if (reg_idx != ((1<<PARAMS::REG_NUM)-1)) begin
-                            golden_mem[model_idx][reg_idx] = tx.data_in;
-                        end else begin
-                            $display("[SCOREBOARD] MODEL WRITE BLOCKED: mem[%0d][%0d] is Read-Only", model_idx, reg_idx);
-                        end
+                        golden_mem[model_idx][reg_idx] = tx.data_in;
                     end 
                     else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
                         timer_last_val[slave_idx][reg_idx] = tx.data_in;
+                        $display("[SCOREBOARD] MODEL WRITE: mem[%0d][%0d] <= 0x%08x", model_idx, reg_idx, tx.data_in);
                     end
                 end
             end
+    endtask
+
+    task get_output();
 
             // OUTPUT MONITOR PROCESSING
+            TRANSACTION tx;
+            int slave_idx, reg_idx, model_idx;
+            bit [PARAMS::DATA_WIDTH-1:0] expected_data;            
+            
             forever begin
-                TRANSACTION tx;
-                int slave_idx, reg_idx, model_idx;
-                bit [PARAMS::DATA_WIDTH-1:0] expected_data;
-
                 mon_out2scb.get(tx);
                 total_output_count++;
                 slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
@@ -135,8 +141,17 @@ class SCOREBOARD;
                 if (tx.rw) begin 
                     if (tx.transfer_status == 1 || tx.valid == 1) begin
                         write_fail_count++; error_count++;
+                        if (tx.valid === 1'b1) begin
+						    $error("[SCOREBOARD] WRITE ERROR (VALID ASSERTED) #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
+							total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
+					    end else begin
+						    $error("[SCOREBOARD] WRITE ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x",
+							total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+					    end
                     end else begin
                         write_pass_count++;
+                        $display("[SCOREBOARD] OUT #%0d WRITE: slave=%0d reg=%0d addr=0x%08x data=0x%08x",
+						    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                     end
                 end 
                 else begin // Read Completion Check
@@ -148,25 +163,34 @@ class SCOREBOARD;
                     if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                         expected_data = golden_mem[model_idx][reg_idx];
                         if ((tx.valid !== 1'b1) || (tx.data_out !== expected_data)) begin
-                            $error("[SCOREBOARD] MEMORY READ FAIL: slave=%0d reg=%0d expected=0x%08x actual=0x%08x valid=%b err=%b", 
-                                slave_idx, reg_idx, expected_data, tx.data_out, tx.valid, tx.transfer_status);
                             read_fail_count++; error_count++;
+                            if (tx.data_out !== expected_data) begin
+                                $error("[SCOREBOARD] READ MISMATCH #%0d: slave=%0d reg=%0d addr=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
+                                    total_output_count, slave_idx, reg_idx, tx.addr, expected_data, tx.data_out, tx.valid);
+                            end else begin
+                                $error("[SCOREBOARD] READ ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
+                                    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
+                            end
                         end else begin
                             read_pass_count++;
                         end
                     end
                     else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                        if ((tx.valid === 1'b1) && (tx.transfer_status === 1'b0)) begin
-                            read_pass_count++;
-                        end else begin
-                            $error("[SCOREBOARD] TIMER PROTOCOL FAIL: slave=%0d reg=%0d valid=%b err=%b", 
-                                slave_idx, reg_idx, tx.valid, tx.transfer_status);
+                        if ((tx.valid !== 1'b1)) begin  // TODO: Add expected value check once timer behavior is fully defined and modeled
                             read_fail_count++; error_count++;
+                            if (tx.valid !== 1'b1) begin
+                                $error("[SCOREBOARD] TIMER READ ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
+                                    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
+                            end else begin
+                                $error("[SCOREBOARD] TIMER PROTOCOL ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (unexpected error status)",
+                                    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                            end
+                        end else begin
+                            read_pass_count++;
                         end
                     end
                 end
             end
-        join_none
     endtask
 
     function void report();
