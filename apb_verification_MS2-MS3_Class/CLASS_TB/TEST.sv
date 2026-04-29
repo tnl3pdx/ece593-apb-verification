@@ -2,7 +2,8 @@ module TEST #(
 	parameter NUM_TESTS = 100
 )
 (
-	apb_external_if ext_if
+	apb_external_if ext_if,
+	apb_bus_if bus_if
 );
 	
 	class ENV;
@@ -13,16 +14,19 @@ module TEST #(
 		MONITOR_IN mon_in;
 		MONITOR_OUT mon_out;
 		SCOREBOARD sb;
+		PROTOCOL_COVERAGE proto_cov;
 
 		mailbox gen2drv;
 		mailbox mon_in2sb;
 		mailbox mon_out2scb;
 
-		// Virtual interface handle
+		// Virtual interface handles
 		virtual apb_external_if ext_if;
+		virtual apb_bus_if #(.DATA_WIDTH(PARAMS::DATA_WIDTH), .ADDR_WIDTH(PARAMS::ADDR_WIDTH), .SLAVE_COUNT(PARAMS::SLAVE_COUNT)) bus_if;
 
-		function new(virtual apb_external_if ext_if, int tests);
+		function new(virtual apb_external_if ext_if, virtual apb_bus_if #(.DATA_WIDTH(PARAMS::DATA_WIDTH), .ADDR_WIDTH(PARAMS::ADDR_WIDTH), .SLAVE_COUNT(PARAMS::SLAVE_COUNT)) bus_if, int tests);
 			this.ext_if = ext_if;
+			this.bus_if = bus_if;
 
 			this.gen2drv = new();
 			this.mon_in2sb = new();
@@ -33,8 +37,8 @@ module TEST #(
 			this.mon_in = new(ext_if, mon_in2sb);
 			this.mon_out = new(ext_if, mon_out2scb);
 			this.sb = new(mon_in2sb, mon_out2scb, tests);
+			this.proto_cov = new(bus_if);
 		endfunction
-
 
 		task pre_test();
 			drv.reset();
@@ -48,12 +52,13 @@ module TEST #(
 				mon_in.start();
 				mon_out.start();
 				sb.start();
+				proto_cov.start();
 			join_none
 		endtask
 
 		task post_test();
 			// Generate all testcases
-			wait(gen.end_of_tests);
+			wait(gen.end_of_tests.triggered);
 			// Check tx count from generator matches transactions observed by driver
 			wait(gen.tx_count == drv.tx_count1);
 			// Check tx count from driver matches transactions observed by output monitor
@@ -73,7 +78,7 @@ module TEST #(
 	endclass
 
 	initial begin
-		ENV env = new(ext_if, NUM_TESTS);
+		ENV env = new(ext_if, bus_if, NUM_TESTS);
 		env.run();
 	end
 

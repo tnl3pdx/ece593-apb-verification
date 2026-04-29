@@ -1,11 +1,24 @@
-all_2step: all_2step_ng gui
-all_3step: all_3step_ng gui
+# ==============================================================================
+# Class-Based Testbench Targets
+# ==============================================================================
+# Add Coverage flags to compile and run
+VCS_FLAGS = -sverilog -debug_access+all -kdb -cm line+cond+fsm+tgl+branch
+SIM_FLAGS = -l run.log -cm line+cond+fsm+tgl+branch
 
-all_2step_ng: clean build_2step run
-all_3step_ng: clean build_3step run
+# Update the target to include 'report_cov'
+class_2step_ng: clean build_class run_class report_cov
+class_2step: clean build_class run_class report_cov gui
 
-VCS_FLAGS = -sverilog -debug_access+all -kdb
-VCS_TB = APB_TOP
+build_class:
+	vcs $(VCS_FLAGS) +incdir+. rtl/APB/*.sv CLASS_TB/APB_TOP.sv -top APB_TOP -l comp_class.log
+
+# Separate run target to include simulation flags
+run_class:
+	./simv $(SIM_FLAGS)
+
+# Generate HTML Coverage Reports
+report_cov:
+	urg -dir simv.vdb -format both -report urgReport
 
 build_2step:
 	vcs $(VCS_FLAGS) rtl/APB/*.sv CLASS_TB/APB_TOP.sv -top $(VCS_TB) -l comp.log

@@ -83,7 +83,7 @@ always @(posedge i_pclk or negedge i_prstn)
       count_pready<=count_pready+$bits(count_pready)'(1);
 
 
-//Error signal generation
-assign o_pslverr = 1'b0;                                                   //Tied to logic zero for this simplified slave implementation. 
-   
+//Error signal generation: Assert high if attempting to WRITE to the Read-Only register
+assign o_pslverr = 1'b0;
+
 endmodule
