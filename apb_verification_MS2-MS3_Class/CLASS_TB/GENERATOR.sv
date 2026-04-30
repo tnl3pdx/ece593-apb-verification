@@ -21,10 +21,11 @@ class GENERATOR;
 		for (int s = 0; s < 2; s++) begin
 			for (int r = 0; r < 32; r++) begin
 				tx = new();
-				// Calculate exact address: slave_idx + reg_idx
-				tx.addr = (s << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (r << PARAMS::WORD_LEN);
+				tx.slave_sel = s;
+				tx.reg_sel = r;
 				tx.rw = 0; // READ
 				tx.data_in = 32'h0;
+				tx.post_randomize(); // Build addr from slave_sel & reg_sel
 				gen2drv.put(tx);
 				tx_count++;
 			end
@@ -41,17 +42,21 @@ class GENERATOR;
 				for (int s = 0; s < 3; s++) begin
 					// 1. Write the pattern
 					tx = new();
-					tx.addr = (s << (PARAMS::REG_NUM + PARAMS::WORD_LEN)); // Target Reg 0
+					tx.slave_sel = s;
+					tx.reg_sel = 0;
 					tx.rw = 1; // WRITE
 					tx.data_in = test_patterns[p];
+					tx.post_randomize();
 					gen2drv.put(tx);
 					tx_count++;
 
 					// 2. Read the pattern immediately
 					tx = new();
-					tx.addr = (s << (PARAMS::REG_NUM + PARAMS::WORD_LEN)); // Same Reg 0
+					tx.slave_sel = s;
+					tx.reg_sel = 0;
 					tx.rw = 0; // READ
 					tx.data_in = 32'h0;
+					tx.post_randomize();
 					gen2drv.put(tx);
 					tx_count++;
 				end
@@ -66,53 +71,69 @@ class GENERATOR;
 		// --- 3A. Floor at Zero Check ---
 		// Write a small value (5) to Timer 0, wait for it to expire, then read.
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (0 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 0;
 		tx.rw = 1; tx.data_in = 32'h00000005;
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 		
 		// Insert dummy reads to other slaves to pass time (> 5 cycles)
 		for (int i = 0; i < 6; i++) begin
 			tx = new();
-			tx.addr = (PARAMS::ADDR_SLAVE_0 << (PARAMS::REG_NUM + PARAMS::WORD_LEN));
+			tx.slave_sel = 0;
+			tx.reg_sel = 0;
 			tx.rw = 0; tx.data_in = 32'h0;
+			tx.post_randomize();
 			gen2drv.put(tx); tx_count++;
 		end
 		
 		// Read Timer 0 back - Scoreboard should expect 0x0
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (0 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 0;
 		tx.rw = 0; tx.data_in = 32'h0;
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3B. Mid-Countdown Override Check ---
 		// Write a large value to Timer 1, then immediately overwrite it.
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (1 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 1;
 		tx.rw = 1; tx.data_in = 32'h00000FFF; // Initial large value
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 		
 		// Read to advance time slightly
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (1 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 1;
 		tx.rw = 0; tx.data_in = 32'h0;
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 		
 		// Overwrite while still counting
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (1 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 1;
 		tx.rw = 1; tx.data_in = 32'h000000AA; // New value
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3C. Out-of-Bounds Indexing Check ---
 		// Attempt to write and read Timer Index 2 (which doesn't exist)
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (2 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 2;
 		tx.rw = 1; tx.data_in = 32'hDEADBEEF;
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 		
 		tx = new();
-		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (2 << PARAMS::WORD_LEN);
+		tx.slave_sel = 2;
+		tx.reg_sel = 2;
 		tx.rw = 0; tx.data_in = 32'h0;
+		tx.post_randomize();
 		gen2drv.put(tx); tx_count++;
 
 		/*

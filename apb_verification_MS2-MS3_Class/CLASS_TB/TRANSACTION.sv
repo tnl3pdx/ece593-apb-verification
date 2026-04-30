@@ -1,24 +1,19 @@
 class TRANSACTION;
-	// General Properties
-	rand bit [PARAMS::ADDR_WIDTH-1:0] addr;
+	// Separated selection fields for cleaner constraint control
+	rand bit [PARAMS::SLAVE_COUNT-1:0] slave_sel;
+	rand bit [PARAMS::REG_NUM-1:0] reg_sel;
 	rand bit [PARAMS::DATA_WIDTH-1:0] data_in;
 	rand bit rw;
 
+	bit [PARAMS::ADDR_WIDTH-1:0] addr;
 	bit [PARAMS::DATA_WIDTH-1:0] data_out;
 	bit transfer_status;
 	bit valid;
 	time timestamp;
 
-	constraint c_valid_addr {
-		// Restrict timer access to specific registers 
-		(addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] == 2) -> 
-			(addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM] inside {0, 1});
-
-		// Ensure address targets a valid slave
-		addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] inside {[0 : PARAMS::SLAVE_COUNT-1]};
-
-		// Ensure word-alignment for 32-bit bus
-		addr[1:0] == 2'b00; 
+	constraint c_slave_distribution {
+		// Solver can now evenly distribute slave_sel independently
+		slave_sel dist { 0 := 1, 1 := 1, 2 := 1 };
 	}
 
 	constraint c_rw {
@@ -36,5 +31,15 @@ class TRANSACTION;
 		};
 		if (!rw) data_in == 32'h0000_0000; // For reads, drive in 0s
 	}
+
+	function void post_randomize();
+		// Post restrictions: Restrict timer register accesses to 0-1
+		if (slave_sel == 2) begin
+			reg_sel = reg_sel % 2; // Timer has only 2 registers, so wrap reg_sel to 0-1
+		end
+		// Construct address from slave_sel and reg_sel
+		addr = {slave_sel, reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		$display("[TRANSACTION] Post-randomize: slave_sel=%b reg_sel=%b addr=0x%08x data_in=0x%08x rw=%b", slave_sel, reg_sel, addr, data_in, rw);
+	endfunction
 endclass : TRANSACTION
 

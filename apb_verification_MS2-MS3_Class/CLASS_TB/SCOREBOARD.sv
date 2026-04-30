@@ -10,6 +10,8 @@ class SCOREBOARD;
     int error_count;
 
     int slave_accesses[PARAMS::SLAVE_COUNT];
+    int slave_rw_accesses[PARAMS::SLAVE_COUNT][2];
+    int slave_rw_errors[PARAMS::SLAVE_COUNT][2];
 
     localparam int REG_DEPTH = (1 << PARAMS::REG_NUM);
     bit [PARAMS::DATA_WIDTH-1:0] golden_mem[][];
@@ -202,6 +204,7 @@ class SCOREBOARD;
 
                 if (write_has_transfer_err || write_has_unexpected_valid) begin
                     write_fail_count++; error_count++;
+                    slave_rw_errors[slave_idx][tx.rw]++;
                     if (write_has_transfer_err && write_has_unexpected_valid) begin
                         $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (combined: transfer error + unexpected valid=1)",
                             total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
@@ -238,6 +241,7 @@ class SCOREBOARD;
                         mem_has_transfer_err = (tx.transfer_status == 1'b1);
 
                         read_fail_count++; error_count++;
+                        slave_rw_errors[slave_idx][tx.rw]++;
                         if (mem_has_invalid && mem_has_data_mismatch && mem_has_transfer_err) begin
                             $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_data, tx.data_out);
@@ -305,6 +309,7 @@ class SCOREBOARD;
                         timer_has_transfer_err = (tx.transfer_status == 1'b1);
 
                         read_fail_count++; error_count++;
+                        slave_rw_errors[slave_idx][tx.rw]++;
                         if (timer_has_invalid && timer_has_unexpected_value && timer_has_transfer_err) begin
                             $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x (combined: invalid transfer valid=%0b + unexpected value expected=0x%08x actual=0x%08x + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_timer_data, tx.data_out);
@@ -330,6 +335,8 @@ class SCOREBOARD;
                             $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (unexpected error status)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);                                
                         end 
+                        $display("[SCOREBOARD]         Timer Differences: Expected: 0x%08x Actual: 0x%08x Difference: %0d cycles Elapsed Time: %0t ns", 
+                            expected_timer_data, tx.data_out, (expected_timer_data > tx.data_out) ? (expected_timer_data - tx.data_out) : (tx.data_out - expected_timer_data), elapsed);
                     end else begin
                         $display("[SCOREBOARD] OUTPUT: TIMER PASS #%0d reg=%0d (expected=0x%08x actual=0x%08x)",
                             total_output_count, reg_idx, expected_timer_data, tx.data_out);
@@ -338,6 +345,7 @@ class SCOREBOARD;
                 end
             end
             slave_accesses[slave_idx]++;
+            slave_rw_accesses[slave_idx][tx.rw]++; // Increment access count for this slave and rw type
         end
     endtask
 
@@ -347,7 +355,8 @@ class SCOREBOARD;
         $display("[SCOREBOARD] READS:  PASS=%0d FAIL=%0d", read_pass_count, read_fail_count);
         $display("[SCOREBOARD] SLAVE ACCESSES:");
         for (int i = 0; i < PARAMS::SLAVE_COUNT; i++) begin
-            $display("[SCOREBOARD]   Slave %0d: %0d accesses", i, slave_accesses[i]);
+            $display("[SCOREBOARD]   Slave %0d: %0d accesses (WRITES=%0d (ERRORS=%0d) READS=%0d (ERRORS=%0d))", 
+                i, slave_accesses[i], slave_rw_accesses[i][1], slave_rw_errors[i][1], slave_rw_accesses[i][0], slave_rw_errors[i][0]);
         end
         $display("[SCOREBOARD] TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d",
             error_count, total_output_count);
