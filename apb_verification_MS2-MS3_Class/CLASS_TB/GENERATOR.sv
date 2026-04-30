@@ -1,15 +1,15 @@
 class GENERATOR;
-	localparam int enable_directed = 0; // Set to 1 to enable directed sequences, 0 for purely random testing
-
 	mailbox gen2drv;
 	int num_tests;
 	int tx_count;
+	int enable_directed; // Set to 1 to enable directed sequences, 0 for purely random testing
 	event end_of_tests;
 
-	function new(mailbox gen2drv, int num_tests);
+	function new(mailbox gen2drv, int num_tests, int enable_directed);
 		this.gen2drv = gen2drv;
 		this.num_tests = num_tests;
 		this.tx_count = 0;
+		this.enable_directed = enable_directed;
 	endfunction
 
 	task directed_sequences(TRANSACTION tx);
@@ -84,7 +84,7 @@ class GENERATOR;
 
 	task start();
 		TRANSACTION tx;
-		$display("[GENERATOR] STARTED: Executing Directed Sequences + Random Tests");
+		$display("[GENERATOR] STARTED: Executing Tests");
 
 		if (enable_directed) begin
 			$display("[GENERATOR] Starting Directed Sequences...");
@@ -95,6 +95,7 @@ class GENERATOR;
 		// Standard Random Testing (FV-002, FV-003)
 		// Fill the remaining requested tests with random traffic.
 		// =========================================================
+		$display("[GENERATOR] Starting Random Sequences...");
 		while (tx_count < num_tests) begin
 			tx = new();
 			if (!tx.randomize()) $fatal("[GENERATOR] Randomization failed!");

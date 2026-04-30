@@ -1,5 +1,6 @@
 module TEST #(
-	parameter NUM_TESTS = 100
+	parameter NUM_TESTS = 100,
+	parameter ENABLE_DIRECTED = 1 // Set to 1 to enable directed sequences, 0 for purely random testing
 )
 (
 	apb_external_if ext_if,
@@ -32,7 +33,7 @@ module TEST #(
 			this.mon_in2sb = new();
 			this.mon_out2scb = new();
 
-			this.gen = new(gen2drv, tests);
+			this.gen = new(gen2drv, tests, ENABLE_DIRECTED); // Enable directed sequences
 			this.drv = new(ext_if, gen2drv);
 			this.mon_in = new(ext_if, mon_in2sb);
 			this.mon_out = new(ext_if, mon_out2scb);
@@ -71,7 +72,7 @@ module TEST #(
 			pre_test();
 			test();
 			post_test();
-			sb.report();
+			sb.report(ENABLE_DIRECTED);
 			$display("All tests completed. Final Score: %0d/%0d", sb.get_score(), gen.tx_count);
 			$finish;
 		endtask

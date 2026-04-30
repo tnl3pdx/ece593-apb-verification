@@ -24,7 +24,8 @@ module APB_TOP;
 
     // Class Based Environment
     TEST #(
-        .NUM_TESTS(1000)
+        .NUM_TESTS(1000),
+        .ENABLE_DIRECTED(0)
     ) test (
         .ext_if(ext_if),
         .bus_if(apb_sys.bus_if)

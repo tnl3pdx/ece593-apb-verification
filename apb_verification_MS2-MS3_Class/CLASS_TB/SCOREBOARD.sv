@@ -250,8 +250,8 @@ class SCOREBOARD;
         end
     endtask
 
-    function void report();
-        $display("\n[SCOREBOARD] ===== FINAL REPORT =====");
+    function void report(int enable_directed);
+        $display("\n[SCOREBOARD] ===== FINAL REPORT (%0s) =====", (enable_directed ? "DIRECTED + RANDOM" : "RANDOM ONLY"));
         $display("[SCOREBOARD] WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count);
         $display("[SCOREBOARD] READS:  PASS=%0d FAIL=%0d", read_pass_count, read_fail_count);
         $display("[SCOREBOARD] SLAVE ACCESSES:");
