@@ -47,6 +47,7 @@ class MONITOR_OUT;
 				tx.rw = vif.rw;
 				tx.valid = vif.valid;
 				tx.transfer_status = vif.transfer_status;
+				tx.timestamp = $time;
 				
 				$display("[MONITOR_OUT] ACCESS: TX#%0d %s ADDR=0x%08x DATA=0x%08x valid=%0b slave=%0d", 
 					tx_count + 1, (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_out, tx.valid, tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len]);

@@ -7,6 +7,7 @@ class TRANSACTION;
 	bit [PARAMS::DATA_WIDTH-1:0] data_out;
 	bit transfer_status;
 	bit valid;
+	time timestamp;
 
 	constraint c_valid_addr {
 		// Restrict timer access to specific registers 

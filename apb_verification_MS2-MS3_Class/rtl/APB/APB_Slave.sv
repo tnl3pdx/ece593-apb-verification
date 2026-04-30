@@ -4,7 +4,7 @@ module APB_Slave(i_prstn,i_pclk,i_paddr,i_pwrite,i_psel,i_penable,i_pwdata,o_prd
 
 //Parameters
 parameter DATA_WIDTH = 32;                                    //Data bus width
-parameter ADDR_WIDTH = 32;                                    //Address bus width
+parameter ADDR_WIDTH = 32;                                    //Address bus widt
 
 parameter WAIT_WRITE = 0;                                     //Number of wait cycles following a write command
 parameter WAIT_READ = 0;                                      //Number of wait cycles following a read command

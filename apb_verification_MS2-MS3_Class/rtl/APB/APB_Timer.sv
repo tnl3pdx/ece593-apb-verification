@@ -29,7 +29,7 @@ logic [WAIT_MAX-1:0] count_pready;                            // Wait state coun
 logic [DATA_WIDTH-1:0] t_reg [num_timers];                    // Timer Registers
 
 // Address decoding to determine which timer is being accessed
-wire [31:0] timer_idx = i_paddr[WORD_LEN + 7 : WORD_LEN]; 
+wire [31:0] timer_idx = i_paddr[WORD_LEN + 4 : WORD_LEN];
 
 // ==============================================================================
 // Timer Decrement & APB Write Logic
