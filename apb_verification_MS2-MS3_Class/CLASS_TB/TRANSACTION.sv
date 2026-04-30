@@ -8,24 +8,24 @@ class TRANSACTION;
 	bit transfer_status;
 	bit valid;
 
-	// Timer Specific Properties
-	rand bit [PARAMS::DATA_WIDTH-1:0] timer_value; // Timer-specific transaction parameter
-	bit timer_status; // Timer-specific status parameter
-	bit timer_start;  // Indicates if the timer should be started with this transaction
-
-	bit illegal_transaction; // Flag to indicate if the transaction is illegal (e.g., invalid address)
-
-	// Ensure the random address targets a valid slave and is word-aligned
 	constraint c_valid_addr {
+		// Restrict timer access to specific registers 
 		(addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] == 2) -> 
 			(addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM] inside {0, 1});
 
-		addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] inside {[0 : PARAMS::SLAVE_COUNT-1]}; // Slave selection bits
-		addr[1:0] == 2'b00; // Word aligned for 32-bit bus
+		// Ensure address targets a valid slave
+		addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] inside {[0 : PARAMS::SLAVE_COUNT-1]};
+
+		// Ensure word-alignment for 32-bit bus
+		addr[1:0] == 2'b00; 
 	}
 
-	// Constrained Randomization for FV-004 Data Integrity
+	constraint c_rw {
+		rw dist { 1:=1, 0:=1 }; // Even distribution of read and write transactions
+	}
+
 	constraint c_data_patterns {
+		// Constrained Randomization for FV-004 Data Integrity
 		data_in dist {
 			32'h00000000 := 2, // Force All Zeros
 			32'hFFFFFFFF := 2, // Force All Ones
