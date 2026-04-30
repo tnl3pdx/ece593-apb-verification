@@ -69,3 +69,26 @@ Fix: Narrowed the address decoding slice to only look at the bits dedicated to t
 
 wire [31:0] timer_idx = i_paddr[WORD_LEN + 4 : WORD_LEN];
 
+
+FV-005 for timer "underflow"
+covergroup cg_timer_validation;
+        option.per_instance = 1;
+        option.name = "FV-005_Timer_Sequences";
+
+        // Proves the timer hit exactly 0 and didn't underflow
+        cp_floor_zero: coverpoint cov_data iff (cov_slave_idx == 2 && cov_rw == 0) {
+            bins hit_zero = {32'h00000000};
+        }
+
+        // Proves we attempted to access an invalid timer register
+        cp_oob_addr: coverpoint cov_reg_idx iff (cov_slave_idx == 2) {
+            bins valid_regs = {[0:1]};
+            bins oob_regs = {[2:31]}; 
+        }
+
+        // Proves a write occurred while the timer was actively counting > 0
+        cp_override: coverpoint cov_timer_override iff (cov_slave_idx == 2 && cov_rw == 1) {
+            bins occurred = {1};
+        }
+    endgroup
+

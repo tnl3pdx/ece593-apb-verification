@@ -58,6 +58,63 @@ class GENERATOR;
 			end
 		end
 
+		// =========================================================
+		// SEQUENCE 3: Timer Validation Sequences
+		// =========================================================
+		$display("[GENERATOR] SEQUENCE 3: Executing Timer Validation Sequences");
+		
+		// --- 3A. Floor at Zero Check ---
+		// Write a small value (5) to Timer 0, wait for it to expire, then read.
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (0 << PARAMS::WORD_LEN);
+		tx.rw = 1; tx.data_in = 32'h00000005;
+		gen2drv.put(tx); tx_count++;
+		
+		// Insert dummy reads to other slaves to pass time (> 5 cycles)
+		for (int i = 0; i < 6; i++) begin
+			tx = new();
+			tx.addr = (PARAMS::ADDR_SLAVE_0 << (PARAMS::REG_NUM + PARAMS::WORD_LEN));
+			tx.rw = 0; tx.data_in = 32'h0;
+			gen2drv.put(tx); tx_count++;
+		end
+		
+		// Read Timer 0 back - Scoreboard should expect 0x0
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (0 << PARAMS::WORD_LEN);
+		tx.rw = 0; tx.data_in = 32'h0;
+		gen2drv.put(tx); tx_count++;
+
+		// --- 3B. Mid-Countdown Override Check ---
+		// Write a large value to Timer 1, then immediately overwrite it.
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (1 << PARAMS::WORD_LEN);
+		tx.rw = 1; tx.data_in = 32'h00000FFF; // Initial large value
+		gen2drv.put(tx); tx_count++;
+		
+		// Read to advance time slightly
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (1 << PARAMS::WORD_LEN);
+		tx.rw = 0; tx.data_in = 32'h0;
+		gen2drv.put(tx); tx_count++;
+		
+		// Overwrite while still counting
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (1 << PARAMS::WORD_LEN);
+		tx.rw = 1; tx.data_in = 32'h000000AA; // New value
+		gen2drv.put(tx); tx_count++;
+
+		// --- 3C. Out-of-Bounds Indexing Check ---
+		// Attempt to write and read Timer Index 2 (which doesn't exist)
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (2 << PARAMS::WORD_LEN);
+		tx.rw = 1; tx.data_in = 32'hDEADBEEF;
+		gen2drv.put(tx); tx_count++;
+		
+		tx = new();
+		tx.addr = (PARAMS::ADDR_SLAVE_2 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | (2 << PARAMS::WORD_LEN);
+		tx.rw = 0; tx.data_in = 32'h0;
+		gen2drv.put(tx); tx_count++;
+
 		/*
 		// Generate invalid transcations 
 		begin

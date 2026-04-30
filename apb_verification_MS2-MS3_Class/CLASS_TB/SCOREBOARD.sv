@@ -25,11 +25,12 @@ class SCOREBOARD;
     localparam int APB_PHASE_OFFSET = 50; // 5 cycles of protocol overhead
 
     // =========================================================
-    // FV-001 & FV-004 Coverage Variables & Groups
+    // Coverage Variables & Groups
     // =========================================================
     int cov_slave_idx, cov_reg_idx;
     bit cov_rw;
     bit [PARAMS::DATA_WIDTH-1:0] cov_data;
+    bit cov_timer_override; //for FV-005
 
     covergroup cg_data_integrity;
         option.per_instance = 1;
@@ -60,6 +61,31 @@ class SCOREBOARD;
         }
         cp_s1_regs: coverpoint cov_reg_idx iff (cov_slave_idx == 1 && cov_rw == 0 && cov_data == 32'h0) {
             bins regs[] = {[0:31]};
+        }
+    endgroup
+
+    // =========================================================
+    // FV-005 Timer Sequences Coverage Group
+    // =========================================================
+    
+    covergroup cg_timer_validation;
+        option.per_instance = 1;
+        option.name = "FV-005_Timer_Sequences";
+
+        // Proves the timer hit exactly 0 and didn't underflow
+        cp_floor_zero: coverpoint cov_data iff (cov_slave_idx == 2 && cov_rw == 0) {
+            bins hit_zero = {32'h00000000};
+        }
+
+        // Proves we attempted to access an invalid timer register
+        cp_oob_addr: coverpoint cov_reg_idx iff (cov_slave_idx == 2) {
+            bins valid_regs = {[0:1]};
+            bins oob_regs = {[2:31]}; 
+        }
+
+        // Proves a write occurred while the timer was actively counting > 0
+        cp_override: coverpoint cov_timer_override iff (cov_slave_idx == 2 && cov_rw == 1) {
+            bins occurred = {1};
         }
     endgroup
 
@@ -99,6 +125,7 @@ class SCOREBOARD;
         // Initialize Covergroups
         cg_data_integrity = new();
         cg_reset = new();
+        cg_timer_validation = new();
     endfunction
 
     task start();
@@ -132,6 +159,20 @@ class SCOREBOARD;
                         slave_idx, reg_idx, tx.addr, tx.data_in);
                 end 
                 else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                    // Determine if the timer is actively counting prior to overwrite
+                    time elapsed = tx.timestamp - timer_write_time[slave_idx][reg_idx];
+                    int cycles_decremented = (elapsed >= APB_PHASE_OFFSET) ? (elapsed - APB_PHASE_OFFSET) / CLK_PERIOD : 0;
+                    
+                    //FV-005
+                    if (timer_last_val[slave_idx][reg_idx] > cycles_decremented && timer_write_time[slave_idx][reg_idx] != 0)
+                        cov_timer_override = 1;
+                    else
+                        cov_timer_override = 0;
+
+                    // Sample the write conditions BEFORE overwriting the history
+                    cg_timer_validation.sample();
+
+                    // Update the model history
                     timer_last_val[slave_idx][reg_idx] = tx.data_in;
                     timer_write_time[slave_idx][reg_idx] = tx.timestamp;
                     $display("[SCOREBOARD] INPUT: WRITE (TIMER): timer[%0d][%0d] <= 0x%08x at %0t", slave_idx, reg_idx, tx.data_in, tx.timestamp); 
@@ -183,6 +224,7 @@ class SCOREBOARD;
                 cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
                 cg_data_integrity.sample();
                 cg_reset.sample();
+                cg_timer_validation.sample();
 
                 if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                     expected_data = golden_mem[model_idx][reg_idx];
