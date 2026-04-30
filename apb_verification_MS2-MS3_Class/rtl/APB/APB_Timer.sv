@@ -23,13 +23,14 @@ module APB_Timer #(
 
 localparam WAIT_MAX  = 3;                                     // Maximum number of wait cycles is 2^WAIT_MAX-1.
 localparam WORD_LEN = $clog2(DATA_WIDTH>>3);                  // Byte offset for word-aligned addresses
+localparam TIMER_IDX_W = (num_timers <= 1) ? 1 : $clog2(num_timers);
 
 // Internal Signals
 logic [WAIT_MAX-1:0] count_pready;                            // Wait state counter 
 logic [DATA_WIDTH-1:0] t_reg [num_timers];                    // Timer Registers
 
 // Address decoding to determine which timer is being accessed
-wire [31:0] timer_idx = i_paddr[WORD_LEN + 7 : WORD_LEN]; 
+wire [TIMER_IDX_W-1:0] timer_idx = i_paddr[WORD_LEN +: TIMER_IDX_W];
 
 // ==============================================================================
 // Timer Decrement & APB Write Logic

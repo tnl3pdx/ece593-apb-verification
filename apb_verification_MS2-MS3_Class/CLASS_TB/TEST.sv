@@ -59,12 +59,16 @@ module TEST #(
 		task post_test();
 			// Generate all testcases
 			wait(gen.end_of_tests.triggered);
+			$display("[ENV] All testcases generated. Waiting for completion...");
 			// Check tx count from generator matches transactions observed by driver
 			wait(gen.tx_count == drv.tx_count1);
+			$display("[ENV] Generator and Driver transaction counts match: %0d transactions", gen.tx_count);
 			// Check tx count from driver matches transactions observed by output monitor
 			wait(drv.tx_count2 == mon_out.tx_count);
+			$display("[ENV] Driver and Output Monitor transaction counts match: %0d transactions", drv.tx_count2);
 			// Wait until scoreboard has processed all outputs
 			wait(sb.total_output_count == gen.tx_count);
+			$display("[ENV] Scoreboard has processed all transactions. Total transactions: %0d", gen.tx_count);
 		endtask
 
 		task run();

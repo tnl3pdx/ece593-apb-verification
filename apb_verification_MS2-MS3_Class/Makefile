@@ -22,6 +22,6 @@ cov:
 	verdi -cov -covdir simv.vdb -elfile cov_exclude.el
 
 clean:
-	rm -rf AN.DB *.vcd simv* csrc* *.log ucli.key verdi* novas* work* *.fsdb 
+	rm -rf AN.DB *.vcd simv* csrc* *.log ucli.key verdi* novas* work* *.fsdb urgReport/ vdCovLog/ vdCov.conf .fsm.*
 
 
