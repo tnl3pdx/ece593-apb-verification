@@ -9,6 +9,8 @@ class SCOREBOARD;
     int total_input_count, total_output_count;
     int error_count;
 
+    int slave_accesses[PARAMS::SLAVE_COUNT];
+
     localparam int REG_DEPTH = (1 << PARAMS::REG_NUM);
     bit [PARAMS::DATA_WIDTH-1:0] golden_mem[][];
     bit [PARAMS::DATA_WIDTH-1:0] timer_last_val[PARAMS::SLAVE_COUNT][];
@@ -96,106 +98,168 @@ class SCOREBOARD;
 	endtask
         
 	task get_input();
-            // INPUT MONITOR PROCESSING
-            TRANSACTION tx;
-            int slave_idx, reg_idx, model_idx;           
-            
-            forever begin
+        // INPUT MONITOR PROCESSING
+        TRANSACTION tx;
+        int slave_idx, reg_idx, model_idx;           
+        
+        forever begin
+            mon_in2sb.get(tx);
+            total_input_count++;
+            slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
+            reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+            model_idx = slave_to_model_idx[slave_idx];
 
-                mon_in2sb.get(tx);
-                total_input_count++;
-                slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-                reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
-                model_idx = slave_to_model_idx[slave_idx];
+            if (tx.rw) begin // Write transaction
+                // Sample FV-004 Coverage for Writes
+                cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
+                cg_data_integrity.sample();
 
-                if (tx.rw) begin // Write transaction
-                    // Sample FV-004 Coverage for Writes
-                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
-                    cg_data_integrity.sample();
-
-                    if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
-                        golden_mem[model_idx][reg_idx] = tx.data_in;
-                    end 
-                    else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                        timer_last_val[slave_idx][reg_idx] = tx.data_in;
-                        $display("[SCOREBOARD] MODEL WRITE: mem[%0d][%0d] <= 0x%08x", model_idx, reg_idx, tx.data_in);
-                    end
+                if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
+                    golden_mem[model_idx][reg_idx] = tx.data_in;
+                    $display("[SCOREBOARD] INPUT: WRITE slave=%0d reg=%0d addr=0x%08x data=0x%08x",
+                        slave_idx, reg_idx, tx.addr, tx.data_in);
+                end 
+                else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                    timer_last_val[slave_idx][reg_idx] = tx.data_in;
+                    $display("[SCOREBOARD] INPUT: WRITE (TIMER) slave=%0d reg=%0d addr=0x%08x data=0x%08x",
+                        slave_idx, reg_idx, tx.addr, tx.data_in);
                 end
             end
+        end
     endtask
 
     task get_output();
+        // OUTPUT MONITOR PROCESSING
+        TRANSACTION tx;
+        int slave_idx, reg_idx, model_idx;
+        bit [PARAMS::DATA_WIDTH-1:0] expected_data;            
+        
+        forever begin
+            mon_out2scb.get(tx);
+            total_output_count++;
+            slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
+            reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+            model_idx = slave_to_model_idx[slave_idx];
 
-            // OUTPUT MONITOR PROCESSING
-            TRANSACTION tx;
-            int slave_idx, reg_idx, model_idx;
-            bit [PARAMS::DATA_WIDTH-1:0] expected_data;            
-            
-            forever begin
-                mon_out2scb.get(tx);
-                total_output_count++;
-                slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-                reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
-                model_idx = slave_to_model_idx[slave_idx];
+            if (tx.rw) begin // Write Completion Check
+                bit write_has_transfer_err;
+                bit write_has_unexpected_valid;
+                write_has_transfer_err = (tx.transfer_status == 1'b1);
+                write_has_unexpected_valid = (tx.valid == 1'b1);
 
-                if (tx.rw) begin 
-                    if (tx.transfer_status == 1 || tx.valid == 1) begin
-                        write_fail_count++; error_count++;
-                        if (tx.valid === 1'b1) begin
-						    $error("[SCOREBOARD] WRITE ERROR (VALID ASSERTED) #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
-							total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
-					    end else begin
-						    $error("[SCOREBOARD] WRITE ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x",
-							total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
-					    end
+                if (write_has_transfer_err || write_has_unexpected_valid) begin
+                    write_fail_count++; error_count++;
+                    if (write_has_transfer_err && write_has_unexpected_valid) begin
+                        $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (combined: transfer error + unexpected valid=1)",
+                            total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                    end
+                    else if (write_has_unexpected_valid) begin
+                        $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (unexpected valid=1)",
+                            total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                    end
+                    else begin
+                        $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (transfer error)",
+                            total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                    end
+                end else begin
+                    write_pass_count++;
+                    $display("[SCOREBOARD] OUTPUT: WRITE PASS #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x",
+                        total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                end
+            end else begin // Read Completion Check
+                // Sample FV-001 and FV-004 Coverage for Reads
+                cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
+                cg_data_integrity.sample();
+                cg_reset.sample();
+
+                if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
+                    expected_data = golden_mem[model_idx][reg_idx];
+                    if ((tx.valid !== 1'b1) || (tx.data_out !== expected_data) || (tx.transfer_status == 1'b1)) begin
+                        bit mem_has_invalid;
+                        bit mem_has_data_mismatch;
+                        bit mem_has_transfer_err;
+
+                        mem_has_invalid = (tx.valid !== 1'b1);
+                        mem_has_data_mismatch = (tx.data_out !== expected_data);
+                        mem_has_transfer_err = (tx.transfer_status == 1'b1);
+
+                        read_fail_count++; error_count++;
+                        if (mem_has_invalid && mem_has_data_mismatch && mem_has_transfer_err) begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x + transfer error)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_data, tx.data_out);
+                        end
+                        else if (mem_has_invalid && mem_has_data_mismatch) begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_data, tx.data_out);
+                        end
+                        else if (mem_has_invalid && mem_has_transfer_err) begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + transfer error)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.valid);
+                        end
+                        else if (mem_has_data_mismatch && mem_has_transfer_err) begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: data mismatch expected=0x%08x actual=0x%08x + transfer error)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, expected_data, tx.data_out);
+                        end
+                        else if (mem_has_data_mismatch) begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
+                                total_output_count, slave_idx, reg_idx, tx.addr, expected_data, tx.data_out, tx.valid);
+                        end
+                        else if (mem_has_invalid) begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (VALID not asserted, valid=%0b)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.valid);
+                        end
+                        else begin
+                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (transfer error)",
+                                total_output_count, slave_idx, reg_idx, tx.addr);
+                        end
                     end else begin
-                        write_pass_count++;
-                        $display("[SCOREBOARD] OUT #%0d WRITE: slave=%0d reg=%0d addr=0x%08x data=0x%08x",
-						    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                        $display("[SCOREBOARD] OUTPUT: READ PASS #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x",
+                            total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                        read_pass_count++;
                     end
-                end 
-                else begin // Read Completion Check
-                    // Sample FV-001 and FV-004 Coverage for Reads
-                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
-                    cg_data_integrity.sample();
-                    cg_reset.sample();
+                end
+                else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                    if ((tx.valid !== 1'b1) || (tx.transfer_status == 1'b1)) begin  // TODO: Add expected value check once timer behavior is fully defined and modeled
+                        bit timer_has_invalid;
+                        bit timer_has_transfer_err;
 
-                    if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
-                        expected_data = golden_mem[model_idx][reg_idx];
-                        if ((tx.valid !== 1'b1) || (tx.data_out !== expected_data)) begin
-                            read_fail_count++; error_count++;
-                            if (tx.data_out !== expected_data) begin
-                                $error("[SCOREBOARD] READ MISMATCH #%0d: slave=%0d reg=%0d addr=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
-                                    total_output_count, slave_idx, reg_idx, tx.addr, expected_data, tx.data_out, tx.valid);
-                            end else begin
-                                $error("[SCOREBOARD] READ ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
-                                    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
-                            end
-                        end else begin
-                            read_pass_count++;
+                        timer_has_invalid = (tx.valid !== 1'b1);
+                        timer_has_transfer_err = (tx.transfer_status == 1'b1);
+
+                        read_fail_count++; error_count++;
+                        if (timer_has_invalid && timer_has_transfer_err) begin
+                            $error("[SCOREBOARD] TIMER READ ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (combined: invalid transfer valid=%0b + unexpected error status)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
                         end
-                    end
-                    else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                        if ((tx.valid !== 1'b1)) begin  // TODO: Add expected value check once timer behavior is fully defined and modeled
-                            read_fail_count++; error_count++;
-                            if (tx.valid !== 1'b1) begin
-                                $error("[SCOREBOARD] TIMER READ ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
-                                    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
-                            end else begin
-                                $error("[SCOREBOARD] TIMER PROTOCOL ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (unexpected error status)",
-                                    total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
-                            end
-                        end else begin
-                            read_pass_count++;
+                        else if (timer_has_invalid) begin
+                            $error("[SCOREBOARD] TIMER READ ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (invalid transfer, valid=%0b)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out, tx.valid);
                         end
+                        else begin
+                            $error("[SCOREBOARD] TIMER PROTOCOL ERROR #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (unexpected error status)",
+                                total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                        end
+                    end else begin
+                        $display("[SCOREBOARD] OUTPUT: READ PASS #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x",
+                            total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                        read_pass_count++;
                     end
                 end
             end
+            slave_accesses[slave_idx]++;
+        end
     endtask
 
     function void report();
-        $display("[SCOREBOARD] Report: writes pass=%0d fail=%0d | reads pass=%0d fail=%0d | errors=%0d | total outputs=%0d",
-            write_pass_count, write_fail_count, read_pass_count, read_fail_count, error_count, total_output_count);
+        $display("\n[SCOREBOARD] ===== FINAL REPORT =====");
+        $display("[SCOREBOARD] WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count);
+        $display("[SCOREBOARD] READS:  PASS=%0d FAIL=%0d", read_pass_count, read_fail_count);
+        $display("[SCOREBOARD] SLAVE ACCESSES:");
+        for (int i = 0; i < PARAMS::SLAVE_COUNT; i++) begin
+            $display("[SCOREBOARD]   Slave %0d: %0d accesses", i, slave_accesses[i]);
+        end
+        $display("[SCOREBOARD] TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d",
+            error_count, total_output_count);
     endfunction
 
     function int get_score();

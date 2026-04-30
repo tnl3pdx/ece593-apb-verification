@@ -33,7 +33,7 @@ class DRIVER;
 		forever begin
 			TRANSACTION tx;
 			gen2drv.get(tx); // Wait for a transaction from the generator
-			$display("[DRIVER] Received transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx_count1 + 1, tx.addr, tx.data_in, tx.rw);
+			$display("[DRIVER] RX TX#%0d: %s ADDR=0x%08x DATA=0x%08x", tx_count1 + 1, (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_in);
 
 			// Wait until DUT is ready/idle.
 			wait_cycles = 0;
@@ -50,7 +50,7 @@ class DRIVER;
 			vif.data_in <= (tx.rw) ? tx.data_in : '0; // Only drive data for write transactions
 			vif.addr <= tx.addr;
 			vif.start <= 1; // Assert start to initiate the transaction
-			$display("[DRIVER] Driving transaction #%0d onto the interface", tx_count1 + 1);
+			$display("[DRIVER]   SINGLE: TX#%0d %s ADDR=0x%08x DATA=0x%08x", tx_count1 + 1, (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_in);
 			@(posedge vif.clk);
 			vif.start <= 0; // Deassert start after one cycle
 			tx_count1++;

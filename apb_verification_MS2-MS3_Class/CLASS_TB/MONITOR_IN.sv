@@ -46,7 +46,7 @@ class MONITOR_IN;
 				tx.addr = vif.addr;
 				tx.data_in = vif.data_in;
 				tx.rw = vif.rw;
-				$display("[MONITOR_IN] Observed transaction: ADDR=0x%08x, DATA=0x%08x, RW=%b", tx.addr, tx.data_in, tx.rw);
+				$display("[MONITOR_IN] SETUP: TX %s ADDR=0x%08x DATA=0x%08x slave=%0d", (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_in, tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len]);
 				
 				// Sample Functional Coverage
 				cov_tx = tx;

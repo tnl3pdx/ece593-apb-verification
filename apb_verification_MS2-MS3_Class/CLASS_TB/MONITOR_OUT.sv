@@ -48,8 +48,8 @@ class MONITOR_OUT;
 				tx.valid = vif.valid;
 				tx.transfer_status = vif.transfer_status;
 				
-				$display("[MONITOR_OUT] Observed completed transaction #%0d: ADDR=0x%08x, DATA=0x%08x, RW=%b, ERR=%b", 
-					tx_count + 1, tx.addr, tx.data_out, tx.rw, tx.transfer_status);
+				$display("[MONITOR_OUT] ACCESS: TX#%0d %s ADDR=0x%08x DATA=0x%08x valid=%0b slave=%0d", 
+					tx_count + 1, (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_out, tx.valid, tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len]);
 				
 				// Sample Protocol Coverage
 				cov_tx = tx;
