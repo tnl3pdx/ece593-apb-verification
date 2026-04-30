@@ -60,7 +60,7 @@ else
     expected_timer_data = '0;
 
 
-Golden Model Generation: Subtracts the decremented cycles from the stored timer_last_val (flooring at 0) to generate the cycle-accurate expected value.
+Golden Model Generation: Subtracts the decremented cycles from the stored timer_last_val (flooring at 0) to generate the cycle-accurate expected value
 
 APB_Timer.sv:
 Issue: The timer was accidentally reading the Master's Slave Select bits (bit 8) as part of its internal register index. For instance, address 0x00000100 evaluated to index 64 instead of index 0. Because the index was out of bounds (num_timers = 2), the timer ignored all writes and always returned 0 on reads.
