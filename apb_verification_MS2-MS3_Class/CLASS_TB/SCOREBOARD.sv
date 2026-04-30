@@ -16,15 +16,17 @@ class SCOREBOARD;
     localparam int REG_DEPTH = (1 << PARAMS::REG_NUM);
     bit [PARAMS::DATA_WIDTH-1:0] golden_mem[][];
     
-    // Timer tracking arrays
-    bit [PARAMS::DATA_WIDTH-1:0] timer_last_val[PARAMS::SLAVE_COUNT][];
-    time timer_write_time[PARAMS::SLAVE_COUNT][]; 
+    // Reference model state for timers (driven by a background task)
+    bit [PARAMS::DATA_WIDTH:0] ref_timer_val[PARAMS::SLAVE_COUNT][];
+    time ref_timer_start_time[PARAMS::SLAVE_COUNT][];
+    bit ref_timer_active[PARAMS::SLAVE_COUNT][];
+
+    // Pending start info for writes: we wait for transfer completion (ready)
+    bit [PARAMS::DATA_WIDTH:0] pending_start_val[PARAMS::SLAVE_COUNT][];
+    time pending_start_request_time[PARAMS::SLAVE_COUNT][];
+    bit pending_start_valid[PARAMS::SLAVE_COUNT][];
     
     int slave_to_model_idx[PARAMS::SLAVE_COUNT];
-
-    // Protocol overhead constants for Time-Delta Prediction
-    localparam int CLK_PERIOD = 10;
-    localparam int APB_PHASE_OFFSET = 50; // 5 cycles of protocol overhead
 
     // =========================================================
     // Coverage Variables & Groups
@@ -109,11 +111,19 @@ class SCOREBOARD;
                 mem_slave_count++;
             end
             if (PARAMS::PERIPH_TYPE[i] == PARAMS::TYPE_TIMER) begin
-                timer_last_val[i] = new[REG_DEPTH];
-                timer_write_time[i] = new[REG_DEPTH];
-                foreach(timer_last_val[i][j]) begin
-                    timer_last_val[i][j] = '0;
-                    timer_write_time[i][j] = 0; 
+                ref_timer_val[i] = new[REG_DEPTH];
+                ref_timer_start_time[i] = new[REG_DEPTH];
+                ref_timer_active[i] = new[REG_DEPTH];
+                pending_start_val[i] = new[REG_DEPTH];
+                pending_start_request_time[i] = new[REG_DEPTH];
+                pending_start_valid[i] = new[REG_DEPTH];
+                foreach(ref_timer_val[i][j]) begin
+                    ref_timer_val[i][j] = '0;
+                    ref_timer_start_time[i][j] = 0;
+                    ref_timer_active[i][j] = 0;
+                    pending_start_val[i][j] = '0;
+                    pending_start_request_time[i][j] = 0;
+                    pending_start_valid[i][j] = 0;
                 end
             end
         end
@@ -135,8 +145,30 @@ class SCOREBOARD;
         fork
             get_input();
             get_output();
+            simulate_timers();
         join_none
     endtask
+
+    // Background task: drive the reference timer model on clock ticks
+    task simulate_timers();
+        forever begin
+            #PARAMS::CLK_PERIOD; // advance by one clock period
+            for (int s = 0; s < PARAMS::SLAVE_COUNT; s++) begin
+                if (PARAMS::PERIPH_TYPE[s] == PARAMS::TYPE_TIMER) begin
+                    foreach (ref_timer_val[s][r]) begin
+                        if (ref_timer_active[s][r] && ref_timer_val[s][r] > 0) begin
+                            ref_timer_val[s][r] = ref_timer_val[s][r] - 1;
+                        end
+                    end
+                end
+            end
+        end
+    endtask
+
+    // Return the current reference-model value for a timer register
+    function bit [PARAMS::DATA_WIDTH-1:0] sample_ref_timer(int slave_idx, int reg_idx);
+        sample_ref_timer = ref_timer_val[slave_idx][reg_idx];
+    endfunction
         
 	task get_input();
         // INPUT MONITOR PROCESSING
@@ -161,23 +193,20 @@ class SCOREBOARD;
                         slave_idx, reg_idx, tx.addr, tx.data_in);
                 end 
                 else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                    // Determine if the timer is actively counting prior to overwrite
-                    time elapsed = tx.timestamp - timer_write_time[slave_idx][reg_idx];
-                    int cycles_decremented = (elapsed >= APB_PHASE_OFFSET) ? (elapsed - APB_PHASE_OFFSET) / CLK_PERIOD : 0;
-                    
-                    //FV-005
-                    if (timer_last_val[slave_idx][reg_idx] > cycles_decremented && timer_write_time[slave_idx][reg_idx] != 0)
+                    // FV-005: Detect if timer is actively counting (will be overwritten)
+                    if (ref_timer_active[slave_idx][reg_idx] && ref_timer_val[slave_idx][reg_idx] > 0)
                         cov_timer_override = 1;
                     else
                         cov_timer_override = 0;
 
-                    // Sample the write conditions BEFORE overwriting the history
+                    // Sample the write conditions BEFORE starting the pending write
                     cg_timer_validation.sample();
 
-                    // Update the model history
-                    timer_last_val[slave_idx][reg_idx] = tx.data_in;
-                    timer_write_time[slave_idx][reg_idx] = tx.timestamp;
-                    $display("[SCOREBOARD] INPUT: WRITE (TIMER): timer[%0d][%0d] <= 0x%08x at %0t", slave_idx, reg_idx, tx.data_in, tx.timestamp); 
+                    // Record pending start for reference model; actual start waits for transfer completion (ready)
+                    pending_start_val[slave_idx][reg_idx] = tx.data_in;
+                    pending_start_request_time[slave_idx][reg_idx] = tx.timestamp;
+                    pending_start_valid[slave_idx][reg_idx] = 1;
+                    $display("[SCOREBOARD] INPUT: WRITE (TIMER) REQUEST: timer[%0d][%0d] <= 0x%08x at %0t (pending start)", slave_idx, reg_idx, tx.data_in, tx.timestamp); 
                 end
             end
         end
@@ -221,6 +250,24 @@ class SCOREBOARD;
                     write_pass_count++;
                     $display("[SCOREBOARD] OUTPUT: WRITE PASS #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x",
                         total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
+                    // If this was a timer write and the transfer completed successfully, start the reference model
+                    if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                        if (pending_start_valid[slave_idx][reg_idx]) begin
+                            // Offset ref_timer_val by 2 to account for APB transfer latency (PENABLE + READY cycle)
+                            // Ref will start decrementing, but will sync to the correct value after 2 cycles
+                            if (pending_start_val[slave_idx][reg_idx] > 0) begin
+                                ref_timer_val[slave_idx][reg_idx] = pending_start_val[slave_idx][reg_idx] + 2;
+                            end else begin
+                                ref_timer_val[slave_idx][reg_idx] = pending_start_val[slave_idx][reg_idx];
+                            end
+                            $display("[SCOREBOARD] Timer Start Values: pending_start_val=0x%08x ref_timer_val=0x%08x", pending_start_val[slave_idx][reg_idx], ref_timer_val[slave_idx][reg_idx]);
+                            ref_timer_start_time[slave_idx][reg_idx] = tx.timestamp; // start at completion (ready)
+                            ref_timer_active[slave_idx][reg_idx] = (ref_timer_val[slave_idx][reg_idx] != '0);
+                            pending_start_valid[slave_idx][reg_idx] = 0;
+                            $display("[SCOREBOARD] REF TIMER STARTED: timer[%0d][%0d] <= 0x%08x at %0t (started on completion)",
+                                slave_idx, reg_idx, ref_timer_val[slave_idx][reg_idx], tx.timestamp);
+                        end
+                    end
                 end
             end else begin // Read Completion Check
                 // Sample FV-001 and FV-004 Coverage for Reads
@@ -276,28 +323,12 @@ class SCOREBOARD;
                 else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
                     bit timer_has_unexpected_value;
 
-                    // Calculate expected decremented value
-                    time elapsed = tx.timestamp - timer_write_time[slave_idx][reg_idx];
-                    int cycles_decremented;
+                    // Use the reference-model sampler for expected timer value
                     bit [PARAMS::DATA_WIDTH-1:0] expected_timer_data;
+                    time elapsed = tx.timestamp - ref_timer_start_time[slave_idx][reg_idx];
 
-                    // Handle uninitialized reads or immediate back-to-back operations
-                    if (timer_write_time[slave_idx][reg_idx] == 0 && timer_last_val[slave_idx][reg_idx] == 0) begin
-                        expected_timer_data = '0;
-                    end else begin
-                        // Apply the phase offset and convert elapsed time to clock cycles
-                        if (elapsed >= APB_PHASE_OFFSET) begin
-                            cycles_decremented = (elapsed - APB_PHASE_OFFSET) / CLK_PERIOD;
-                        end else begin
-                            cycles_decremented = 0;
-                        end
-
-                        // Timer acts as a down-counter that floors at 0
-                        if (timer_last_val[slave_idx][reg_idx] > cycles_decremented)
-                            expected_timer_data = timer_last_val[slave_idx][reg_idx] - cycles_decremented;
-                        else
-                            expected_timer_data = '0; 
-                    end
+                    // If reference model never started, expected is 0
+                    expected_timer_data = sample_ref_timer(slave_idx, reg_idx);
 
                     timer_has_unexpected_value = (tx.data_out !== expected_timer_data);
 
@@ -338,8 +369,8 @@ class SCOREBOARD;
                         $display("[SCOREBOARD]         Timer Differences: Expected: 0x%08x Actual: 0x%08x Difference: %0d cycles Elapsed Time: %0t ns", 
                             expected_timer_data, tx.data_out, (expected_timer_data > tx.data_out) ? (expected_timer_data - tx.data_out) : (tx.data_out - expected_timer_data), elapsed);
                     end else begin
-                        $display("[SCOREBOARD] OUTPUT: TIMER PASS #%0d reg=%0d (expected=0x%08x actual=0x%08x)",
-                            total_output_count, reg_idx, expected_timer_data, tx.data_out);
+                        $display("[SCOREBOARD] OUTPUT: TIMER PASS #%0d reg=%0d (expected=0x%08x actual=0x%08x) elapsed=%0t ns",
+                            total_output_count, reg_idx, expected_timer_data, tx.data_out, elapsed);
                         read_pass_count++;
                     end
                 end

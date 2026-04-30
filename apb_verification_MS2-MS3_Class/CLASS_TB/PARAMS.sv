@@ -1,4 +1,7 @@
 package PARAMS;
+	// Global parameters
+	parameter CLK_PERIOD = 10;									//Clock period in time units
+
 	// Parameters
 	parameter DATA_WIDTH = 32;									//Data bus width
 	parameter ADDR_WIDTH = 32;									//Address bus width
