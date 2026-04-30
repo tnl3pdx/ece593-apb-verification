@@ -13,6 +13,8 @@ class TRANSACTION;
 	bit timer_status; // Timer-specific status parameter
 	bit timer_start;  // Indicates if the timer should be started with this transaction
 
+	bit illegal_transaction; // Flag to indicate if the transaction is illegal (e.g., invalid address)
+
 	// Ensure the random address targets a valid slave and is word-aligned
 	constraint c_valid_addr {
 		(addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] == 2) -> 

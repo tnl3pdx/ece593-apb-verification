@@ -21,9 +21,10 @@ class DRIVER;
 		vif.addr <= '0;
 
 		// Synchronize to external reset generation before driving traffic.
+		wait (vif.rst_n === 1'b1);
 		wait (vif.rst_n === 1'b0);
 		wait (vif.rst_n === 1'b1);
-		repeat (2) @(posedge vif.clk);
+		@(posedge vif.clk);
 	endtask
 
 	task start();

@@ -59,6 +59,28 @@ class GENERATOR;
 			end
 		end
 
+		/*
+		// Generate invalid transcations 
+		begin
+			// Invalid Address: Targeting non-existent slave (e.g., slave index 4)
+			tx = new();
+			tx.addr = (4 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)); // Invalid slave index
+			tx.rw = 1; // WRITE
+			tx.data_in = 32'hDEADBEEF;
+			gen2drv.put(tx);
+			tx_count++;
+
+			// Invalid Address: Unaligned access
+			tx = new();
+			tx.addr = (0 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | 2; // Slave 0, Reg 0, but unaligned
+			tx.rw = 1; // WRITE
+			tx.data_in = 32'hCAFEBABE;
+			gen2drv.put(tx);
+			tx_count++;
+
+		end
+		*/
+
 		// =========================================================
 		// SEQUENCE 3: Standard Random Testing (FV-002, FV-003)
 		// Fill the remaining requested tests with random traffic.

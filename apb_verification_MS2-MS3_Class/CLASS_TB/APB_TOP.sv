@@ -6,12 +6,14 @@ module APB_TOP;
 
     // Reset and clock generation
     initial begin
+        prstn = 1; // Release reset
+        @(posedge pclk)
         prstn = 0;
         @(posedge pclk)
         prstn = 1; // Release reset
         @(posedge pclk);
-
     end
+    
     initial begin
         pclk = 0;
         forever #5 pclk = ~pclk;
