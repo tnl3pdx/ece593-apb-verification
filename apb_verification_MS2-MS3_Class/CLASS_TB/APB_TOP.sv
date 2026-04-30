@@ -40,7 +40,9 @@ module APB_TOP;
         .WAIT_WRITE_S0(PARAMS::WAIT_WRITE_S0),
         .WAIT_READ_S0(PARAMS::WAIT_READ_S0),
         .WAIT_WRITE_S1(PARAMS::WAIT_WRITE_S1),
-        .WAIT_READ_S1(PARAMS::WAIT_READ_S1)
+        .WAIT_READ_S1(PARAMS::WAIT_READ_S1),
+        .WAIT_WRITE_S2(PARAMS::WAIT_WRITE_S2),
+        .WAIT_READ_S2(PARAMS::WAIT_READ_S2)
     ) apb_sys (
         .ext_if(ext_if)
     );

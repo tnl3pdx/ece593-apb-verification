@@ -23,7 +23,9 @@ package PARAMS;
 
 	// Waitstate configurations for slaves
 	parameter WAIT_WRITE_S0 = 1;								//Waitstates for Slave 0 writes
-	parameter WAIT_READ_S0 = 2;									//Waitstates for Slave 0 reads
-	parameter WAIT_WRITE_S1 = 0;								//Waitstates for Slave 1 writes
+	parameter WAIT_READ_S0 = 1;									//Waitstates for Slave 0 reads
+	parameter WAIT_WRITE_S1 = 1;								//Waitstates for Slave 1 writes
 	parameter WAIT_READ_S1 = 1;									//Waitstates for Slave 1 reads
+	parameter WAIT_WRITE_S2 = 1;								//Waitstates for Slave 2 writes
+	parameter WAIT_READ_S2 = 1;									//Waitstates for Slave 2 reads
 endpackage : PARAMS
