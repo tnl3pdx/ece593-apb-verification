@@ -41,6 +41,7 @@ class TRANSACTION;
 		end
 		// Construct address from slave_sel and reg_sel
 		addr = {slave_sel, reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		illegal = 1'b0;
 	endfunction
 endclass : TRANSACTION
 

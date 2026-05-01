@@ -6,8 +6,10 @@ class SCOREBOARD;
     int mem_slave_count;
     int read_pass_count, read_fail_count;
     int write_pass_count, write_fail_count;
+    int illegal_pass_count, illegal_fail_count;
     int total_input_count, total_output_count;
     int error_count;
+    int illegal_count;
 
     int slave_accesses[PARAMS::SLAVE_COUNT];
     int slave_rw_accesses[PARAMS::SLAVE_COUNT][2];
@@ -100,8 +102,10 @@ class SCOREBOARD;
         this.total_tests = total_tests;
         this.read_pass_count = 0; this.read_fail_count = 0;
         this.write_pass_count = 0; this.write_fail_count = 0;
+        this.illegal_pass_count = 0; this.illegal_fail_count = 0;
         this.total_input_count = 0; this.total_output_count = 0;
         this.error_count = 0;
+        this.illegal_count = 0;
 
         foreach (slave_to_model_idx[i]) slave_to_model_idx[i] = -1;
         mem_slave_count = 0;
@@ -180,19 +184,32 @@ class SCOREBOARD;
             total_input_count++;
             slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
             reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
-            model_idx = slave_to_model_idx[slave_idx];
+            model_idx = (slave_idx < PARAMS::SLAVE_COUNT) ? slave_to_model_idx[slave_idx] : -1;
 
-            if (tx.rw) begin // Write transaction
+            if (tx.illegal) begin
+                illegal_count++;
+                if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
+                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
+                    cg_timer_validation.sample();
+                end
+                if (tx.rw) begin
+                    $display("[SCOREBOARD]\tTX#%0d (INPUT) ILLEGAL WRITE / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_IN=0x%08x",
+                        total_input_count, slave_idx, reg_idx, tx.addr, tx.data_in);
+                end else begin
+                    $display("[SCOREBOARD]\tTX#%0d (INPUT) ILLEGAL READ / SLAVE=%0d REG=%0d ADDR=0x%08x", total_input_count, slave_idx, reg_idx, tx.addr);
+                end
+            end
+            else if (tx.rw) begin // Write transaction
                 // Sample FV-004 Coverage for Writes
                 cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
                 cg_data_integrity.sample();
 
-                if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
+                if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                     golden_mem[model_idx][reg_idx] = tx.data_in;
-                    $display("[SCOREBOARD] INPUT: WRITE slave=%0d reg=%0d addr=0x%08x data=0x%08x",
-                        slave_idx, reg_idx, tx.addr, tx.data_in);
+                    $display("[SCOREBOARD]\tTX#%0d (INPUT) WRITE / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_IN=0x%08x",
+                        total_input_count, slave_idx, reg_idx, tx.addr, tx.data_in);
                 end 
-                else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                else if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
                     // FV-005: Detect if timer is actively counting (will be overwritten)
                     if (ref_timer_active[slave_idx][reg_idx] && ref_timer_val[slave_idx][reg_idx] > 0)
                         cov_timer_override = 1;
@@ -206,7 +223,8 @@ class SCOREBOARD;
                     pending_start_val[slave_idx][reg_idx] = tx.data_in;
                     pending_start_request_time[slave_idx][reg_idx] = tx.timestamp;
                     pending_start_valid[slave_idx][reg_idx] = 1;
-                    $display("[SCOREBOARD] INPUT: WRITE (TIMER) REQUEST: timer[%0d][%0d] <= 0x%08x at %0t (pending start)", slave_idx, reg_idx, tx.data_in, tx.timestamp); 
+                    $display("[SCOREBOARD]\tTX#%0d (INPUT) WRITE (TIMER) REQUEST / timer[%0d][%0d] <= 0x%08x at %0t", 
+                        total_input_count, slave_idx, reg_idx, tx.data_in, tx.timestamp); 
                 end
             end
         end
@@ -223,7 +241,24 @@ class SCOREBOARD;
             total_output_count++;
             slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
             reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
-            model_idx = slave_to_model_idx[slave_idx];
+            model_idx = (slave_idx < PARAMS::SLAVE_COUNT) ? slave_to_model_idx[slave_idx] : -1;
+
+            if (tx.illegal) begin
+                if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
+                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
+                    cg_timer_validation.sample();
+                end
+                if (tx.transfer_status == 1'b1) begin
+                    illegal_pass_count++; 
+                    $display("[SCOREBOARD]\tTX#%0d (OUTPUT) ILLEGAL TX PASS / SLAVE=%0d REG=%0d ADDR=0x%08x TRANSFER_STATUS=%0b",
+                        total_output_count, slave_idx, reg_idx, tx.addr, tx.transfer_status);
+                end else begin
+                    illegal_fail_count++;
+                    $error("[SCOREBOARD]\tTX#%0d (OUTPUT) ILLEGAL TX FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x TRANSFER_STATUS=%0b",
+                        total_output_count, slave_idx, reg_idx, tx.addr, tx.transfer_status);
+                end
+                continue;
+            end
 
             if (tx.rw) begin // Write Completion Check
                 bit write_has_transfer_err;
@@ -235,20 +270,20 @@ class SCOREBOARD;
                     write_fail_count++; error_count++;
                     slave_rw_errors[slave_idx][tx.rw]++;
                     if (write_has_transfer_err && write_has_unexpected_valid) begin
-                        $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (combined: transfer error + unexpected valid=1)",
+                        $error("[SCOREBOARD]\tTX#%0d (OUTPUT) WRITE FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x (combined: transfer error + unexpected valid=1)",
                             total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                     end
                     else if (write_has_unexpected_valid) begin
-                        $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (unexpected valid=1)",
+                        $error("[SCOREBOARD]\tTX#%0d (OUTPUT) WRITE FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x (unexpected valid=1)",
                             total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                     end
                     else begin
-                        $error("[SCOREBOARD] OUTPUT: WRITE FAIL #%0d: slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (transfer error)",
+                        $error("[SCOREBOARD]\tTX#%0d (OUTPUT) WRITE FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x (transfer error)",
                             total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                     end
                 end else begin
                     write_pass_count++;
-                    $display("[SCOREBOARD] OUTPUT: WRITE PASS #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x",
+                    $display("[SCOREBOARD]\tTX#%0d (OUTPUT) WRITE PASS / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x",
                         total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                     // If this was a timer write and the transfer completed successfully, start the reference model
                     if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
@@ -260,11 +295,10 @@ class SCOREBOARD;
                             end else begin
                                 ref_timer_val[slave_idx][reg_idx] = pending_start_val[slave_idx][reg_idx];
                             end
-                            $display("[SCOREBOARD] Timer Start Values: pending_start_val=0x%08x ref_timer_val=0x%08x", pending_start_val[slave_idx][reg_idx], ref_timer_val[slave_idx][reg_idx]);
                             ref_timer_start_time[slave_idx][reg_idx] = tx.timestamp; // start at completion (ready)
                             ref_timer_active[slave_idx][reg_idx] = (ref_timer_val[slave_idx][reg_idx] != '0);
                             pending_start_valid[slave_idx][reg_idx] = 0;
-                            $display("[SCOREBOARD] REF TIMER STARTED: timer[%0d][%0d] <= 0x%08x at %0t (started on completion)",
+                            $display("[SCOREBOARD]\tREF TIMER STARTED: timer[%0d][%0d] <= 0x%08x at %0t",
                                 slave_idx, reg_idx, ref_timer_val[slave_idx][reg_idx], tx.timestamp);
                         end
                     end
@@ -276,7 +310,7 @@ class SCOREBOARD;
                 cg_reset.sample();
                 cg_timer_validation.sample();
 
-                if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
+                if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                     expected_data = golden_mem[model_idx][reg_idx];
                     if ((tx.valid !== 1'b1) || (tx.data_out !== expected_data) || (tx.transfer_status == 1'b1)) begin
                         bit mem_has_invalid;
@@ -290,37 +324,37 @@ class SCOREBOARD;
                         read_fail_count++; error_count++;
                         slave_rw_errors[slave_idx][tx.rw]++;
                         if (mem_has_invalid && mem_has_data_mismatch && mem_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x + transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_data, tx.data_out);
                         end else if (mem_has_invalid && mem_has_data_mismatch) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: invalid VALID=%0b + data mismatch expected=0x%08x actual=0x%08x)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_data, tx.data_out);
                         end else if (mem_has_invalid && mem_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: invalid VALID=%0b + transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: invalid VALID=%0b + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid);
                         end else if (mem_has_data_mismatch && mem_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (combined: data mismatch expected=0x%08x actual=0x%08x + transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: data mismatch expected=0x%08x actual=0x%08x + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, expected_data, tx.data_out);
                         end else if (mem_has_data_mismatch) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
                                 total_output_count, slave_idx, reg_idx, tx.addr, expected_data, tx.data_out, tx.valid);
                         end else if (mem_has_invalid) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (VALID not asserted, valid=%0b)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (VALID not asserted, valid=%0b)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid);
                         end else if (mem_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x (transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x (transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                         end else begin
-                            $error("[SCOREBOARD] OUTPUT: READ FAIL #%0d slave=%0d reg=%0d ADDR=0x%08x (transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr);
                         end
                     end else begin
-                        $display("[SCOREBOARD] OUTPUT: READ PASS #%0d slave=%0d reg=%0d ADDR=0x%08x data=0x%08x",
+                        $display("[SCOREBOARD]\tTX#%0d (OUTPUT) READ PASS / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x",
                             total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                         read_pass_count++;
                     end
                 end
-                else if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                else if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
                     bit timer_has_unexpected_value;
 
                     // Use the reference-model sampler for expected timer value
@@ -342,35 +376,35 @@ class SCOREBOARD;
                         read_fail_count++; error_count++;
                         slave_rw_errors[slave_idx][tx.rw]++;
                         if (timer_has_invalid && timer_has_unexpected_value && timer_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x (combined: invalid transfer valid=%0b + unexpected value expected=0x%08x actual=0x%08x + transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: invalid transfer valid=%0b + unexpected value expected=0x%08x actual=0x%08x + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_timer_data, tx.data_out);
                         end else if (timer_has_invalid && timer_has_unexpected_value) begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x (combined: invalid transfer valid=%0b + unexpected value expected=0x%08x actual=0x%08x)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: invalid transfer valid=%0b + unexpected value expected=0x%08x actual=0x%08x)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid, expected_timer_data, tx.data_out);
                         end else if (timer_has_invalid && timer_has_transfer_err) begin 
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x (combined: invalid transfer valid=%0b + transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: invalid transfer valid=%0b + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid);
                         end else if (timer_has_unexpected_value && timer_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x (combined: unexpected value expected=0x%08x actual=0x%08x + transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (combined: unexpected value expected=0x%08x actual=0x%08x + transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, expected_timer_data, tx.data_out);
                         end else if (timer_has_unexpected_value) begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x expected=0x%08x actual=0x%08x valid=%0b",
                                 total_output_count, slave_idx, reg_idx, tx.addr, expected_timer_data, tx.data_out, tx.valid);
                         end else if (timer_has_invalid) begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x (VALID not asserted, valid=%0b)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x (VALID not asserted, valid=%0b)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.valid);
                         end else if (timer_has_transfer_err) begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (transfer error)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x (transfer error)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);
                         end else begin
-                            $error("[SCOREBOARD] OUTPUT: TIMER READ FAIL #%0d: slave=%0d reg=%0d addr=0x%08x data=0x%08x (unexpected error status)",
+                            $error("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER READ FAIL / SLAVE=%0d REG=%0d ADDR=0x%08x DATA_OUT=0x%08x (unexpected error status)",
                                 total_output_count, slave_idx, reg_idx, tx.addr, tx.data_out);                                
                         end 
-                        $display("[SCOREBOARD]         Timer Differences: Expected: 0x%08x Actual: 0x%08x Difference: %0d cycles Elapsed Time: %0t ns", 
+                        $display("[SCOREBOARD]\tTimer Differences: Expected:0x%08x Actual:0x%08x Difference:%0d cycles Elapsed Time:%0t ns", 
                             expected_timer_data, tx.data_out, (expected_timer_data > tx.data_out) ? (expected_timer_data - tx.data_out) : (tx.data_out - expected_timer_data), elapsed);
                     end else begin
-                        $display("[SCOREBOARD] OUTPUT: TIMER PASS #%0d reg=%0d (expected=0x%08x actual=0x%08x) elapsed=%0t ns",
-                            total_output_count, reg_idx, expected_timer_data, tx.data_out, elapsed);
+                        $display("[SCOREBOARD]\tTX#%0d (OUTPUT) TIMER PASS / SLAVE=%0d REG=%0d (expected=0x%08x actual=0x%08x) elapsed=%0t ns",
+                            total_output_count, slave_idx, reg_idx, expected_timer_data, tx.data_out, elapsed);
                         read_pass_count++;
                     end
                 end
@@ -384,16 +418,17 @@ class SCOREBOARD;
         $display("\n[SCOREBOARD] ===== FINAL REPORT (%0s) =====", (enable_directed ? "DIRECTED + RANDOM" : "RANDOM ONLY"));
         $display("[SCOREBOARD] WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count);
         $display("[SCOREBOARD] READS:  PASS=%0d FAIL=%0d", read_pass_count, read_fail_count);
+        $display("[SCOREBOARD] ILLEGAL TX: PASS=%0d FAIL=%0d", illegal_pass_count, illegal_fail_count);
         $display("[SCOREBOARD] SLAVE ACCESSES:");
         for (int i = 0; i < PARAMS::SLAVE_COUNT; i++) begin
             $display("[SCOREBOARD]   Slave %0d: %0d accesses (WRITES=%0d (ERRORS=%0d) READS=%0d (ERRORS=%0d))", 
                 i, slave_accesses[i], slave_rw_accesses[i][1], slave_rw_errors[i][1], slave_rw_accesses[i][0], slave_rw_errors[i][0]);
         end
-        $display("[SCOREBOARD] TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d",
-            error_count, total_output_count);
+        $display("[SCOREBOARD] TOTAL ERRORS: %0d | ILLEGAL TX: %0d | TRANSACTIONS VERIFIED: %0d",
+            error_count, illegal_count, total_output_count);
     endfunction
 
     function int get_score();
-        return (write_pass_count + read_pass_count);
+        return (write_pass_count + read_pass_count + illegal_pass_count);
     endfunction
 endclass : SCOREBOARD

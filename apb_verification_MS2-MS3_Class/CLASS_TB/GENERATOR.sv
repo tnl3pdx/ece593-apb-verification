@@ -26,6 +26,7 @@ class GENERATOR;
 				tx.rw = 0; // READ
 				tx.data_in = 32'h0;
 				tx.post_randomize(); // Build addr from slave_sel & reg_sel
+				tx.illegal = 1'b0;
 				gen2drv.put(tx);
 				tx_count++;
 			end
@@ -47,6 +48,7 @@ class GENERATOR;
 					tx.rw = 1; // WRITE
 					tx.data_in = test_patterns[p];
 					tx.post_randomize();
+					tx.illegal = 1'b0;
 					gen2drv.put(tx);
 					tx_count++;
 
@@ -75,6 +77,7 @@ class GENERATOR;
 		tx.reg_sel = 0;
 		tx.rw = 1; tx.data_in = 32'h00000005;
 		tx.post_randomize();
+		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 		
 		// Insert dummy reads to other slaves to pass time (> 5 cycles)
@@ -84,6 +87,7 @@ class GENERATOR;
 			tx.reg_sel = 0;
 			tx.rw = 0; tx.data_in = 32'h0;
 			tx.post_randomize();
+				tx.illegal = 1'b0;
 			gen2drv.put(tx); tx_count++;
 		end
 		
@@ -93,6 +97,7 @@ class GENERATOR;
 		tx.reg_sel = 0;
 		tx.rw = 0; tx.data_in = 32'h0;
 		tx.post_randomize();
+		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3B. Mid-Countdown Override Check ---
@@ -102,6 +107,7 @@ class GENERATOR;
 		tx.reg_sel = 1;
 		tx.rw = 1; tx.data_in = 32'h00000FFF; // Initial large value
 		tx.post_randomize();
+		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 		
 		// Read to advance time slightly
@@ -110,6 +116,7 @@ class GENERATOR;
 		tx.reg_sel = 1;
 		tx.rw = 0; tx.data_in = 32'h0;
 		tx.post_randomize();
+		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 		
 		// Overwrite while still counting
@@ -118,6 +125,7 @@ class GENERATOR;
 		tx.reg_sel = 1;
 		tx.rw = 1; tx.data_in = 32'h000000AA; // New value
 		tx.post_randomize();
+		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3C. Out-of-Bounds Indexing Check ---
@@ -129,6 +137,7 @@ class GENERATOR;
 		tx.rw = 1;
 		tx.data_in = 32'hDEADBEEF;
 		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
 		
 		tx = new();
@@ -137,6 +146,7 @@ class GENERATOR;
 		tx.rw = 0;
 		tx.data_in = 32'h0;
 		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3D. Invalid Slave Selection Check ---
@@ -147,6 +157,7 @@ class GENERATOR;
 		tx.rw = 1;
 		tx.data_in = 32'hCAFEBABE;
 		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3E. Unaligned Access Check ---
@@ -157,6 +168,7 @@ class GENERATOR;
 		tx.rw = 1;
 		tx.data_in = 32'hFACE_FEED;
 		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}} | {{PARAMS::ADDR_WIDTH-2{1'b0}}, 2'b10};
+		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
 
 		$display("[GENERATOR] COMPLETED DIRECTED SEQUENCES. Total TX: %0d", tx_count);

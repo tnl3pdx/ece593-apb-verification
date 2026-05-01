@@ -12,6 +12,8 @@ parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_0 = 0;                 //Address of slav
 parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_1= 1;                  //Address of slave_1
 parameter [ADDR_MSB_len-1:0] ADDR_SLAVE_2= 2;                  //Address of slave_2
 
+localparam WORD_LEN = $clog2(DATA_WIDTH>>3);
+
 //STATE Parameters
 localparam [1:0] IDLE = 2'b00;                                 //IDLE state
 localparam [1:0] SETUP = 2'b01;                                //SETUP state
@@ -42,6 +44,22 @@ output logic o_ready;                                          //'ready' signal.
 //Internal signals
 logic [1:0] state;
 logic [1:0] next_state;
+logic transfer_status_pending;
+logic invalid_slave_sel;
+logic unaligned_addr;
+
+always @(*) begin
+  case (i_addr_in[(ADDR_WIDTH-1)-:ADDR_MSB_len])
+    ADDR_SLAVE_0,
+    ADDR_SLAVE_1,
+    ADDR_SLAVE_2: invalid_slave_sel = 1'b0;
+    default:       invalid_slave_sel = 1'b1;
+  endcase
+end
+
+always @(*) begin
+  unaligned_addr = |i_addr_in[WORD_LEN-1:0];
+end
 
 //HDL code
 //Updating current state
@@ -55,7 +73,7 @@ always @(posedge i_pclk or negedge i_prstn)
 always @(*)
   case(state)
     IDLE: next_state = (i_start) ? SETUP : IDLE;
-    SETUP: next_state = ACCESS;
+    SETUP: next_state = (invalid_slave_sel || unaligned_addr) ? IDLE : ACCESS;
     ACCESS: next_state = (i_pready) ? IDLE : ACCESS;
     default: next_state = IDLE;
   endcase
@@ -69,10 +87,13 @@ always @(posedge i_pclk or negedge i_prstn)
     o_penable<=1'b0;
     o_pwdata<='0;
     o_transfer_status<=1'b0;
+    transfer_status_pending<=1'b0;
     o_data_out<='0;
   end
   else begin
-    o_transfer_status<=1'b0;
+    transfer_status_pending <= 1'b0;
+    o_transfer_status<=transfer_status_pending;
+
     case (state)
 
     IDLE: begin
@@ -86,6 +107,12 @@ always @(posedge i_pclk or negedge i_prstn)
       ADDR_SLAVE_2: o_psel<=3'b100;
       default: o_psel<=3'b000;
       endcase
+
+      if (invalid_slave_sel || unaligned_addr) begin
+        transfer_status_pending <= 1'b1;
+        o_psel <= '0;
+        o_penable <= 1'b0;
+      end
          
       o_pwdata<=(i_command) ? i_data_in : o_pwdata;            //Update the write bus for a write operation
       o_penable<=1'b0;                                         //PENABLE signal rises to logic high during the ENABLE phase of the transmission 	
@@ -121,6 +148,7 @@ always @(posedge i_pclk or negedge i_prstn)
       o_penable<=1'b0;
       o_pwdata<='0;
       o_transfer_status<=1'b0;
+      transfer_status_pending<=1'b0;
       o_data_out<='0;
     end
 
