@@ -121,42 +121,45 @@ class GENERATOR;
 		gen2drv.put(tx); tx_count++;
 
 		// --- 3C. Out-of-Bounds Indexing Check ---
-		// Attempt to write and read Timer Index 2 (which doesn't exist)
+		// Attempt to write and read a timer register outside the valid range.
+		// This bypasses TRANSACTION::post_randomize() so the address stays invalid.
 		tx = new();
 		tx.slave_sel = 2;
-		tx.reg_sel = 2;
-		tx.rw = 1; tx.data_in = 32'hDEADBEEF;
-		tx.post_randomize();
+		tx.reg_sel = PARAMS::NUM_TIMERS;
+		tx.rw = 1;
+		tx.data_in = 32'hDEADBEEF;
+		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}};
 		gen2drv.put(tx); tx_count++;
 		
 		tx = new();
 		tx.slave_sel = 2;
-		tx.reg_sel = 2;
-		tx.rw = 0; tx.data_in = 32'h0;
-		tx.post_randomize();
+		tx.reg_sel = PARAMS::NUM_TIMERS;
+		tx.rw = 0;
+		tx.data_in = 32'h0;
+		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}};
 		gen2drv.put(tx); tx_count++;
 
-		/*
-		// Generate invalid transcations 
-		begin
-			// Invalid Address: Targeting non-existent slave (e.g., slave index 4)
-			tx = new();
-			tx.addr = (4 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)); // Invalid slave index
-			tx.rw = 1; // WRITE
-			tx.data_in = 32'hDEADBEEF;
-			gen2drv.put(tx);
-			tx_count++;
+		// --- 3D. Invalid Slave Selection Check ---
+		// Target a slave index outside the configured slave range.
+		tx = new();
+		tx.slave_sel = PARAMS::SLAVE_COUNT;
+		tx.reg_sel = 0;
+		tx.rw = 1;
+		tx.data_in = 32'hCAFEBABE;
+		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		gen2drv.put(tx); tx_count++;
 
-			// Invalid Address: Unaligned access
-			tx = new();
-			tx.addr = (0 << (PARAMS::REG_NUM + PARAMS::WORD_LEN)) | 2; // Slave 0, Reg 0, but unaligned
-			tx.rw = 1; // WRITE
-			tx.data_in = 32'hCAFEBABE;
-			gen2drv.put(tx);
-			tx_count++;
+		// --- 3E. Unaligned Access Check ---
+		// Keep the address structure valid, but break word alignment.
+		tx = new();
+		tx.slave_sel = 2;
+		tx.reg_sel = 0;
+		tx.rw = 1;
+		tx.data_in = 32'hFACE_FEED;
+		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}} | {{PARAMS::ADDR_WIDTH-2{1'b0}}, 2'b10};
+		gen2drv.put(tx); tx_count++;
 
-		end
-		*/
+		$display("[GENERATOR] COMPLETED DIRECTED SEQUENCES. Total TX: %0d", tx_count);
 
 	endtask
 

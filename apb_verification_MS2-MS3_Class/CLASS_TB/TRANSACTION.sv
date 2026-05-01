@@ -11,6 +11,8 @@ class TRANSACTION;
 	bit valid;
 	time timestamp;
 
+	bit illegal; // Flag for transactions that violate constraints (e.g., invalid slave/reg_sel combinations)
+
 	constraint c_slave_distribution {
 		// Solver can now evenly distribute slave_sel independently
 		slave_sel dist { 0 := 1, 1 := 1, 2 := 1 };
@@ -35,11 +37,10 @@ class TRANSACTION;
 	function void post_randomize();
 		// Post restrictions: Restrict timer register accesses to 0-1
 		if (slave_sel == 2) begin
-			reg_sel = reg_sel % 2; // Timer has only 2 registers, so wrap reg_sel to 0-1
+			reg_sel = reg_sel % PARAMS::NUM_TIMERS; // Restrict to valid timer registers
 		end
 		// Construct address from slave_sel and reg_sel
 		addr = {slave_sel, reg_sel, {PARAMS::WORD_LEN{1'b0}}};
-		$display("[TRANSACTION] Post-randomize: slave_sel=%b reg_sel=%b addr=0x%08x data_in=0x%08x rw=%b", slave_sel, reg_sel, addr, data_in, rw);
 	endfunction
 endclass : TRANSACTION
 

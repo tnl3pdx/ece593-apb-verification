@@ -11,7 +11,8 @@ module APB_SYS_DUT
 	parameter WAIT_WRITE_S1 = 0,                                     
 	parameter WAIT_READ_S1 = 0,
 	parameter WAIT_WRITE_S2 = 0,
-	parameter WAIT_READ_S2 = 0
+	parameter WAIT_READ_S2 = 0,
+	parameter NUM_TIMERS = 2
 )
 (
 	apb_external_if ext_if
@@ -114,7 +115,7 @@ APB_Slave #(
 );
 
 APB_Timer #(
-    .DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .WAIT_WRITE(WAIT_WRITE_S2), .WAIT_READ(WAIT_READ_S2), .num_timers(2)
+    .DATA_WIDTH(DATA_WIDTH), .ADDR_WIDTH(ADDR_WIDTH), .WAIT_WRITE(WAIT_WRITE_S2), .WAIT_READ(WAIT_READ_S2), .NUM_TIMERS(NUM_TIMERS)
 ) timer0 (
     .i_prstn(ext_if.rst_n),
     .i_pclk(ext_if.clk),

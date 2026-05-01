@@ -31,4 +31,5 @@ package PARAMS;
 	parameter WAIT_READ_S1 = 1;									//Waitstates for Slave 1 reads
 	parameter WAIT_WRITE_S2 = 1;								//Waitstates for Slave 2 writes
 	parameter WAIT_READ_S2 = 1;									//Waitstates for Slave 2 reads
+	parameter NUM_TIMERS = 5;									//Number of timers in the system (max 32)
 endpackage : PARAMS

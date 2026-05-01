@@ -49,8 +49,8 @@ class MONITOR_OUT;
 				tx.transfer_status = vif.transfer_status;
 				tx.timestamp = $time;
 				
-				$display("[MONITOR_OUT] ACCESS: TX#%0d %s ADDR=0x%08x DATA=0x%08x valid=%0b slave=%0d", 
-					tx_count + 1, (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_out, tx.valid, tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len]);
+				$display("[MONITOR_OUT] ACCESS: TX#%0d %s ADDR=0x%08x DATA=0x%08x valid=%0b slave=%0d transfer_status=%0b", 
+					tx_count + 1, (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_out, tx.valid, tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len], tx.transfer_status);
 				
 				// Sample Protocol Coverage
 				cov_tx = tx;
