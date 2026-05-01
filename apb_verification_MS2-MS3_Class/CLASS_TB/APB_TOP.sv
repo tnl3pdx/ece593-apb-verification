@@ -16,7 +16,7 @@ module APB_TOP;
     
     initial begin
         pclk = 0;
-        forever #5 pclk = ~pclk;
+        forever #(PARAMS::CLK_PERIOD/2) pclk = ~pclk;
     end
 
     // Interface instances
@@ -24,8 +24,8 @@ module APB_TOP;
 
     // Class Based Environment
     TEST #(
-        .NUM_TESTS(1000),
-        .ENABLE_DIRECTED(0)
+        .NUM_TESTS(150),
+        .ENABLE_DIRECTED(1)
     ) test (
         .ext_if(ext_if),
         .bus_if(apb_sys.bus_if)
@@ -43,7 +43,8 @@ module APB_TOP;
         .WAIT_WRITE_S1(PARAMS::WAIT_WRITE_S1),
         .WAIT_READ_S1(PARAMS::WAIT_READ_S1),
         .WAIT_WRITE_S2(PARAMS::WAIT_WRITE_S2),
-        .WAIT_READ_S2(PARAMS::WAIT_READ_S2)
+        .WAIT_READ_S2(PARAMS::WAIT_READ_S2),
+        .NUM_TIMERS(PARAMS::NUM_TIMERS)
     ) apb_sys (
         .ext_if(ext_if)
     );

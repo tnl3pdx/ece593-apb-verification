@@ -7,7 +7,7 @@ module APB_Timer #(
     parameter ADDR_WIDTH = 32,                                    // Address bus width
     parameter WAIT_WRITE = 0,                                     // Number of wait cycles following a write command
     parameter WAIT_READ  = 0,                                     // Number of wait cycles following a read command
-    parameter num_timers = 2                                      // Default number of timers
+    parameter NUM_TIMERS = 2                                      // Default number of timers
 ) (
     input  logic i_prstn,
     input  logic i_pclk,
@@ -26,23 +26,25 @@ localparam WORD_LEN = $clog2(DATA_WIDTH>>3);                  // Byte offset for
 
 // Internal Signals
 logic [WAIT_MAX-1:0] count_pready;                            // Wait state counter 
-logic [DATA_WIDTH-1:0] t_reg [num_timers];                    // Timer Registers
+logic [DATA_WIDTH-1:0] t_reg [NUM_TIMERS];                    // Timer Registers
+logic timer_addr_error;                                       // High when the address points outside the timer array
 
 // Address decoding to determine which timer is being accessed
-wire [31:0] timer_idx = i_paddr[WORD_LEN + 7 : WORD_LEN]; 
+wire [31:0] timer_idx = i_paddr[WORD_LEN + 4 : WORD_LEN];
+assign timer_addr_error = (timer_idx >= NUM_TIMERS);
 
 // ==============================================================================
 // Timer Decrement & APB Write Logic
 // ==============================================================================
 always_ff @(posedge i_pclk or negedge i_prstn) begin
     if (!i_prstn) begin
-        for (int i = 0; i < num_timers; i++) begin
+        for (int i = 0; i < NUM_TIMERS; i++) begin
             t_reg[i] <= '0;
         end
     end 
     else begin
         // 1. Default Timer Behavior: Decrement if > 0
-        for (int i = 0; i < num_timers; i++) begin
+        for (int i = 0; i < NUM_TIMERS; i++) begin
             if (t_reg[i] > 0) begin
                 t_reg[i] <= t_reg[i] - 1;
             end
@@ -50,7 +52,7 @@ always_ff @(posedge i_pclk or negedge i_prstn) begin
 
         // 2. APB Write: Overrides the decrement if a new value is written
         if (i_psel && i_penable && i_pwrite && o_pready) begin
-            if (timer_idx < num_timers) begin
+            if (timer_idx < NUM_TIMERS) begin
                 t_reg[timer_idx] <= i_pwdata;
             end
         end
@@ -74,7 +76,7 @@ always_ff @(posedge i_pclk or negedge i_prstn) begin
         end 
         else if (!i_pwrite && WAIT_READ == 0) begin    // Read command, no wait states
             o_pready <= 1'b1;
-            o_prdata <= (timer_idx < num_timers) ? t_reg[timer_idx] : '0;
+            o_prdata <= (timer_idx < NUM_TIMERS) ? t_reg[timer_idx] : '0;
         end 
         else begin
             o_pready <= 1'b0;
@@ -97,7 +99,7 @@ always_ff @(posedge i_pclk or negedge i_prstn) begin
     else if (!i_pwrite && i_psel) begin
         if (count_pready == $bits(count_pready)'(WAIT_READ-1)) begin                    
             o_pready     <= 1'b1;
-            o_prdata     <= (timer_idx < num_timers) ? t_reg[timer_idx] : '0;
+            o_prdata     <= (timer_idx < NUM_TIMERS) ? t_reg[timer_idx] : '0;
             count_pready <= count_pready + $bits(count_pready)'(1);
         end 
         else if (count_pready == $bits(count_pready)'(WAIT_READ)) begin
@@ -109,7 +111,7 @@ always_ff @(posedge i_pclk or negedge i_prstn) begin
     end
 end
 
-// Error signal tied to zero for this implementation
-assign o_pslverr = 1'b0;
+// Report an APB error only when the transfer is completing and the address is invalid
+assign o_pslverr = o_pready && i_psel && timer_addr_error;
 
 endmodule

@@ -1,7 +1,18 @@
 class MONITOR_IN;
+	int tx_count;
 	virtual apb_external_if vif;
 	mailbox mon_in2sb;
 	bit prev_start;
+
+	function bit tx_is_illegal(bit [PARAMS::ADDR_WIDTH-1:0] addr);
+		int unsigned slave_idx;
+		int unsigned reg_idx;
+		slave_idx = addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
+		reg_idx = addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+		return ((addr[PARAMS::WORD_LEN-1:0] != '0) ||
+				(slave_idx >= PARAMS::SLAVE_COUNT) ||
+				((slave_idx == 2) && (reg_idx >= PARAMS::NUM_TIMERS)));
+	endfunction
 
 	// Transaction handle specifically for coverage sampling
 	TRANSACTION cov_tx; 
@@ -33,6 +44,7 @@ class MONITOR_IN;
 	function new(virtual apb_external_if ext_if, mailbox mon_in2sb);
 		this.vif = ext_if;
 		this.mon_in2sb = mon_in2sb;
+		this.tx_count = 0;
 		this.prev_start = 0;
 		apb_cg = new(); // Instantiate the covergroup
 	endfunction
@@ -46,13 +58,17 @@ class MONITOR_IN;
 				tx.addr = vif.addr;
 				tx.data_in = vif.data_in;
 				tx.rw = vif.rw;
-				$display("[MONITOR_IN] SETUP: TX %s ADDR=0x%08x DATA=0x%08x slave=%0d", (tx.rw ? "WRITE" : "READ "), tx.addr, tx.data_in, tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len]);
+				tx.illegal = tx_is_illegal(vif.addr);
+				tx.timestamp = $time;
+				$display("[MONITOR_IN]\tTX#%0d %s / SLAVE=%0d REG=%0d ADDR=0x%08x %0s%0s", 
+					tx_count + 1, (tx.rw ? "WRITE" : "READ"), tx.slave_sel, tx.reg_sel, tx.addr, (tx.rw ? "DATA_IN=" : ""), (tx.rw ? $sformatf("0x%08x", tx.data_in) : ""));
 				
 				// Sample Functional Coverage
 				cov_tx = tx;
 				apb_cg.sample();
 
 				mon_in2sb.put(tx);
+				tx_count++;
 			end
 			prev_start = vif.start;
 		end
