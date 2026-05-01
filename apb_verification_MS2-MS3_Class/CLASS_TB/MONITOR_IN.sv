@@ -18,9 +18,9 @@ class MONITOR_IN;
 	TRANSACTION cov_tx; 
 
 	// =========================================================
-	// Functional Coverage Model
+	// FV-006 Functional Coverage Model
 	// =========================================================
-	covergroup apb_cg;
+	covergroup cg_apb;
 		option.per_instance = 1;
 		option.name = "APB_Functional_Coverage";
 
@@ -46,7 +46,7 @@ class MONITOR_IN;
 		this.mon_in2sb = mon_in2sb;
 		this.tx_count = 0;
 		this.prev_start = 0;
-		apb_cg = new(); // Instantiate the covergroup
+		cg_apb = new(); // Instantiate the covergroup
 	endfunction
 
 	task start();
@@ -65,7 +65,7 @@ class MONITOR_IN;
 				
 				// Sample Functional Coverage
 				cov_tx = tx;
-				apb_cg.sample();
+				cg_apb.sample();
 
 				mon_in2sb.put(tx);
 				tx_count++;
