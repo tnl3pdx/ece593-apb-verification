@@ -4,7 +4,7 @@ module APB_Slave(i_prstn,i_pclk,i_paddr,i_pwrite,i_psel,i_penable,i_pwdata,o_prd
 
 //Parameters
 parameter DATA_WIDTH = 32;                                    //Data bus width
-parameter ADDR_WIDTH = 32;                                    //Address bus width
+parameter ADDR_WIDTH = 32;                                    //Address bus widt
 
 parameter WAIT_WRITE = 0;                                     //Number of wait cycles following a write command
 parameter WAIT_READ = 0;                                      //Number of wait cycles following a read command
@@ -47,6 +47,7 @@ always @(posedge i_pclk or negedge i_prstn)
   if (!i_prstn) begin
     count_pready<='0;
     o_pready<=1'b0;
+    o_prdata<='0;
   end
   else if ((i_psel==1'b1)&&(i_penable==1'b0)) begin
     count_pready<='0; 
@@ -70,7 +71,7 @@ always @(posedge i_pclk or negedge i_prstn)
     else
       count_pready<=count_pready+$bits(count_pready)'(1);
 
-  else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+  else if ((!i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
     if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
       o_pready<=1'b1;
       o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
@@ -82,7 +83,7 @@ always @(posedge i_pclk or negedge i_prstn)
       count_pready<=count_pready+$bits(count_pready)'(1);
 
 
-//Error signal generation
-assign o_pslverr = 1'b0;                                                   //Tied to logic zero for this simplified slave implementation. 
-   
+//Error signal generation: Assert high if attempting to WRITE to the Read-Only register
+assign o_pslverr = 1'b0;
+
 endmodule
