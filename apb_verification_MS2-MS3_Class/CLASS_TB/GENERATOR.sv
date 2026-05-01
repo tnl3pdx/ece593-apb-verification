@@ -66,11 +66,61 @@ class GENERATOR;
 		end
 
 		// =========================================================
-		// SEQUENCE 3: Timer Validation Sequences
+		// SEQUENCE 3: Stuck bits and Boundary Checks
+		// Switch all mem registers to 0xFFFFFFFF, then read them, 
+		// then write 0x00000000 and read again to check for stuck bits.
+
+		for (int s = 0; s < 2; s++) begin		// Only for mem devices
+			for (int r = 0; r < 32; r++) begin
+				// Write all 1s
+				tx = new();
+				tx.slave_sel = s;
+				tx.reg_sel = r;
+				tx.rw = 1; // WRITE
+				tx.data_in = 32'hFFFFFFFF;
+				tx.post_randomize();
+				tx.illegal = 1'b0;
+				gen2drv.put(tx);
+				tx_count++;
+
+				// Read back
+				tx = new();
+				tx.slave_sel = s;
+				tx.reg_sel = r;
+				tx.rw = 0; // READ
+				tx.data_in = 32'h0;
+				tx.post_randomize();
+				gen2drv.put(tx);
+				tx_count++;
+
+				// Write all 0s
+				tx = new();
+				tx.slave_sel = s;
+				tx.reg_sel = r;
+				tx.rw = 1; // WRITE
+				tx.data_in = 32'h00000000;
+				tx.post_randomize();
+				tx.illegal = 1'b0;
+				gen2drv.put(tx);
+				tx_count++;
+
+				// Read back
+				tx = new();
+				tx.slave_sel = s;
+				tx.reg_sel = r;
+				tx.rw = 0; // READ
+				tx.data_in = 32'h0;
+				tx.post_randomize();
+				gen2drv.put(tx);
+				tx_count++;
+			end
+		end
+
 		// =========================================================
-		$display("[GENERATOR] SEQUENCE 3: Executing Timer Validation Sequences");
-		
-		// --- 3A. Floor at Zero Check ---
+		// SEQUENCE 4: Timer Validation Sequences
+		// =========================================================
+
+		// --- 4A. Floor at Zero Check ---
 		// Write a small value (5) to Timer 0, wait for it to expire, then read.
 		tx = new();
 		tx.slave_sel = 2;
@@ -100,7 +150,7 @@ class GENERATOR;
 		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 
-		// --- 3B. Mid-Countdown Override Check ---
+		// --- 4B. Mid-Countdown Override Check ---
 		// Write a large value to Timer 1, then immediately overwrite it.
 		tx = new();
 		tx.slave_sel = 2;
@@ -128,7 +178,7 @@ class GENERATOR;
 		tx.illegal = 1'b0;
 		gen2drv.put(tx); tx_count++;
 
-		// --- 3C. Out-of-Bounds Indexing Check ---
+		// --- 4C. Out-of-Bounds Indexing Check ---
 		// Attempt to write and read a timer register outside the valid range.
 		// This bypasses TRANSACTION::post_randomize() so the address stays invalid.
 		tx = new();
@@ -149,7 +199,11 @@ class GENERATOR;
 		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
 
-		// --- 3D. Invalid Slave Selection Check ---
+		// =========================================================
+		// SEQUENCE 5: Illegal Transaction Checks
+		// =========================================================
+
+		// --- 5A. Invalid Slave Selection Check ---
 		// Target a slave index outside the configured slave range.
 		tx = new();
 		tx.slave_sel = PARAMS::SLAVE_COUNT;
@@ -160,16 +214,18 @@ class GENERATOR;
 		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
 
-		// --- 3E. Unaligned Access Check ---
+		// --- 5B. Unaligned Access Check ---
 		// Keep the address structure valid, but break word alignment.
 		tx = new();
 		tx.slave_sel = 2;
 		tx.reg_sel = 0;
 		tx.rw = 1;
 		tx.data_in = 32'hFACE_FEED;
-		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}} | {{PARAMS::ADDR_WIDTH-2{1'b0}}, 2'b10};
+		tx.addr = {tx.slave_sel, tx.reg_sel, {PARAMS::WORD_LEN{1'b0}}} | {{PARAMS::ADDR_WIDTH-2{1'b0}}, 2'b11};
 		tx.illegal = 1'b1;
 		gen2drv.put(tx); tx_count++;
+
+
 
 		$display("[GENERATOR] COMPLETED DIRECTED SEQUENCES. Total TX: %0d", tx_count);
 

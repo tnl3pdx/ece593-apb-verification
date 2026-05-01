@@ -71,7 +71,7 @@ always @(posedge i_pclk or negedge i_prstn)
     else
       count_pready<=count_pready+$bits(count_pready)'(1);
 
-  else if ((~i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
+  else if ((!i_pwrite)&&(i_psel))                                          //Read command with 'WAIT_READ' wait states
     if (count_pready==$bits(count_pready)'(WAIT_READ-1)) begin                    
       o_pready<=1'b1;
       o_prdata<=mem[i_paddr[REG_NUM+WORD_LEN-1:WORD_LEN]];                 //Updating the o_prdata with the rising edge of pready
