@@ -2,8 +2,7 @@
 
 Milestone 4
 
-
-**APB_DRIVER.sv**
+## APB_DRIVER.sv
 extends uvm_driver, parameterized with apb_transaction
 `uvm_component_utils(apb_driver): Registers the driver with the UVM factory
 
@@ -21,7 +20,7 @@ Uses Transaction Level Modeling (TLM) via seq_item_port.get_next_item(req) and s
 $display/$fatal are replaced with UVM Macros (`uvm_info and `uvm_fatal)
 
 
-**APB_SCOREBOARD.sv**
+## APB_SCOREBOARD.sv
 Class Declaration: class apb_scoreboard extends uvm_scoreboard
 uvm_analysis_export: Receives data streams from  mon_in and mon_out components
 uvm_tlm_analysis_fifo: Buffers incoming transactions since scoreboard prediction logic requires time to process
@@ -80,3 +79,4 @@ Automated Phasing
     Before: TB calls scoreboard.start() and scoreboard.report()
 
     After: Threads are launched in run_phase, and statistics are dumped in report_phase
+

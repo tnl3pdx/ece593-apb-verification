@@ -13,7 +13,7 @@ class transaction_seq extends uvm_sequence;
 
 	function new(string name = "transaction_seq");
 		super.new(name);
-		`uvm_info("TRANSACTION_SEQUENCE", "Sequence created", UVM_HIGH);
+		`uvm_info("TRANSACTION_SEQUENCE", "Sequence created", UVM_HIGH)
 	endfunction
 
 	task body();

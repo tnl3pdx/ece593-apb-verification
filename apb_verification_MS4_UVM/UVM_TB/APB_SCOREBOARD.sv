@@ -1,6 +1,3 @@
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-
 class apb_scoreboard extends uvm_scoreboard;
     `uvm_component_utils(apb_scoreboard)
 
@@ -283,7 +280,7 @@ class apb_scoreboard extends uvm_scoreboard;
     endtask
 
     // Report Phase
-        virtual function void report_phase(uvm_phase phase);
+    virtual function void report_phase(uvm_phase phase);
         super.report_phase(phase);
         `uvm_info("SCB_REPORT", "===== FINAL SCOREBOARD REPORT =====", UVM_NONE)
         `uvm_info("SCB_REPORT", $sformatf("WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count), UVM_NONE)

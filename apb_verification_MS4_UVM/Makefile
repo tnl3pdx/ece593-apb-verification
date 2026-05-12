@@ -10,7 +10,7 @@ sim: clean build run gui
 cov: clean build run cov
 
 build:
-	vcs $(VCS_FLAGS) +incdir+. rtl/APB/*.sv CLASS_TB/APB_TOP.sv -top APB_TOP -l comp_class.log
+	vcs $(VCS_FLAGS) +incdir+. rtl/APB/*.sv UVM_TB/APB_TOP.sv -top apb_top -l comp_class.log
 
 run:
 	./simv $(SIM_FLAGS) -l run.log
