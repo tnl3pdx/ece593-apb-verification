@@ -1,17 +1,16 @@
-timescale 1ns/1ns
-
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 
-`include "PARAMS.sv"
-`include "APB_SEQUENCE.sv"
-`include "APB_SEQUENCER.sv"
-`include "APB_DRIVER.sv"
-`include "APB_MONITOR.sv"
-`include "APB_AGENT.sv"
-`include "APB_SCOREBOARD.sv"
-`include "APB_ENV.sv"
-`include "APB_TEST.sv"
+`include "UVM_TB/PARAMS.sv"
+`include "UVM_TB/APB_TRANSACTION.sv"
+`include "UVM_TB/APB_SEQUENCE.sv"
+`include "UVM_TB/APB_SEQUENCER.sv"
+`include "UVM_TB/APB_DRIVER.sv"
+`include "UVM_TB/APB_MONITOR.sv"
+`include "UVM_TB/APB_AGENT.sv"
+`include "UVM_TB/APB_SCOREBOARD.sv"
+`include "UVM_TB/APB_ENV.sv"
+`include "UVM_TB/APB_TEST.sv"
 
 module apb_top;
     // Clock and Reset Signals

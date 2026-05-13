@@ -2,7 +2,8 @@ class apb_monitor extends uvm_monitor;
 	`uvm_component_utils(apb_monitor)
 
 	virtual apb_external_if vif;
-	uvm_analysis_port #(apb_transaction) monitor_port;
+	uvm_analysis_port #(apb_transaction) ap_in;
+	uvm_analysis_port #(apb_transaction) ap_out;
 
 	int tx_count_in;
 	int tx_count_out;
@@ -88,7 +89,8 @@ class apb_monitor extends uvm_monitor;
 	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 
-		monitor_port = new("monitor_port", this);
+		ap_in = new("ap_in", this);
+		ap_out = new("ap_out", this);
 
 		if (!uvm_config_db#(virtual apb_external_if)::get(this, "*", "vif", vif)) begin
 			`uvm_error("APB_MONITOR", "Failed to get VIF from config DB.")
@@ -147,7 +149,7 @@ class apb_monitor extends uvm_monitor;
 				cg_apb.sample();
 
 				// Send transaction to scoreboard via analysis port
-				monitor_port.write(tx);
+			ap_in.write(tx);
 				tx_count_in++;
 			end
 			prev_start = vif.start;
@@ -196,7 +198,7 @@ class apb_monitor extends uvm_monitor;
 				cg_protocol.sample();
 
 				// Send transaction to scoreboard via analysis port
-				monitor_port.write(tx);
+			ap_out.write(tx);
 				tx_count_out++;
 			end
 			prev_ready = vif.ready;

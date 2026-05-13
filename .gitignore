@@ -11,3 +11,4 @@ urgReport/
 vdCov*
 .fsm.*
 *Store
+apb_verification_MS4_UVM/vc_hdrs.h

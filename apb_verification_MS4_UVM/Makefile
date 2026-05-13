@@ -2,7 +2,7 @@
 # Class-Based Testbench Targets
 # ==============================================================================
 # Add Coverage flags to compile and run
-VCS_FLAGS = -sverilog -debug_access+all -kdb -cm line+cond+fsm+tgl+branch
+VCS_FLAGS = -sverilog -debug_access+all -kdb -cm line+cond+fsm+tgl+branch -ntb_opts uvm
 SIM_FLAGS = -l run.log -cm line+cond+fsm+tgl+branch
 
 sim_ng: clean build run 
@@ -22,6 +22,6 @@ cov:
 	verdi -cov -covdir simv.vdb -elfile cov_exclude.el
 
 clean:
-	rm -rf AN.DB *.vcd simv* csrc* *.log ucli.key verdi* novas* work* *.fsdb 
+	rm -rf AN.DB *.vcd simv* csrc* *.log ucli.key verdi* novas* work* *.fsdb vc_hdrs.h .fsm.*
 
 

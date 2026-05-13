@@ -40,8 +40,8 @@ class apb_test extends uvm_test;
 		phase.raise_objection(this);
 		// Test sequence
 		repeat(100) begin
-			transaction_seq = transaction_seq::type_id::create("transaction_seq");
-			transaction_seq.start(env.agnt.sequencer);
+			seq = transaction_seq::type_id::create("transaction_seq");
+			seq.start(env.agnt.seqr);
 		end
 		phase.drop_objection(this);
 	endtask
