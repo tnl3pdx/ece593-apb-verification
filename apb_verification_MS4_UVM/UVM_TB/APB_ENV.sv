@@ -9,7 +9,7 @@ class apb_env extends uvm_env;
     // Constructor
     function new(string name = "apb_env", uvm_component parent);
         super.new(name, parent);
-        `uvm_info(get_type_name(), "Constructor [new] completed", UVM_HIGH)
+        `uvm_info("APB_ENV", "Constructor [new] completed", UVM_HIGH)
     endfunction
 
     // Build phase: Instantiate components
@@ -21,13 +21,13 @@ class apb_env extends uvm_env;
         scb  = apb_scoreboard::type_id::create("scb", this);
         cov  = apb_coverage::type_id::create("cov", this); // Build the coverage component
         
-        `uvm_info(get_type_name(), "Build Phase completed", UVM_HIGH)
+        `uvm_info("APB_ENV", "Build Phase completed", UVM_HIGH)
     endfunction
 
     // Connect phase: Connect agent's monitor to the scoreboard and coverage
     virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        `uvm_info(get_type_name(), "Connecting agent ports to scoreboard and coverage", UVM_HIGH)
+        `uvm_info("APB_ENV", "Connecting agent ports to scoreboard and coverage", UVM_HIGH)
 
         // Connect monitor analysis ports to scoreboard exports
         agnt.mon.ap_in.connect(scb.mon_in_export);
@@ -36,12 +36,12 @@ class apb_env extends uvm_env;
         // Connect monitor output port to coverage subscriber export
         agnt.mon.ap_out.connect(cov.analysis_export);
         
-        `uvm_info(get_type_name(), "Connect Phase completed", UVM_HIGH)
+        `uvm_info("APB_ENV", "Connect Phase completed", UVM_HIGH)
     endfunction
 
     virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
-        `uvm_info(get_type_name(), "Run Phase started", UVM_LOW)
+        `uvm_info("APB_ENV", "Run Phase started", UVM_LOW)
     endtask
 
 endclass : apb_env

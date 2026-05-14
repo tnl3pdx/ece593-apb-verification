@@ -65,7 +65,7 @@ class apb_coverage extends uvm_subscriber #(apb_transaction);
     endfunction
 
     // Subscriber Function
-    // Automatically called by  Monitor via analysis port
+    // Automatically called by Monitor via analysis port
     virtual function void write(apb_transaction t);
         // Map incoming broadcasted transaction to coverage handle
         cov_tx = t;

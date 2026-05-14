@@ -67,7 +67,7 @@ module apb_top;
 
 	// Max simulation time
 	initial begin
-		#100000; // Set a maximum simulation time to prevent infinite runs
+		#10000000;
 		$display("Maximum simulation time reached. Ending simulation.");
 		$finish;
 	end

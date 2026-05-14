@@ -17,6 +17,18 @@ class apb_transaction extends uvm_sequence_item;
 
 	bit illegal; // Flag for transactions that violate constraints (e.g., invalid slave/reg_sel combinations)
 
+	static function bit [PARAMS::ADDR_WIDTH-1:0] build_addr(
+		bit [PARAMS::SLAVE_COUNT-1:0] slave_sel,
+		bit [PARAMS::REG_NUM-1:0] reg_sel
+	);
+		bit [PARAMS::ADDR_WIDTH-1:0] addr;
+
+		addr = '0;
+		addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] = slave_sel;
+		addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM] = reg_sel;
+		return addr;
+	endfunction
+
 	// --- Constraints ---
 
 	constraint c_slave_distribution {
@@ -47,8 +59,8 @@ class apb_transaction extends uvm_sequence_item;
 		if (slave_sel == 2) begin
 			reg_sel = reg_sel % PARAMS::NUM_TIMERS; // Restrict to valid timer registers
 		end
-		// Construct address from slave_sel and reg_sel
-		addr = {slave_sel, reg_sel, {PARAMS::WORD_LEN{1'b0}}};
+		// Construct address from slave_sel and reg_sel using the monitored bus layout
+		addr = build_addr(slave_sel, reg_sel);
 		illegal = 1'b0;
 	endfunction
 

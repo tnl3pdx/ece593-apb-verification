@@ -2,7 +2,11 @@ class apb_test extends uvm_test;
 	`uvm_component_utils(apb_test)
 
 	apb_env env;
-	transaction_seq seq;
+	uvm_sequence_base seq;
+	string test_mode = "all";
+	int unsigned random_count = 1000;
+	int unsigned run_timeout_us = 100;
+	time run_timeout;
 
 	// APB_TEST Constructor
 	function new(string name = "apb_test", uvm_component parent);
@@ -17,6 +21,11 @@ class apb_test extends uvm_test;
 
 		env = apb_env::type_id::create("env", this);
 
+		void'($value$plusargs("APB_RUN_TIMEOUT_US=%d", run_timeout_us));
+		run_timeout = run_timeout_us * 1us;
+		uvm_top.set_timeout(run_timeout, 1);
+		`uvm_info("APB_TEST", $sformatf("Run phase timeout set to %0t (%0d us)", run_timeout, run_timeout_us), UVM_LOW)
+
 	endfunction
 
 	// APB_TEST Connect Phase
@@ -30,32 +39,92 @@ class apb_test extends uvm_test;
 		super.run_phase(phase);
 		`uvm_info("APB_TEST", "RUNNING", UVM_HIGH)
 
-		phase.raise_objection(this);
-		// Test sequence
-		repeat(100) begin
-			seq = transaction_seq::type_id::create("transaction_seq");
-			seq.start(env.agnt.seqr);
+		void'($value$plusargs("APB_TEST_MODE=%s", test_mode));
+		void'($value$plusargs("APB_RANDOM_COUNT=%d", random_count));
+		if (test_mode.len() == 0) begin
+			test_mode = "all";
 		end
+
+		phase.raise_objection(this);
+
+		case (test_mode)
+			"reset": begin
+				seq = apb_reset_check_seq::type_id::create("apb_reset_check_seq");
+				seq.start(env.agnt.seqr);
+			end
+			"data": begin
+				seq = apb_data_integrity_seq::type_id::create("apb_data_integrity_seq");
+				seq.start(env.agnt.seqr);
+			end
+			"stuck": begin
+				seq = apb_stuck_bits_seq::type_id::create("apb_stuck_bits_seq");
+				seq.start(env.agnt.seqr);
+			end
+			"timer": begin
+				seq = apb_timer_validation_seq::type_id::create("apb_timer_validation_seq");
+				seq.start(env.agnt.seqr);
+			end
+			"illegal": begin
+				seq = apb_illegal_tx_seq::type_id::create("apb_illegal_tx_seq");
+				seq.start(env.agnt.seqr);
+			end
+			"all": begin
+				run_directed_sequences();
+				repeat (random_count) begin
+					seq = transaction_seq::type_id::create("transaction_seq");
+					seq.start(env.agnt.seqr);
+				end
+			end
+		endcase
 		phase.drop_objection(this);
+	endtask
+
+	task automatic run_directed_sequences();
+		seq = apb_reset_check_seq::type_id::create("apb_reset_check_seq");
+		seq.start(env.agnt.seqr);
+
+		seq = apb_data_integrity_seq::type_id::create("apb_data_integrity_seq");
+		seq.start(env.agnt.seqr);
+
+		seq = apb_stuck_bits_seq::type_id::create("apb_stuck_bits_seq");
+		seq.start(env.agnt.seqr);
+
+		seq = apb_timer_validation_seq::type_id::create("apb_timer_validation_seq");
+		seq.start(env.agnt.seqr);
+
+		seq = apb_illegal_tx_seq::type_id::create("apb_illegal_tx_seq");
+		seq.start(env.agnt.seqr);
 	endtask
 
 // LOGGING
 
 	virtual function void end_of_elaboration_phase(uvm_phase phase);
-        UVM_FILE scb_file, drv_file;
+        UVM_FILE scb_file, trs_file;
         super.end_of_elaboration_phase(phase);
 
         // Open the files
-        scb_file = $fopen("scoreboard_report.log", "w");
-        drv_file = $fopen("driver_report.log", "w");
+        scb_file = $fopen("logs/uvm_scoreboard_report.log", "w");
+        trs_file = $fopen("logs/uvm_transaction_report.log", "w");
 
-        // Scoreboard  write to file and  terminal (UVM_DISPLAY | UVM_LOG)
-        // UVM_LOG to write only to file and silence the terminal
-        uvm_top.set_report_id_action_hier("SCB_OUT", UVM_DISPLAY | UVM_LOG);
-        uvm_top.set_report_id_file_hier("SCB_OUT", scb_file);
+		// Configure Scoreboard Logging
+        env.scb.set_report_verbosity_level(UVM_HIGH);
+		uvm_top.set_report_id_action_hier("APB_SCB_IN", UVM_LOG);
+        uvm_top.set_report_id_file_hier("APB_SCB_IN", scb_file);
+		uvm_top.set_report_id_action_hier("APB_SCB_OUT", UVM_LOG);
+		uvm_top.set_report_id_file_hier("APB_SCB_OUT", scb_file);
+		uvm_top.set_report_id_action_hier("APB_SCB", UVM_LOG | UVM_DISPLAY);
+		uvm_top.set_report_id_file_hier("APB_SCB", scb_file);
 
-        uvm_top.set_report_id_action_hier("DRV_STIMULUS", UVM_DISPLAY | UVM_LOG);
-        uvm_top.set_report_id_file_hier("DRV_STIMULUS", drv_file);
+		// Configure Driver and Monitor Logging
+        uvm_top.set_report_id_action_hier("APB_DRV", UVM_LOG);
+        uvm_top.set_report_id_file_hier("APB_DRV", trs_file);
+
+		uvm_top.set_report_id_action_hier("APB_MONITOR_IN", UVM_LOG);
+		uvm_top.set_report_id_file_hier("APB_MONITOR_IN", trs_file);
+
+		uvm_top.set_report_id_action_hier("APB_MONITOR_OUT", UVM_LOG);
+		uvm_top.set_report_id_file_hier("APB_MONITOR_OUT", trs_file);
+
 
 		uvm_top.print_topology();
 

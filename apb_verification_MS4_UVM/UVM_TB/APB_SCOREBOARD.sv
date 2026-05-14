@@ -18,13 +18,16 @@ class apb_scoreboard extends uvm_scoreboard;
     int error_count;
     int illegal_count;
 
+    // Per-slave and per-access-type statistics
     int slave_accesses[PARAMS::SLAVE_COUNT];
     int slave_rw_accesses[PARAMS::SLAVE_COUNT][2];
     int slave_rw_errors[PARAMS::SLAVE_COUNT][2];
 
+    // Golden Model State
     localparam int REG_DEPTH = (1 << PARAMS::REG_NUM);
     bit [PARAMS::DATA_WIDTH-1:0] golden_mem[][];
     
+    // Timer Model State
     bit [PARAMS::DATA_WIDTH:0] ref_timer_val[PARAMS::SLAVE_COUNT][];
     time ref_timer_start_time[PARAMS::SLAVE_COUNT][];
     bit ref_timer_active[PARAMS::SLAVE_COUNT][];
@@ -33,6 +36,7 @@ class apb_scoreboard extends uvm_scoreboard;
     time pending_start_request_time[PARAMS::SLAVE_COUNT][];
     bit pending_start_valid[PARAMS::SLAVE_COUNT][];
     
+    // Slave to Model Index Mapping
     int slave_to_model_idx[PARAMS::SLAVE_COUNT];
 
     // Coverage Groups
@@ -134,16 +138,6 @@ class apb_scoreboard extends uvm_scoreboard;
         mon_out_export.connect(mon_out_fifo.analysis_export);
     endfunction
 
-    // Run Phase Threads
-    virtual task run_phase(uvm_phase phase);
-        `uvm_info("SCB", "STARTED", UVM_LOW)
-        fork
-            get_input();
-            get_output();
-            simulate_timers();
-        join_none
-    endtask
-
     task simulate_timers();
         forever begin
             #PARAMS::CLK_PERIOD;
@@ -162,6 +156,16 @@ class apb_scoreboard extends uvm_scoreboard;
     function bit [PARAMS::DATA_WIDTH-1:0] sample_ref_timer(int slave_idx, int reg_idx);
         sample_ref_timer = ref_timer_val[slave_idx][reg_idx];
     endfunction
+
+    // Run Phase Threads
+    virtual task run_phase(uvm_phase phase);
+        `uvm_info("APB_SCB", "STARTED", UVM_HIGH)
+        fork
+            get_input();
+            get_output();
+            simulate_timers();
+        join_none
+    endtask
         
     task get_input();
         apb_transaction tx;
@@ -179,14 +183,14 @@ class apb_scoreboard extends uvm_scoreboard;
                     cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
                     cg_timer_validation.sample();
                 end
-                `uvm_info("SCB_IN_ILLEGAL", $sformatf("\n%s", tx.sprint()), UVM_LOW)
+                `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Illegal Transaction Acknowledged: ADDR=0x%08x SLAVE=%0d REG=%0d", total_input_count, tx.addr, slave_idx, reg_idx), UVM_HIGH)
             end
             else if (tx.rw) begin 
                 cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
                 cg_data_integrity.sample();
                 if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                     golden_mem[model_idx][reg_idx] = tx.data_in;
-                    `uvm_info("SCB_IN_MEM_WR", $sformatf("Memory Write Registered at slave %0d, reg %0d", slave_idx, reg_idx), UVM_HIGH)
+                    `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Memory Write Registered: SLAVE=%0d REG=%0d ADDR=0x%08x DATA=0x%08x", total_input_count, slave_idx, reg_idx, tx.addr, tx.data_in), UVM_HIGH)
                 end 
                 else if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
                     cov_timer_override = (ref_timer_active[slave_idx][reg_idx] && ref_timer_val[slave_idx][reg_idx] > 0) ? 1 : 0;
@@ -194,55 +198,55 @@ class apb_scoreboard extends uvm_scoreboard;
                     pending_start_val[slave_idx][reg_idx] = tx.data_in;
                     pending_start_request_time[slave_idx][reg_idx] = tx.timestamp;
                     pending_start_valid[slave_idx][reg_idx] = 1;
-                    `uvm_info("SCB_IN_TMR_WR", $sformatf("Timer Write Registered at slave %0d, reg %0d", slave_idx, reg_idx), UVM_HIGH)
+                    `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Timer Write Registered: SLAVE=%0d REG=%0d ADDR=0x%08x DATA=0x%08x", total_input_count, slave_idx, reg_idx, tx.addr, tx.data_in), UVM_HIGH)
                 end
             end
         end
     endtask
 
     task get_output();
-        apb_transaction tx, expected_tx;
+        apb_transaction tx;
         int slave_idx, reg_idx, model_idx;
+        bit [PARAMS::DATA_WIDTH-1:0] expected_data;
+        bit transfer_status_ok, valid_ok, data_ok, check_pass;
         forever begin
             mon_out_fifo.get(tx);
             total_output_count++;
             slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
             reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
             model_idx = (slave_idx < PARAMS::SLAVE_COUNT) ? slave_to_model_idx[slave_idx] : -1;
-            
-            // Clone  transaction to inherit base properties, then overwrite only expected values
-            $cast(expected_tx, tx.clone()); 
 
             if (tx.illegal) begin
+                // --- ILLEGAL TRANSACTION CHECK ---
+                // Only check: transfer_status should be asserted (1)
                 if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
                     cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
                     cg_timer_validation.sample();
                 end
                 
-                // For illegal TX, we expect transfer_status to be 1
-                expected_tx.transfer_status = 1'b1;
-                
-                if (!tx.compare(expected_tx)) begin
+                if (tx.transfer_status != 1'b1) begin
                     illegal_fail_count++;
-                    `uvm_error("SCB_FAIL", $sformatf("ILLEGAL TX FAIL! Expected Error Status.\n%s", tx.sprint()))
+                    `uvm_error("APB_SCB_OUT", $sformatf("ILLEGAL FAIL: transfer_status=%0b (expected 1)", tx.transfer_status))
                 end else begin
                     illegal_pass_count++;
-                    `uvm_info("SCB_OUT", "ILLEGAL TX PASS", UVM_HIGH)
+                    `uvm_info("APB_SCB_OUT", $sformatf("ILLEGAL PASS: transfer_status=%0b", tx.transfer_status), UVM_HIGH)
                 end
                 continue;
             end
 
             if (tx.rw) begin 
                 // --- WRITE COMPLETION CHECK ---
-                expected_tx.transfer_status = 1'b0;
-                expected_tx.valid = 1'b0; // Writes should not assert valid data
+                // Check: transfer_status deasserted (0) AND valid deasserted (0)
+                transfer_status_ok = (tx.transfer_status == 1'b0);
+                valid_ok = (tx.valid == 1'b0);
+                check_pass = transfer_status_ok && valid_ok;
 
-                if (!tx.compare(expected_tx)) begin
+                if (!check_pass) begin
                     write_fail_count++; error_count++; slave_rw_errors[slave_idx][tx.rw]++;
-                    `uvm_error("SCB_FAIL", $sformatf("WRITE FAIL! Mismatch detected:\n%s", tx.sprint()))
+                    `uvm_error("APB_SCB_OUT", $sformatf("TX#%0d WRITE FAIL: transfer_status=%0b (expected 0), valid=%0b (expected 0)", total_output_count, tx.transfer_status, tx.valid))
                 end else begin
                     write_pass_count++;
-                    `uvm_info("SCB_OUT", "WRITE PASS", UVM_HIGH)
+                    `uvm_info("APB_SCB_OUT", $sformatf("TX#%0d WRITE PASS: transfer_status=%0b, valid=%0b", total_output_count, tx.transfer_status, tx.valid), UVM_HIGH)
                     if (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER && pending_start_valid[slave_idx][reg_idx]) begin
                         ref_timer_val[slave_idx][reg_idx] = (pending_start_val[slave_idx][reg_idx] > 0) ? (pending_start_val[slave_idx][reg_idx] + 2) : pending_start_val[slave_idx][reg_idx];
                         ref_timer_start_time[slave_idx][reg_idx] = tx.timestamp;
@@ -253,26 +257,33 @@ class apb_scoreboard extends uvm_scoreboard;
 
             end else begin 
                 // --- READ COMPLETION CHECK ---
+                // Check: transfer_status deasserted (0), valid asserted (1), and data_out matches expected
                 cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
                 cg_data_integrity.sample(); cg_reset.sample(); cg_timer_validation.sample();
                 
-                expected_tx.transfer_status = 1'b0;
-                expected_tx.valid = 1'b1; // Reads MUST assert valid data
-
+                transfer_status_ok = (tx.transfer_status == 1'b0);
+                valid_ok = (tx.valid == 1'b1);
+                
+                // Determine expected data based on peripheral type
                 if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
-                    expected_tx.data_out = golden_mem[model_idx][reg_idx];
+                    expected_data = golden_mem[model_idx][reg_idx];
                 end
                 else if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                    expected_tx.data_out = sample_ref_timer(slave_idx, reg_idx);
+                    expected_data = sample_ref_timer(slave_idx, reg_idx);
+                end
+                else begin
+                    expected_data = 32'h0; // Default for unrecognized peripherals
                 end
                 
-                // Single native UVM comparison for the entire packet!
-                if (!tx.compare(expected_tx)) begin
+                data_ok = (tx.data_out == expected_data);
+                check_pass = transfer_status_ok && valid_ok && data_ok;
+                
+                if (!check_pass) begin
                     read_fail_count++; error_count++; slave_rw_errors[slave_idx][tx.rw]++;
-                    `uvm_error("SCB_FAIL", $sformatf("READ FAIL! Expected vs Actual mismatch.\nGolden Expected:\n%s\nActual Received:\n%s", expected_tx.sprint(), tx.sprint()))
+                    `uvm_error("APB_SCB_OUT", $sformatf("TX#%0d READ FAIL: transfer_status=%0b (expected 0), valid=%0b (expected 1), data_out=0x%08x (expected 0x%08x)", total_output_count, tx.transfer_status, tx.valid, tx.data_out, expected_data))
                 end else begin
                     read_pass_count++;
-                    `uvm_info("SCB_OUT", "READ PASS", UVM_HIGH)
+                    `uvm_info("APB_SCB_OUT", $sformatf("TX#%0d READ PASS: transfer_status=%0b, valid=%0b, data_out=0x%08x", total_output_count, tx.transfer_status, tx.valid, tx.data_out), UVM_HIGH)
                 end
             end
             slave_accesses[slave_idx]++; slave_rw_accesses[slave_idx][tx.rw]++;
@@ -282,18 +293,18 @@ class apb_scoreboard extends uvm_scoreboard;
     // Report Phase
     virtual function void report_phase(uvm_phase phase);
         super.report_phase(phase);
-        `uvm_info("SCB_REPORT", "===== FINAL SCOREBOARD REPORT =====", UVM_NONE)
-        `uvm_info("SCB_REPORT", $sformatf("WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count), UVM_NONE)
-        `uvm_info("SCB_REPORT", $sformatf("READS:  PASS=%0d FAIL=%0d", read_pass_count, read_fail_count), UVM_NONE)
-        `uvm_info("SCB_REPORT", $sformatf("ILLEGAL TX: PASS=%0d FAIL=%0d", illegal_pass_count, illegal_fail_count), UVM_NONE)
+        `uvm_info("APB_SCB", "===== FINAL SCOREBOARD REPORT =====", UVM_LOW)
+        `uvm_info("APB_SCB", $sformatf("WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count), UVM_LOW)
+        `uvm_info("APB_SCB", $sformatf("READS:  PASS=%0d FAIL=%0d", read_pass_count, read_fail_count), UVM_LOW)
+        `uvm_info("APB_SCB", $sformatf("ILLEGAL TX: PASS=%0d FAIL=%0d", illegal_pass_count, illegal_fail_count), UVM_LOW)
         for (int i = 0; i < PARAMS::SLAVE_COUNT; i++) begin
-            `uvm_info("SCB_REPORT", $sformatf("  Slave %0d: %0d accesses (WRITES=%0d (ERRORS=%0d) READS=%0d (ERRORS=%0d))", 
-                i, slave_accesses[i], slave_rw_accesses[i][1], slave_rw_errors[i][1], slave_rw_accesses[i][0], slave_rw_errors[i][0]), UVM_NONE)
+            `uvm_info("APB_SCB", $sformatf("  Slave %0d: %0d accesses (WRITES=%0d (ERRORS=%0d) READS=%0d (ERRORS=%0d))", 
+                i, slave_accesses[i], slave_rw_accesses[i][1], slave_rw_errors[i][1], slave_rw_accesses[i][0], slave_rw_errors[i][0]), UVM_LOW)
         end
         if (error_count == 0) begin
-            `uvm_info("SCB_REPORT", $sformatf("VERIFICATION PASSED! TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d", error_count, total_output_count), UVM_NONE)
+            `uvm_info("APB_SCB", $sformatf("VERIFICATION PASSED! TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d", error_count, total_output_count), UVM_LOW)
         end else begin
-            `uvm_error("SCB_REPORT", $sformatf("VERIFICATION FAILED! TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d", error_count, total_output_count))
+            `uvm_error("APB_SCB", $sformatf("VERIFICATION FAILED! TOTAL ERRORS: %0d | TRANSACTIONS VERIFIED: %0d", error_count, total_output_count))
         end
     endfunction
 

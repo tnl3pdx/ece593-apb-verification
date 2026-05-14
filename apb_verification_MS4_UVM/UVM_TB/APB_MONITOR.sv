@@ -10,10 +10,6 @@ class apb_monitor extends uvm_monitor;
 	bit prev_start;
 	bit prev_ready;
 
-	// apb_transaction cov_in_tx;
-	// apb_transaction cov_out_tx;
-	// commenting these out to prevent double instantiation
-
 	function bit tx_is_illegal(bit [PARAMS::ADDR_WIDTH-1:0] addr);
 		int unsigned slave_idx;
 		int unsigned reg_idx;
@@ -34,7 +30,7 @@ class apb_monitor extends uvm_monitor;
 		prev_start = 1'b0;
 		prev_ready = 1'b1;
 	
-	`uvm_info(get_type_name(), "Constructor [new] completed", UVM_HIGH)
+	`uvm_info("APB_MONITOR", "Constructor [new] completed", UVM_HIGH)
 	endfunction
 
 	virtual function void build_phase(uvm_phase phase);
@@ -46,22 +42,22 @@ class apb_monitor extends uvm_monitor;
 		if (!uvm_config_db#(virtual apb_external_if)::get(this, "*", "vif", vif)) begin
 			`uvm_error("APB_MONITOR", "Failed to get VIF from config DB.")
 		end
-		`uvm_info(get_type_name(), "Build Phase completed", UVM_HIGH)
+		`uvm_info("APB_MONITOR", "Build Phase completed", UVM_HIGH)
 	endfunction
 
 	virtual function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
-		`uvm_info(get_type_name(), "Connect Phase completed", UVM_HIGH)
+		`uvm_info("APB_MONITOR", "Connect Phase completed", UVM_HIGH)
 	endfunction
 
 	virtual task run_phase(uvm_phase phase);
-        `uvm_info(get_type_name(), "Run phase started. Waiting for reset...", UVM_LOW)
+        `uvm_info("APB_MONITOR", "Run phase started. Waiting for reset...", UVM_LOW)
 
         // Wait for reset to drop, then wait 1 clock cycle to ensure stability
         wait(vif.rst_n === 1'b1);
         @(posedge vif.clk);
 
-        `uvm_info(get_type_name(), "Reset complete. Starting capture threads.", UVM_LOW)
+        `uvm_info("APB_MONITOR", "Reset complete. Starting capture threads.", UVM_LOW)
         fork
             monitor_input();
             monitor_output();
@@ -72,6 +68,8 @@ class apb_monitor extends uvm_monitor;
 		apb_transaction tx;
 		int unsigned slave_idx;
 		int unsigned reg_idx;
+		string data_str;
+		string monitor_msg;
 		forever begin
 			@(posedge vif.clk);
 			if (vif.start && !prev_start) begin
@@ -90,16 +88,23 @@ class apb_monitor extends uvm_monitor;
 				tx.slave_sel = slave_idx;
 				tx.reg_sel = reg_idx;
 
-				`uvm_info("MONITOR_IN", $sformatf(
-					"TX#%0d %s / SLAVE=%0d REG=%0d ADDR=0x%08x %s%s",
+				// Build a multi-line, human-readable monitor message
+				if (tx.rw) begin
+					data_str = $sformatf("0x%08x", tx.data_in);
+				end else begin
+					data_str = "N/A";
+				end
+				monitor_msg = $sformatf(
+					"\nTX#%0d\n  Type: %s\n  Slave: %0d\n  Reg: %0d\n  Addr: 0x%08x\n  Data: %s\n  Illegal: %0b",
 					tx_count_in + 1,
 					(tx.rw ? "WRITE" : "READ"),
 					slave_idx,
 					reg_idx,
 					tx.addr,
-					(tx.rw ? "DATA_IN=" : ""),
-					(tx.rw ? $sformatf("0x%08x", tx.data_in) : "")
-				), UVM_LOW)
+					data_str,
+					tx.illegal
+				);
+				`uvm_info("APB_MONITOR_IN", monitor_msg, UVM_LOW)
 
 				// Send transaction to scoreboard via analysis port
 				ap_in.write(tx);
@@ -113,6 +118,8 @@ class apb_monitor extends uvm_monitor;
 		apb_transaction tx;
 		int unsigned slave_idx;
 		int unsigned reg_idx;
+		string data_str;
+		string monitor_msg;
 		forever begin
 			@(posedge vif.clk);
 			if (vif.ready && !prev_ready) begin
@@ -133,18 +140,23 @@ class apb_monitor extends uvm_monitor;
 				tx.slave_sel = slave_idx;
 				tx.reg_sel = reg_idx;
 
-				`uvm_info("MONITOR_OUT", $sformatf(
-					"TX#%0d %s / SLAVE=%0d REG=%0d ADDR=0x%08x %s%s VALID=%0b TRANSFER_STATUS=%0b",
+				if (tx.rw) begin
+					data_str = "N/A";
+				end else begin
+					data_str = $sformatf("0x%08x", tx.data_out);
+				end
+				monitor_msg = $sformatf(
+					"\nTX#%0d\n  Type: %s\n  Slave: %0d\n  Reg: %0d\n  Addr: 0x%08x\n  Data: %s\n  Valid: %0b\n  Transfer Status: %0b",
 					tx_count_out + 1,
 					(tx.rw ? "WRITE" : "READ"),
 					slave_idx,
 					reg_idx,
 					tx.addr,
-					(tx.rw ? "" : "DATA_OUT="),
-					(tx.rw ? "" : $sformatf("0x%08x", tx.data_out)),
+					data_str,
 					tx.valid,
 					tx.transfer_status
-				), UVM_LOW)
+				);
+				`uvm_info("APB_MONITOR_OUT", monitor_msg, UVM_LOW)
 
 				// Send transaction to scoreboard via analysis port
 				ap_out.write(tx);

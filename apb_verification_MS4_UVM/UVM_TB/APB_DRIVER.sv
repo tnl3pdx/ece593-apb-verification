@@ -15,14 +15,14 @@ class apb_driver extends uvm_driver #(apb_transaction);
     // Retrieve virtual interface
     virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        `uvm_info("APB_DRIVER", "Build phase started", UVM_HIGH)
+        `uvm_info("APB_DRV", "Build phase started", UVM_HIGH)
         
         // Fetch the virtual interface from the config DB
         if (!uvm_config_db#(virtual apb_external_if)::get(this, "", "vif", vif)) begin
             `uvm_fatal("DRV_NO_VIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"})
         end
         
-        `uvm_info("APB_DRIVER", "Build phase complete", UVM_HIGH)
+        `uvm_info("APB_DRV", "Build phase complete", UVM_HIGH)
     endfunction
 
     // Run phase, reset DUT and drive transactions
@@ -33,7 +33,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
         reset_dut();
 
         // Main Stimulus Loop
-        `uvm_info("APB_DRIVER", "STARTED", UVM_LOW)
+        `uvm_info("APB_DRV", "STARTED", UVM_LOW)
         forever begin
             // Fetch transaction from  sequencer
             seq_item_port.get_next_item(req);
@@ -57,7 +57,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
             //--------------------------------
             //  LOGGING 
             // Log the stimulus using UVM_INFO
-            `uvm_info("DRV_STIMULUS", $sformatf("TX#%0d %s / SLAVE=%0d REG=%0d ADDR=0x%08x %s%s", 
+            `uvm_info("APB_DRV", $sformatf("TX#%0d %s / SLAVE=%0d REG=%0d ADDR=0x%08x %s%s", 
                 tx_count1 + 1, (req.rw ? "WRITE" : "READ"), req.slave_sel, req.reg_sel, req.addr, 
                 (req.rw ? "DATA_IN=" : ""), (req.rw ? $sformatf("0x%08x", req.data_in) : "")), UVM_LOW)
 
@@ -71,7 +71,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
                 @(posedge vif.clk);
                 wait_cycles++;
                 if (wait_cycles >= READY_TIMEOUT_CYCLES) begin
-                    `uvm_fatal("DRV_TIMEOUT", $sformatf("Timeout waiting for ready=0 after issuing tx #%0d", tx_count1))
+                    `uvm_fatal("APB_DRV", $sformatf("Timeout waiting for ready=0 after issuing tx #%0d", tx_count1))
                 end
             end
 
@@ -81,7 +81,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
                 @(posedge vif.clk);
                 wait_cycles++;
                 if (wait_cycles >= READY_TIMEOUT_CYCLES) begin
-                    `uvm_fatal("DRV_TIMEOUT", $sformatf("Timeout waiting for ready=1 completion for tx #%0d", tx_count1))
+                    `uvm_fatal("APB_DRV", $sformatf("Timeout waiting for ready=1 completion for tx #%0d", tx_count1))
                 end
             end
 
@@ -94,7 +94,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
 
     // Reset task
     virtual task reset_dut();
-        `uvm_info("DRV_RESET", "Resetting DUT...", UVM_LOW)
+        `uvm_info("APB_DRV", "Resetting DUT...", UVM_LOW)
         vif.start <= 0;
         vif.rw <= 0;
         vif.data_in <= '0;
@@ -105,7 +105,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
         wait (vif.rst_n === 1'b0);
         wait (vif.rst_n === 1'b1);
         @(posedge vif.clk);
-        `uvm_info("DRV_RESET", "Reset sequence complete.", UVM_LOW)
+        `uvm_info("APB_DRV", "Reset sequence complete.", UVM_LOW)
     endtask
 
 endclass : apb_driver
