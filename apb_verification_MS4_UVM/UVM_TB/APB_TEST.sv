@@ -19,13 +19,6 @@ class apb_test extends uvm_test;
 
 	endfunction
 
-	// Topology Function
-	virtual function void end_of_elaboration_phase(uvm_phase phase);
-		super.end_of_elaboration_phase(phase);
-		`uvm_info("APB_TEST", "End of Elaboration Phase - Topology is set", UVM_HIGH)
-		uvm_top.print_topology();
-	endfunction
-
 	// APB_TEST Connect Phase
 	function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
@@ -63,6 +56,11 @@ class apb_test extends uvm_test;
 
         uvm_top.set_report_id_action_hier("DRV_STIMULUS", UVM_DISPLAY | UVM_LOG);
         uvm_top.set_report_id_file_hier("DRV_STIMULUS", drv_file);
+
+		uvm_top.print_topology();
+
+		`uvm_info("APB_TEST", "End of Elaboration Phase - Topology and File Logging is set", UVM_HIGH)
+
     endfunction
 
 endclass : apb_test

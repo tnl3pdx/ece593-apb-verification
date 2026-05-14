@@ -1,6 +1,3 @@
-`include "uvm_macros.svh"
-import uvm_pkg::*;
-
 class apb_coverage extends uvm_subscriber #(apb_transaction);
     `uvm_component_utils(apb_coverage)
 

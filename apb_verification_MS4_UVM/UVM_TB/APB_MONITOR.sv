@@ -24,53 +24,6 @@ class apb_monitor extends uvm_monitor;
 				((slave_idx == 2) && (reg_idx >= PARAMS::NUM_TIMERS)));
 	endfunction
 
-	// =========================================================
-	// FV-006 Functional Coverage Model
-	// =========================================================
-	// covergroup cg_apb;
-	// 	option.per_instance = 1;
-	// 	option.name = "APB_Functional_Coverage";
-
-	// 	// Track Read vs Write operations
-	// 	cp_rw: coverpoint cov_in_tx.rw {
-	// 		bins read  = {0};
-	// 		bins write = {1};
-	// 	}
-
-	// 	// Track which slave is being accessed
-	// 	cp_slave: coverpoint cov_in_tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] {
-	// 		bins slave0_mem   = {0};
-	// 		bins slave1_mem   = {1};
-	// 		bins slave2_timer = {2};
-	// 	}
-
-	// 	// Cross Coverage: Ensure every slave receives BOTH a read and a write
-	// 	cx_slave_rw: cross cp_slave, cp_rw;
-	// endgroup
-
-	// =========================================================
-	// FV-003: APB Protocol Functional Coverage
-	// =========================================================
-	//  cg_protocol;
-	// 	option.per_instance = 1;
-	// 	option.name = "FV-003_Protocol";
-
-	// 	cp_rw: coverpoint cov_out_tx.rw {
-	// 		bins read  = {0};
-	// 		bins write = {1};
-	// 	}
-
-	// 	cp_error: coverpoint cov_out_tx.transfer_status {
-	// 		bins no_error = {0};
-	// 		bins error    = {1};
-	// 	}
-
-	// 	cx_type_error: cross cp_rw, cp_error {
-	// 		// Reads to our memory never generate errors, so ignore that impossible combination
-	// 		ignore_bins read_errors = binsof(cp_rw.read) && binsof(cp_error.error);
-	// 	}
-	// endgroup
-
 	function new(string name = "apb_monitor", uvm_component parent);
 		super.new(name, parent);
 		`uvm_info("APB_MONITOR", "Creating APB Monitor", UVM_HIGH)
@@ -80,11 +33,6 @@ class apb_monitor extends uvm_monitor;
 		tx_count_out = 0;
 		prev_start = 1'b0;
 		prev_ready = 1'b1;
-
-		// Initialize coverage transactions and covergroups
-
-		// cg_apb = new();
-		// cg_protocol = new();
 	
 	`uvm_info(get_type_name(), "Constructor [new] completed", UVM_HIGH)
 	endfunction
@@ -153,12 +101,8 @@ class apb_monitor extends uvm_monitor;
 					(tx.rw ? $sformatf("0x%08x", tx.data_in) : "")
 				), UVM_LOW)
 
-				// Update coverage transaction for input covergroup
-				// cov_in_tx = tx;
-				// cg_apb.sample();
-
 				// Send transaction to scoreboard via analysis port
-			ap_in.write(tx);
+				ap_in.write(tx);
 				tx_count_in++;
 			end
 			prev_start = vif.start;
@@ -202,13 +146,8 @@ class apb_monitor extends uvm_monitor;
 					tx.transfer_status
 				), UVM_LOW)
 
-				// Update coverage transaction for protocol covergroup
-				// NOT USING THIS DUE TO APB_COVERAGE.SV BEING CREATED
-				// cov_out_tx = tx;
-				// cg_protocol.sample();
-
 				// Send transaction to scoreboard via analysis port
-			ap_out.write(tx);
+				ap_out.write(tx);
 				tx_count_out++;
 			end
 			prev_ready = vif.ready;

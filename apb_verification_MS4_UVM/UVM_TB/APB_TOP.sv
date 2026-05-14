@@ -9,6 +9,7 @@ import uvm_pkg::*;
 `include "UVM_TB/APB_MONITOR.sv"
 `include "UVM_TB/APB_AGENT.sv"
 `include "UVM_TB/APB_SCOREBOARD.sv"
+`include "UVM_TB/APB_COVERAGE.sv"
 `include "UVM_TB/APB_ENV.sv"
 `include "UVM_TB/APB_TEST.sv"
 
