@@ -10,8 +10,9 @@ class apb_monitor extends uvm_monitor;
 	bit prev_start;
 	bit prev_ready;
 
-	apb_transaction cov_in_tx;
-	apb_transaction cov_out_tx;
+	// apb_transaction cov_in_tx;
+	// apb_transaction cov_out_tx;
+	// commenting these out to prevent double instantiation
 
 	function bit tx_is_illegal(bit [PARAMS::ADDR_WIDTH-1:0] addr);
 		int unsigned slave_idx;
@@ -26,49 +27,49 @@ class apb_monitor extends uvm_monitor;
 	// =========================================================
 	// FV-006 Functional Coverage Model
 	// =========================================================
-	covergroup cg_apb;
-		option.per_instance = 1;
-		option.name = "APB_Functional_Coverage";
+	// covergroup cg_apb;
+	// 	option.per_instance = 1;
+	// 	option.name = "APB_Functional_Coverage";
 
-		// Track Read vs Write operations
-		cp_rw: coverpoint cov_in_tx.rw {
-			bins read  = {0};
-			bins write = {1};
-		}
+	// 	// Track Read vs Write operations
+	// 	cp_rw: coverpoint cov_in_tx.rw {
+	// 		bins read  = {0};
+	// 		bins write = {1};
+	// 	}
 
-		// Track which slave is being accessed
-		cp_slave: coverpoint cov_in_tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] {
-			bins slave0_mem   = {0};
-			bins slave1_mem   = {1};
-			bins slave2_timer = {2};
-		}
+	// 	// Track which slave is being accessed
+	// 	cp_slave: coverpoint cov_in_tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len] {
+	// 		bins slave0_mem   = {0};
+	// 		bins slave1_mem   = {1};
+	// 		bins slave2_timer = {2};
+	// 	}
 
-		// Cross Coverage: Ensure every slave receives BOTH a read and a write
-		cx_slave_rw: cross cp_slave, cp_rw;
-	endgroup
+	// 	// Cross Coverage: Ensure every slave receives BOTH a read and a write
+	// 	cx_slave_rw: cross cp_slave, cp_rw;
+	// endgroup
 
 	// =========================================================
 	// FV-003: APB Protocol Functional Coverage
 	// =========================================================
-	covergroup cg_protocol;
-		option.per_instance = 1;
-		option.name = "FV-003_Protocol";
+	//  cg_protocol;
+	// 	option.per_instance = 1;
+	// 	option.name = "FV-003_Protocol";
 
-		cp_rw: coverpoint cov_out_tx.rw {
-			bins read  = {0};
-			bins write = {1};
-		}
+	// 	cp_rw: coverpoint cov_out_tx.rw {
+	// 		bins read  = {0};
+	// 		bins write = {1};
+	// 	}
 
-		cp_error: coverpoint cov_out_tx.transfer_status {
-			bins no_error = {0};
-			bins error    = {1};
-		}
+	// 	cp_error: coverpoint cov_out_tx.transfer_status {
+	// 		bins no_error = {0};
+	// 		bins error    = {1};
+	// 	}
 
-		cx_type_error: cross cp_rw, cp_error {
-			// Reads to our memory never generate errors, so ignore that impossible combination
-			ignore_bins read_errors = binsof(cp_rw.read) && binsof(cp_error.error);
-		}
-	endgroup
+	// 	cx_type_error: cross cp_rw, cp_error {
+	// 		// Reads to our memory never generate errors, so ignore that impossible combination
+	// 		ignore_bins read_errors = binsof(cp_rw.read) && binsof(cp_error.error);
+	// 	}
+	// endgroup
 
 	function new(string name = "apb_monitor", uvm_component parent);
 		super.new(name, parent);
@@ -82,8 +83,10 @@ class apb_monitor extends uvm_monitor;
 
 		// Initialize coverage transactions and covergroups
 
-		cg_apb = new();
-		cg_protocol = new();
+		// cg_apb = new();
+		// cg_protocol = new();
+	
+	`uvm_info(get_type_name(), "Constructor [new] completed", UVM_HIGH)
 	endfunction
 
 	virtual function void build_phase(uvm_phase phase);
@@ -95,21 +98,27 @@ class apb_monitor extends uvm_monitor;
 		if (!uvm_config_db#(virtual apb_external_if)::get(this, "*", "vif", vif)) begin
 			`uvm_error("APB_MONITOR", "Failed to get VIF from config DB.")
 		end
-
+		`uvm_info(get_type_name(), "Build Phase completed", UVM_HIGH)
 	endfunction
 
 	virtual function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
-		`uvm_info("APB_MONITOR", "Connecting monitor to scoreboard", UVM_HIGH)
+		`uvm_info(get_type_name(), "Connect Phase completed", UVM_HIGH)
 	endfunction
 
 	virtual task run_phase(uvm_phase phase);
-		`uvm_info("APB_MONITOR", "STARTED", UVM_HIGH)
-		fork
-			monitor_input();
-			monitor_output();
-		join
-	endtask
+        `uvm_info(get_type_name(), "Run phase started. Waiting for reset...", UVM_LOW)
+
+        // Wait for reset to drop, then wait 1 clock cycle to ensure stability
+        wait(vif.rst_n === 1'b1);
+        @(posedge vif.clk);
+
+        `uvm_info(get_type_name(), "Reset complete. Starting capture threads.", UVM_LOW)
+        fork
+            monitor_input();
+            monitor_output();
+        join
+    endtask
 
 	task monitor_input();
 		apb_transaction tx;
@@ -145,8 +154,8 @@ class apb_monitor extends uvm_monitor;
 				), UVM_LOW)
 
 				// Update coverage transaction for input covergroup
-				cov_in_tx = tx;
-				cg_apb.sample();
+				// cov_in_tx = tx;
+				// cg_apb.sample();
 
 				// Send transaction to scoreboard via analysis port
 			ap_in.write(tx);
@@ -194,8 +203,9 @@ class apb_monitor extends uvm_monitor;
 				), UVM_LOW)
 
 				// Update coverage transaction for protocol covergroup
-				cov_out_tx = tx;
-				cg_protocol.sample();
+				// NOT USING THIS DUE TO APB_COVERAGE.SV BEING CREATED
+				// cov_out_tx = tx;
+				// cg_protocol.sample();
 
 				// Send transaction to scoreboard via analysis port
 			ap_out.write(tx);
