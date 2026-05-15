@@ -35,8 +35,10 @@ class apb_env extends uvm_env;
         agnt.mon.ap_in.connect(scb.mon_in_export);
         agnt.mon.ap_out.connect(scb.mon_out_export);
 
-        // Connect monitor output port to coverage subscriber export
-        agnt.mon.ap_out.connect(cov.analysis_export);
+        // Single-path coverage: connect scoreboard coverage port to coverage write export
+        // All transactions (writes with timer_override from input, reads from output, illegals) 
+        // are forwarded from scoreboard and sampled in coverage's single processing task
+        scb.ap_cov_write.connect(cov.cov_write_export);
         
         `uvm_info("APB_ENV", "Port connections established", UVM_MEDIUM)
     endfunction

@@ -16,6 +16,7 @@ class apb_transaction extends uvm_sequence_item;
 	time timestamp;
 
 	bit illegal; // Flag for transactions that violate constraints (e.g., invalid slave/reg_sel combinations)
+	bit timer_override; // Flag indicating timer override detected during write (for coverage)
 
 	static function bit [PARAMS::ADDR_WIDTH-1:0] build_addr(
 		bit [PARAMS::SLAVE_COUNT-1:0] slave_sel,

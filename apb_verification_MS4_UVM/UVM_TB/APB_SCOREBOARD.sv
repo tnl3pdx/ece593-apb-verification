@@ -39,62 +39,12 @@ class apb_scoreboard extends uvm_scoreboard;
     // Slave to Model Index Mapping
     int slave_to_model_idx[PARAMS::SLAVE_COUNT];
 
-    // Coverage Groups
-    int cov_slave_idx, cov_reg_idx;
-    bit cov_rw;
-    bit [PARAMS::DATA_WIDTH-1:0] cov_data;
-    bit cov_timer_override; 
-
-    covergroup cg_data_integrity;
-        option.per_instance = 1;
-        option.name = "FV-004_Data_Integrity";
-        cp_slave: coverpoint cov_slave_idx {
-            bins slave0 = {0}; bins slave1 = {1}; bins slave2 = {2};
-        }
-        cp_data: coverpoint cov_data {
-            bins all_zeros = {32'h00000000};
-            bins all_ones  = {32'hFFFFFFFF};
-            bins alt_a     = {32'hAAAAAAAA};
-            bins alt_5     = {32'h55555555};
-            bins others    = default;
-        }
-        cp_rw: coverpoint cov_rw {
-            bins read  = {0}; bins write = {1};
-        }
-        cx_integrity: cross cp_slave, cp_data, cp_rw;
-    endgroup
-
-    covergroup cg_reset;
-        option.per_instance = 1;
-        option.name = "FV-001_Reset";
-        cp_s0_regs: coverpoint cov_reg_idx iff (cov_slave_idx == 0 && cov_rw == 0 && cov_data == 32'h0) {
-            bins regs[] = {[0:31]};
-        }
-        cp_s1_regs: coverpoint cov_reg_idx iff (cov_slave_idx == 1 && cov_rw == 0 && cov_data == 32'h0) {
-            bins regs[] = {[0:31]};
-        }
-    endgroup
-    
-    covergroup cg_timer_validation;
-        option.per_instance = 1;
-        option.name = "FV-005_Timer_Sequences";
-        cp_floor_zero: coverpoint cov_data iff (cov_slave_idx == 2 && cov_rw == 0) {
-            bins hit_zero = {32'h00000000};
-        }
-        cp_oob_addr: coverpoint cov_reg_idx iff (cov_slave_idx == 2) {
-            bins valid_regs = {[0:1]}; bins oob_regs = {[2:31]}; 
-        }
-        cp_override: coverpoint cov_timer_override iff (cov_slave_idx == 2 && cov_rw == 1) {
-            bins occurred = {1};
-        }
-    endgroup
+    // Coverage forwarding port to coverage component
+    uvm_analysis_port #(apb_transaction) ap_cov_write;
 
     // Constructor & Build Phase
     function new(string name = "apb_scoreboard", uvm_component parent);
         super.new(name, parent);
-        cg_data_integrity = new();
-        cg_reset = new();
-        cg_timer_validation = new();
 
         `uvm_info("APB_SCB", "APB Scoreboard initialized", UVM_MEDIUM)
     endfunction
@@ -108,6 +58,7 @@ class apb_scoreboard extends uvm_scoreboard;
         mon_out_export = new("mon_out_export", this);
         mon_in_fifo    = new("mon_in_fifo", this);
         mon_out_fifo   = new("mon_out_fifo", this);
+        ap_cov_write   = new("ap_cov_write", this);
 
         foreach (slave_to_model_idx[i]) slave_to_model_idx[i] = -1;
         mem_slave_count = 0;
@@ -147,7 +98,7 @@ class apb_scoreboard extends uvm_scoreboard;
         mon_in_export.connect(mon_in_fifo.analysis_export);
         mon_out_export.connect(mon_out_fifo.analysis_export);
 
-        `uvm_info("APB_SCB", "Scoreboard connections established", UVM_MEDIUM)
+        `uvm_info("APB_SCB", "Scoreboard connections established (coverage port wired in env)", UVM_MEDIUM)
     endfunction
 
     task simulate_timers();
@@ -191,22 +142,24 @@ class apb_scoreboard extends uvm_scoreboard;
             
             if (tx.illegal) begin
                 illegal_count++;
-                if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
-                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
-                    cg_timer_validation.sample();
-                end
                 `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Illegal Transaction Acknowledged: ADDR=0x%08x SLAVE=%0d REG=%0d", total_input_count, tx.addr, slave_idx, reg_idx), UVM_HIGH)
             end
             else if (tx.rw) begin 
-                cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
-                cg_data_integrity.sample();
+                // Compute timer override for coverage forwarding
+                if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
+                    tx.timer_override = (ref_timer_active[slave_idx][reg_idx] && ref_timer_val[slave_idx][reg_idx] > 0) ? 1 : 0;
+                end else begin
+                    tx.timer_override = 1'b0;
+                end
+                
+                // Forward write transaction to coverage component
+                ap_cov_write.write(tx);
+                
                 if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                     golden_mem[model_idx][reg_idx] = tx.data_in;
                     `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Memory Write Registered: SLAVE=%0d REG=%0d ADDR=0x%08x DATA=0x%08x", total_input_count, slave_idx, reg_idx, tx.addr, tx.data_in), UVM_HIGH)
                 end 
                 else if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                    cov_timer_override = (ref_timer_active[slave_idx][reg_idx] && ref_timer_val[slave_idx][reg_idx] > 0) ? 1 : 0;
-                    cg_timer_validation.sample();
                     pending_start_val[slave_idx][reg_idx] = tx.data_in;
                     pending_start_request_time[slave_idx][reg_idx] = tx.timestamp;
                     pending_start_valid[slave_idx][reg_idx] = 1;
@@ -231,10 +184,6 @@ class apb_scoreboard extends uvm_scoreboard;
             if (tx.illegal) begin
                 // --- ILLEGAL TRANSACTION CHECK ---
                 // Only check: transfer_status should be asserted (1)
-                if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
-                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
-                    cg_timer_validation.sample();
-                end
                 
                 if (tx.transfer_status != 1'b1) begin
                     illegal_fail_count++;
@@ -243,6 +192,9 @@ class apb_scoreboard extends uvm_scoreboard;
                     illegal_pass_count++;
                     `uvm_info("APB_SCB_OUT", $sformatf("TX#%0d ILLEGAL PASS: transfer_status=%0b", total_output_count, tx.transfer_status), UVM_HIGH)
                 end
+                
+                // Forward illegal transaction to coverage
+                ap_cov_write.write(tx);
                 continue;
             end
 
@@ -270,8 +222,6 @@ class apb_scoreboard extends uvm_scoreboard;
             end else begin 
                 // --- READ COMPLETION CHECK ---
                 // Check: transfer_status deasserted (0), valid asserted (1), and data_out matches expected
-                cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
-                cg_data_integrity.sample(); cg_reset.sample(); cg_timer_validation.sample();
                 
                 transfer_status_ok = (tx.transfer_status == 1'b0);
                 valid_ok = (tx.valid == 1'b1);
@@ -297,6 +247,9 @@ class apb_scoreboard extends uvm_scoreboard;
                     read_pass_count++;
                     `uvm_info("APB_SCB_OUT", $sformatf("TX#%0d READ PASS: transfer_status=%0b, valid=%0b, data_out=0x%08x", total_output_count, tx.transfer_status, tx.valid, tx.data_out), UVM_HIGH)
                 end
+                
+                // Forward read transaction to coverage
+                ap_cov_write.write(tx);
             end
             slave_accesses[slave_idx]++; slave_rw_accesses[slave_idx][tx.rw]++;
         end

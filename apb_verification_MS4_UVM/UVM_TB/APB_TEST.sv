@@ -105,12 +105,13 @@ class apb_test extends uvm_test;
 // LOGGING
 
 	function void end_of_elaboration_phase(uvm_phase phase);
-        UVM_FILE scb_file, trs_file;
+        UVM_FILE scb_file, trs_file, cov_file;
         super.end_of_elaboration_phase(phase);
 
         // Open the files
         scb_file = $fopen("logs/uvm_scoreboard_report.log", "w");
         trs_file = $fopen("logs/uvm_transaction_report.log", "w");
+        cov_file = $fopen("logs/uvm_coverage_activity.log", "w");
 
 		// Configure Scoreboard Logging
         env.scb.set_report_verbosity_level(UVM_HIGH);
@@ -132,6 +133,11 @@ class apb_test extends uvm_test;
 
 		uvm_top.set_report_id_action_hier("APB_MON_OUT", UVM_LOG);
 		uvm_top.set_report_id_file_hier("APB_MON_OUT", trs_file);
+
+		// Configure Coverage Logging
+		env.cov.set_report_verbosity_level(UVM_HIGH);
+		uvm_top.set_report_id_action_hier("APV_COV", UVM_LOG);
+		uvm_top.set_report_id_file_hier("APV_COV", cov_file);
 
 		uvm_top.print_topology();
 
