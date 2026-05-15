@@ -13,8 +13,8 @@ class apb_monitor extends uvm_monitor;
 	function bit tx_is_illegal(bit [PARAMS::ADDR_WIDTH-1:0] addr);
 		int unsigned slave_idx;
 		int unsigned reg_idx;
-		slave_idx = addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-		reg_idx = addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+		slave_idx = PARAMS::addr_to_slave_idx(addr);
+		reg_idx = PARAMS::addr_to_reg_idx(addr);
 		return ((addr[PARAMS::WORD_LEN-1:0] != '0) ||
 				(slave_idx >= PARAMS::SLAVE_COUNT) ||
 				((slave_idx == 2) && (reg_idx >= PARAMS::NUM_TIMERS)));
@@ -22,7 +22,6 @@ class apb_monitor extends uvm_monitor;
 
 	function new(string name = "apb_monitor", uvm_component parent);
 		super.new(name, parent);
-		`uvm_info("APB_MONITOR", "Creating APB Monitor", UVM_HIGH)
 
 		// Initialize transaction counts and previous signal states
 		tx_count_in = 0;
@@ -30,34 +29,37 @@ class apb_monitor extends uvm_monitor;
 		prev_start = 1'b0;
 		prev_ready = 1'b1;
 	
-	`uvm_info("APB_MONITOR", "Constructor [new] completed", UVM_HIGH)
+		`uvm_info("APB_MON", "APB Monitor initialized", UVM_MEDIUM)
 	endfunction
 
-	virtual function void build_phase(uvm_phase phase);
+	function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
+
+		`uvm_info("APB_MON", "Building APB Monitor components (initialize ports and check VIF)", UVM_MEDIUM)
 
 		ap_in = new("ap_in", this);
 		ap_out = new("ap_out", this);
 
 		if (!uvm_config_db#(virtual apb_external_if)::get(this, "*", "vif", vif)) begin
-			`uvm_error("APB_MONITOR", "Failed to get VIF from config DB.")
+			`uvm_error("APB_MON", "Failed to get VIF from config DB.")
 		end
-		`uvm_info("APB_MONITOR", "Build Phase completed", UVM_HIGH)
+		`uvm_info("APB_MON", "Ports initialized and VIF present", UVM_MEDIUM)
 	endfunction
 
-	virtual function void connect_phase(uvm_phase phase);
+	function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
-		`uvm_info("APB_MONITOR", "Connect Phase completed", UVM_HIGH)
 	endfunction
 
-	virtual task run_phase(uvm_phase phase);
-        `uvm_info("APB_MONITOR", "Run phase started. Waiting for reset...", UVM_LOW)
+	task run_phase(uvm_phase phase);
+        `uvm_info("APB_MON", "Run phase started. Waiting for reset...", UVM_MEDIUM)
 
-        // Wait for reset to drop, then wait 1 clock cycle to ensure stability
+        // Wait for reset sequence to complete before starting monitoring
         wait(vif.rst_n === 1'b1);
+		wait (vif.rst_n === 1'b0);
+        wait (vif.rst_n === 1'b1);
         @(posedge vif.clk);
 
-        `uvm_info("APB_MONITOR", "Reset complete. Starting capture threads.", UVM_LOW)
+        `uvm_info("APB_MON", "Reset complete. Starting capture threads...", UVM_MEDIUM)
         fork
             monitor_input();
             monitor_output();
@@ -83,12 +85,11 @@ class apb_monitor extends uvm_monitor;
 				tx.timestamp = $time;
 
 				// Decode slave and register indices for coverage and reporting
-				slave_idx = vif.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-				reg_idx = vif.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+				slave_idx = PARAMS::addr_to_slave_idx(vif.addr);
+				reg_idx = PARAMS::addr_to_reg_idx(vif.addr);
 				tx.slave_sel = slave_idx;
 				tx.reg_sel = reg_idx;
 
-				// Build a multi-line, human-readable monitor message
 				if (tx.rw) begin
 					data_str = $sformatf("0x%08x", tx.data_in);
 				end else begin
@@ -104,7 +105,7 @@ class apb_monitor extends uvm_monitor;
 					data_str,
 					tx.illegal
 				);
-				`uvm_info("APB_MONITOR_IN", monitor_msg, UVM_LOW)
+				`uvm_info("APB_MON_IN", monitor_msg, UVM_HIGH)
 
 				// Send transaction to scoreboard via analysis port
 				ap_in.write(tx);
@@ -135,8 +136,8 @@ class apb_monitor extends uvm_monitor;
 				tx.timestamp = $time;
 
 				// Decode slave and register indices for coverage and reporting
-				slave_idx = vif.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-				reg_idx = vif.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+				slave_idx = PARAMS::addr_to_slave_idx(vif.addr);
+				reg_idx = PARAMS::addr_to_reg_idx(vif.addr);
 				tx.slave_sel = slave_idx;
 				tx.reg_sel = reg_idx;
 
@@ -156,7 +157,7 @@ class apb_monitor extends uvm_monitor;
 					tx.valid,
 					tx.transfer_status
 				);
-				`uvm_info("APB_MONITOR_OUT", monitor_msg, UVM_LOW)
+				`uvm_info("APB_MON_OUT", monitor_msg, UVM_HIGH)
 
 				// Send transaction to scoreboard via analysis port
 				ap_out.write(tx);

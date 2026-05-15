@@ -9,24 +9,31 @@ class apb_agent extends uvm_agent;
 
 	function new(string name = "apb_agent", uvm_component parent);
 		super.new(name, parent);
-		`uvm_info("APB_AGENT", "Creating APB Agent", UVM_HIGH)
+
+		`uvm_info("APB_AGENT", "APB Agent initialized", UVM_MEDIUM)
+
 	endfunction
 
 	function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 
-		`uvm_info("APB_AGENT", "Building agent components", UVM_HIGH)
+		`uvm_info("APB_AGENT", "Building agent components", UVM_MEDIUM)
 
 		seqr = apb_sequencer::type_id::create("seqr", this);
 		drv = apb_driver::type_id::create("drv", this);
 		mon = apb_monitor::type_id::create("mon", this);
+
+		`uvm_info("APB_AGENT", "Built sequencer, driver, and monitor", UVM_MEDIUM)
 	endfunction
 
 	function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
-		`uvm_info("APB_AGENT", "Connecting driver and monitor to sequencer and scoreboard", UVM_HIGH)
+
+		`uvm_info("APB_AGENT", "Connecting sequencer to driver", UVM_MEDIUM)
 
 		drv.seq_item_port.connect(seqr.seq_item_export);
+
+		`uvm_info("APB_AGENT", "Sequencer connected to driver", UVM_MEDIUM)
 	endfunction
 
 	task run_phase(uvm_phase phase);

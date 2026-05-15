@@ -68,10 +68,16 @@ class apb_test extends uvm_test;
 				seq = apb_illegal_tx_seq::type_id::create("apb_illegal_tx_seq");
 				seq.start(env.agnt.seqr);
 			end
+			"random": begin
+				repeat (random_count) begin
+					seq = rand_seq::type_id::create("rand_seq");
+					seq.start(env.agnt.seqr);
+				end
+			end
 			"all": begin
 				run_directed_sequences();
 				repeat (random_count) begin
-					seq = transaction_seq::type_id::create("transaction_seq");
+					seq = rand_seq::type_id::create("rand_seq");
 					seq.start(env.agnt.seqr);
 				end
 			end
@@ -98,7 +104,7 @@ class apb_test extends uvm_test;
 
 // LOGGING
 
-	virtual function void end_of_elaboration_phase(uvm_phase phase);
+	function void end_of_elaboration_phase(uvm_phase phase);
         UVM_FILE scb_file, trs_file;
         super.end_of_elaboration_phase(phase);
 
@@ -116,15 +122,16 @@ class apb_test extends uvm_test;
 		uvm_top.set_report_id_file_hier("APB_SCB", scb_file);
 
 		// Configure Driver and Monitor Logging
+		env.agnt.drv.set_report_verbosity_level(UVM_HIGH);
         uvm_top.set_report_id_action_hier("APB_DRV", UVM_LOG);
         uvm_top.set_report_id_file_hier("APB_DRV", trs_file);
 
-		uvm_top.set_report_id_action_hier("APB_MONITOR_IN", UVM_LOG);
-		uvm_top.set_report_id_file_hier("APB_MONITOR_IN", trs_file);
+		env.agnt.mon.set_report_verbosity_level(UVM_HIGH);
+		uvm_top.set_report_id_action_hier("APB_MON_IN", UVM_LOG);
+		uvm_top.set_report_id_file_hier("APB_MON_IN", trs_file);
 
-		uvm_top.set_report_id_action_hier("APB_MONITOR_OUT", UVM_LOG);
-		uvm_top.set_report_id_file_hier("APB_MONITOR_OUT", trs_file);
-
+		uvm_top.set_report_id_action_hier("APB_MON_OUT", UVM_LOG);
+		uvm_top.set_report_id_file_hier("APB_MON_OUT", trs_file);
 
 		uvm_top.print_topology();
 

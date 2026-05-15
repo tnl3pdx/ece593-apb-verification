@@ -95,10 +95,15 @@ class apb_scoreboard extends uvm_scoreboard;
         cg_data_integrity = new();
         cg_reset = new();
         cg_timer_validation = new();
+
+        `uvm_info("APB_SCB", "APB Scoreboard initialized", UVM_MEDIUM)
     endfunction
 
-    virtual function void build_phase(uvm_phase phase);
+    function void build_phase(uvm_phase phase);
         super.build_phase(phase);
+
+        `uvm_info("APB_SCB", "Building Scoreboard components (analysis ports, FIFOs, and golden models)", UVM_MEDIUM)
+
         mon_in_export  = new("mon_in_export", this);
         mon_out_export = new("mon_out_export", this);
         mon_in_fifo    = new("mon_in_fifo", this);
@@ -130,12 +135,19 @@ class apb_scoreboard extends uvm_scoreboard;
             golden_mem[i] = new[REG_DEPTH];
             foreach (golden_mem[i][j]) golden_mem[i][j] = '0;
         end
+
+        `uvm_info("APB_SCB", "Configured Scoreboard components", UVM_MEDIUM)
     endfunction
 
-    virtual function void connect_phase(uvm_phase phase);
+    function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
+
+        `uvm_info("APB_SCB", "Connecting scoreboard analysis exports to FIFOs", UVM_MEDIUM)
+
         mon_in_export.connect(mon_in_fifo.analysis_export);
         mon_out_export.connect(mon_out_fifo.analysis_export);
+
+        `uvm_info("APB_SCB", "Scoreboard connections established", UVM_MEDIUM)
     endfunction
 
     task simulate_timers();
@@ -158,8 +170,8 @@ class apb_scoreboard extends uvm_scoreboard;
     endfunction
 
     // Run Phase Threads
-    virtual task run_phase(uvm_phase phase);
-        `uvm_info("APB_SCB", "STARTED", UVM_HIGH)
+    task run_phase(uvm_phase phase);
+        `uvm_info("APB_SCB", "Starting Scoreboard", UVM_MEDIUM)
         fork
             get_input();
             get_output();
@@ -173,8 +185,8 @@ class apb_scoreboard extends uvm_scoreboard;
         forever begin
             mon_in_fifo.get(tx);
             total_input_count++;
-            slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-            reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+            slave_idx = PARAMS::addr_to_slave_idx(tx.addr);
+            reg_idx = PARAMS::addr_to_reg_idx(tx.addr);
             model_idx = (slave_idx < PARAMS::SLAVE_COUNT) ? slave_to_model_idx[slave_idx] : -1;
             
             if (tx.illegal) begin
@@ -212,8 +224,8 @@ class apb_scoreboard extends uvm_scoreboard;
         forever begin
             mon_out_fifo.get(tx);
             total_output_count++;
-            slave_idx = tx.addr[PARAMS::ADDR_WIDTH-1 -: PARAMS::ADDR_MSB_len];
-            reg_idx = tx.addr[PARAMS::WORD_LEN +: PARAMS::REG_NUM];
+            slave_idx = PARAMS::addr_to_slave_idx(tx.addr);
+            reg_idx = PARAMS::addr_to_reg_idx(tx.addr);
             model_idx = (slave_idx < PARAMS::SLAVE_COUNT) ? slave_to_model_idx[slave_idx] : -1;
 
             if (tx.illegal) begin
@@ -226,10 +238,10 @@ class apb_scoreboard extends uvm_scoreboard;
                 
                 if (tx.transfer_status != 1'b1) begin
                     illegal_fail_count++;
-                    `uvm_error("APB_SCB_OUT", $sformatf("ILLEGAL FAIL: transfer_status=%0b (expected 1)", tx.transfer_status))
+                    `uvm_error("APB_SCB_OUT", $sformatf("TX#%0d ILLEGAL FAIL: transfer_status=%0b (expected 1)", total_output_count, tx.transfer_status))
                 end else begin
                     illegal_pass_count++;
-                    `uvm_info("APB_SCB_OUT", $sformatf("ILLEGAL PASS: transfer_status=%0b", tx.transfer_status), UVM_HIGH)
+                    `uvm_info("APB_SCB_OUT", $sformatf("TX#%0d ILLEGAL PASS: transfer_status=%0b", total_output_count, tx.transfer_status), UVM_HIGH)
                 end
                 continue;
             end
@@ -291,7 +303,7 @@ class apb_scoreboard extends uvm_scoreboard;
     endtask
 
     // Report Phase
-    virtual function void report_phase(uvm_phase phase);
+    function void report_phase(uvm_phase phase);
         super.report_phase(phase);
         `uvm_info("APB_SCB", "===== FINAL SCOREBOARD REPORT =====", UVM_LOW)
         `uvm_info("APB_SCB", $sformatf("WRITES: PASS=%0d FAIL=%0d", write_pass_count, write_fail_count), UVM_LOW)

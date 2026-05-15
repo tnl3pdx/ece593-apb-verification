@@ -10,30 +10,31 @@ class apb_driver extends uvm_driver #(apb_transaction);
     // Standard UVM component constructor
     function new(string name = "apb_driver", uvm_component parent);
         super.new(name, parent);
+        `uvm_info("APB_DRV", "APB Driver initialized", UVM_MEDIUM)
     endfunction
 
     // Retrieve virtual interface
-    virtual function void build_phase(uvm_phase phase);
+    function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        `uvm_info("APB_DRV", "Build phase started", UVM_HIGH)
+        `uvm_info("APB_DRV", "Checking VIF", UVM_MEDIUM)
         
         // Fetch the virtual interface from the config DB
         if (!uvm_config_db#(virtual apb_external_if)::get(this, "", "vif", vif)) begin
             `uvm_fatal("DRV_NO_VIF", {"Virtual interface must be set for: ", get_full_name(), ".vif"})
         end
         
-        `uvm_info("APB_DRV", "Build phase complete", UVM_HIGH)
+        `uvm_info("APB_DRV", "VIF present", UVM_MEDIUM)
     endfunction
 
     // Run phase, reset DUT and drive transactions
-    virtual task run_phase(uvm_phase phase);
+    task run_phase(uvm_phase phase);
         int wait_cycles;
         
         // Execute Reset Sequence
         reset_dut();
 
         // Main Stimulus Loop
-        `uvm_info("APB_DRV", "STARTED", UVM_LOW)
+        `uvm_info("APB_DRV", "Running stimulus loop", UVM_MEDIUM)
         forever begin
             // Fetch transaction from  sequencer
             seq_item_port.get_next_item(req);
@@ -59,7 +60,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
             // Log the stimulus using UVM_INFO
             `uvm_info("APB_DRV", $sformatf("TX#%0d %s / SLAVE=%0d REG=%0d ADDR=0x%08x %s%s", 
                 tx_count1 + 1, (req.rw ? "WRITE" : "READ"), req.slave_sel, req.reg_sel, req.addr, 
-                (req.rw ? "DATA_IN=" : ""), (req.rw ? $sformatf("0x%08x", req.data_in) : "")), UVM_LOW)
+                (req.rw ? "DATA_IN=" : ""), (req.rw ? $sformatf("0x%08x", req.data_in) : "")), UVM_HIGH)
 
             @(posedge vif.clk);
             vif.start <= 0; // Deassert start after one cycle
@@ -93,8 +94,8 @@ class apb_driver extends uvm_driver #(apb_transaction);
     endtask
 
     // Reset task
-    virtual task reset_dut();
-        `uvm_info("APB_DRV", "Resetting DUT...", UVM_LOW)
+    task reset_dut();
+        `uvm_info("APB_DRV", "Resetting DUT", UVM_MEDIUM)
         vif.start <= 0;
         vif.rw <= 0;
         vif.data_in <= '0;
@@ -105,7 +106,7 @@ class apb_driver extends uvm_driver #(apb_transaction);
         wait (vif.rst_n === 1'b0);
         wait (vif.rst_n === 1'b1);
         @(posedge vif.clk);
-        `uvm_info("APB_DRV", "Reset sequence complete.", UVM_LOW)
+        `uvm_info("APB_DRV", "Reset sequence complete.", UVM_MEDIUM)
     endtask
 
 endclass : apb_driver

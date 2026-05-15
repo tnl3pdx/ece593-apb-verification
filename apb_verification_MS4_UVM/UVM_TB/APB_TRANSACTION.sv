@@ -37,7 +37,7 @@ class apb_transaction extends uvm_sequence_item;
 	}
 
 	constraint c_rw {
-		rw dist { 1:=1, 0:=1 }; // Even distribution of read and write transactions
+		rw dist { 1:=1, 0:=1 };
 	}
 
 	constraint c_data_patterns {
@@ -49,7 +49,6 @@ class apb_transaction extends uvm_sequence_item;
 			32'h55555555 := 2, // Force Alternating 0101
 			[32'h00000001 : 32'hFFFFFFFE] :/ 20 // Standard random values
 		};
-		if (!rw) data_in == 32'h0000_0000; // For reads, drive in 0s
 	}
 
 	// --- Methods ---
@@ -59,9 +58,16 @@ class apb_transaction extends uvm_sequence_item;
 		if (slave_sel == 2) begin
 			reg_sel = reg_sel % PARAMS::NUM_TIMERS; // Restrict to valid timer registers
 		end
+
 		// Construct address from slave_sel and reg_sel using the monitored bus layout
 		addr = build_addr(slave_sel, reg_sel);
+
+		// Set illegal flag to 0 by default
 		illegal = 1'b0;
+
+		// For reads, drive in 0s
+		if (!rw) data_in = 32'h0000_0000; 
+
 	endfunction
 
 	// UVM Constructor

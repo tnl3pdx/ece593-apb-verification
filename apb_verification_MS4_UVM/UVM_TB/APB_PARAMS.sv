@@ -32,4 +32,14 @@ package PARAMS;
 	parameter WAIT_WRITE_S2 = 1;								//Waitstates for Slave 2 writes
 	parameter WAIT_READ_S2 = 1;									//Waitstates for Slave 2 reads
 	parameter NUM_TIMERS = 5;									//Number of timers in the system (max 32)
+
+	// Helper functions
+	function int addr_to_slave_idx(bit [ADDR_WIDTH-1:0] addr);
+		return addr[ADDR_WIDTH-1 -: ADDR_MSB_len];
+	endfunction
+
+	function int addr_to_reg_idx(bit [ADDR_WIDTH-1:0] addr);
+		return addr[WORD_LEN +: REG_NUM];
+	endfunction
+
 endpackage : PARAMS

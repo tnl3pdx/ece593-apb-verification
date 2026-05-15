@@ -1,7 +1,7 @@
 import uvm_pkg::*;
 `include "uvm_macros.svh"
 
-`include "UVM_TB/PARAMS.sv"
+`include "UVM_TB/APB_PARAMS.sv"
 `include "UVM_TB/APB_TRANSACTION.sv"
 `include "UVM_TB/APB_SEQUENCE.sv"
 `include "UVM_TB/APB_SEQUENCER.sv"

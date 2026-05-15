@@ -51,22 +51,20 @@ class apb_coverage extends uvm_subscriber #(apb_transaction);
         super.new(name, parent);
         cg_apb = new();
         cg_protocol = new();
-        `uvm_info(get_type_name(), "Constructor [new] completed", UVM_HIGH)
+        `uvm_info("APV_COV", "APB Coverage initialized", UVM_MEDIUM)
     endfunction
 
-    virtual function void build_phase(uvm_phase phase);
+    function void build_phase(uvm_phase phase);
         super.build_phase(phase);
-        `uvm_info(get_type_name(), "Build Phase completed", UVM_HIGH)
     endfunction
 
-    virtual function void connect_phase(uvm_phase phase);
+    function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        `uvm_info(get_type_name(), "Connect Phase completed", UVM_HIGH)
     endfunction
 
     // Subscriber Function
     // Automatically called by Monitor via analysis port
-    virtual function void write(apb_transaction t);
+    function void write(apb_transaction t);
         // Map incoming broadcasted transaction to coverage handle
         cov_tx = t;
         
@@ -74,7 +72,7 @@ class apb_coverage extends uvm_subscriber #(apb_transaction);
         cg_apb.sample();
         cg_protocol.sample();
         
-        `uvm_info("COV", "Sampled transaction for protocol coverage", UVM_DEBUG)
+        `uvm_info("APV_COV", "Sampled transaction for protocol coverage", UVM_DEBUG)
     endfunction
 
 endclass : apb_coverage
