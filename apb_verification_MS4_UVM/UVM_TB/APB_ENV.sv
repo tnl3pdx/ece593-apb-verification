@@ -27,18 +27,16 @@ class apb_env extends uvm_env;
     endfunction
 
     // Connect phase: Connect agent's monitor to the scoreboard and coverage
-    function void connect_phase(uvm_phase phase);
+   function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-        `uvm_info("APB_ENV", "Connecting agent ports to scoreboard and coverage", UVM_MEDIUM)
-
-        // Connect monitor analysis ports to scoreboard exports
+        
+        // Connect to Scoreboard
         agnt.mon.ap_in.connect(scb.mon_in_export);
         agnt.mon.ap_out.connect(scb.mon_out_export);
 
-        // Connect monitor output port to coverage subscriber export
-        agnt.mon.ap_out.connect(cov.analysis_export);
-        
-        `uvm_info("APB_ENV", "Port connections established", UVM_MEDIUM)
+        // Connect to Coverage (Both Interfaces)
+        agnt.mon.ap_in.connect(cov.cov_export_in);
+        agnt.mon.ap_out.connect(cov.cov_export_out);
     endfunction
 
     task run_phase(uvm_phase phase);

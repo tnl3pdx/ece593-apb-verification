@@ -34,3 +34,16 @@ apb_coverage handle declared and built using UVM factory (type_id::create) withi
 Added TLM Connection: agnt.mon.ap_out to cov.analysis_export during the connect_phase
 
 Phase Logging: Cleaned up the existing $display and uvm_info statements, standardizing them with get_type_name() and proper UVM_HIGH/UVM_LOW verbosity levels
+
+**14-MAY-2026**
+Coverage Architecture & Transition Bins Update
+
+**APB_COVERAGE.sv**
+Dual-Port Integration, Upgraded coverage collector from standard uvm_subscriber to a custom uvm_component using `uvm_analysis_imp_decl macros, for simultaneous listening to both the input and output bus interfaces
+
+Replaced the default write() function with write_mon_in() and write_mon_out() to independently sample the request and response transactions
+
+cg_apb covergroup to verify back-to-back bus operations
+
+**APB_ENV.sv**
+Updated the connect_phase to wire both agnt.mon.ap_in and agnt.mon.ap_out to new dual ports on coverage collector
