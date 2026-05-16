@@ -1,3 +1,6 @@
+`uvm_analysis_imp_decl(_mon_in)
+`uvm_analysis_imp_decl(_mon_out)
+
 package PARAMS;
 	// Global parameters
 	parameter CLK_PERIOD = 10;									//Clock period in time units

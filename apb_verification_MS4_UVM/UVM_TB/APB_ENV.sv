@@ -13,7 +13,7 @@ class apb_env extends uvm_env;
     endfunction
 
     // Build phase: Instantiate components
-    function void build_phase(uvm_phase phase);
+    virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
         `uvm_info("APB_ENV", "Initializing components", UVM_MEDIUM)
@@ -27,19 +27,19 @@ class apb_env extends uvm_env;
     endfunction
 
     // Connect phase: Connect agent's monitor to the scoreboard and coverage
-   function void connect_phase(uvm_phase phase);
+    virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
         
         // Connect to Scoreboard
-        agnt.mon.ap_in.connect(scb.mon_in_export);
-        agnt.mon.ap_out.connect(scb.mon_out_export);
+        agnt.mon.ap_in.connect(scb.scb_mon_in_port);
+        agnt.mon.ap_out.connect(scb.scb_mon_out_port);
 
         // Connect to Coverage (Both Interfaces)
-        agnt.mon.ap_in.connect(cov.cov_export_in);
-        agnt.mon.ap_out.connect(cov.cov_export_out);
+        agnt.mon.ap_in.connect(cov.cov_mon_in_port);
+        agnt.mon.ap_out.connect(cov.cov_mon_out_port);
     endfunction
 
-    task run_phase(uvm_phase phase);
+    virtual task run_phase(uvm_phase phase);
         super.run_phase(phase);
     endtask
 

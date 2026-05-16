@@ -14,7 +14,7 @@ class apb_agent extends uvm_agent;
 
 	endfunction
 
-	function void build_phase(uvm_phase phase);
+	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 
 		`uvm_info("APB_AGENT", "Building agent components", UVM_MEDIUM)
@@ -26,7 +26,7 @@ class apb_agent extends uvm_agent;
 		`uvm_info("APB_AGENT", "Built sequencer, driver, and monitor", UVM_MEDIUM)
 	endfunction
 
-	function void connect_phase(uvm_phase phase);
+	virtual function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
 
 		`uvm_info("APB_AGENT", "Connecting sequencer to driver", UVM_MEDIUM)
@@ -36,7 +36,7 @@ class apb_agent extends uvm_agent;
 		`uvm_info("APB_AGENT", "Sequencer connected to driver", UVM_MEDIUM)
 	endfunction
 
-	task run_phase(uvm_phase phase);
+	virtual task run_phase(uvm_phase phase);
 		super.run_phase(phase);
 	endtask
 

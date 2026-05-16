@@ -5,9 +5,9 @@
 VCS_FLAGS = -sverilog -debug_access+all -kdb -cm line+cond+fsm+tgl+branch -ntb_opts uvm +define+UVM_REPORT_DISABLE_FILE_LINE
 SIM_FLAGS = -l run.log -cm line+cond+fsm+tgl+branch
 
-sim_ng: clean build run 
-sim: clean build run gui
-cov: clean build run cov
+all_sim_ng: clean build run 
+all_sim: clean build run gui
+all_cov: clean build run cov
 
 build:
 	mkdir logs/
