@@ -1,3 +1,12 @@
+// ============================================================================
+// GROUP 2 UVM TESTBENCH
+// Class: apb_coverage
+// Type: UVM Component (Subscriber)
+// Description: Passively monitors the APB bus via dual analysis ports
+// Independently tracks functional coverage for protocol integrity, reset states,
+// and timer edge-cases without interfering with the scoreboard or datapath
+// ============================================================================
+
 class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
     `uvm_component_utils(apb_coverage)
 
@@ -25,13 +34,21 @@ class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
             bins reset_asserted = {0};
         }*/
 
-        cp_s0_regs: coverpoint cov_in_reg_idx iff (cov_in_slave_idx == 0 && cov_in_tx.rw == 0 && cov_in_tx.data_in == 32'h0) {
-            bins regs[] = {[0:31]};
-        }
+        // cp_s0_regs: coverpoint cov_in_reg_idx iff (cov_in_slave_idx == 0 && cov_in_tx.rw == 0 && cov_in_tx.data_in == 32'h0) {
+        //     bins regs[] = {[0:31]};
+        // }
 
-        cp_s1_regs: coverpoint cov_in_reg_idx iff (cov_in_slave_idx == 1 && cov_in_tx.rw == 0 && cov_in_tx.data_in == 32'h0) {
+        // cp_s1_regs: coverpoint cov_in_reg_idx iff (cov_in_slave_idx == 1 && cov_in_tx.rw == 0 && cov_in_tx.data_in == 32'h0) {
+        //     bins regs[] = {[0:31]};
+        // }
+
+        cp_s0_regs: coverpoint cov_out_reg_idx iff (cov_out_slave_idx == 0 && cov_out_tx.rw == 0 && cov_out_tx.data_out == 32'h0) {
             bins regs[] = {[0:31]};
         }
+        cp_s1_regs: coverpoint cov_out_reg_idx iff (cov_out_slave_idx == 1 && cov_out_tx.rw == 0 && cov_out_tx.data_out == 32'h0) {
+            bins regs[] = {[0:31]};
+        }    
+
     endgroup
 
     // =========================================================
@@ -114,6 +131,11 @@ class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
     // =========================================================
     // FV-005 Timer Validation Coverage (Output Oriented, focused on Slave 2)
     // =========================================================
+
+    bit cov_timer_override;
+    time timer_start_time[2];
+    int  timer_duration[2];
+    
     covergroup cg_timer_validation;
         option.per_instance = 1;
         option.name = "FV-005_Timer_Sequences";
@@ -126,6 +148,10 @@ class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
             bins valid_regs = {[0:1]}; 
             ignore_bins oob_regs = {[2:31]}; 
         }
+
+        cp_override: coverpoint cov_timer_override iff (cov_out_slave_idx == 2 && cov_out_tx.rw == 1) {
+            bins occurred = {1};
+}
     endgroup
 
 
@@ -148,6 +174,8 @@ class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
         `uvm_info("APB_COV", "Building Coverage components (analysis ports)", UVM_MEDIUM)
 
         // Build the two receiving ports
+        // Dual port analysis implementations; allows this single component to subscribe 
+        // to both the request (inpjut) and response (output) phases of bus
         cov_mon_in_port  = new("cov_mon_in_port", this);
         cov_mon_out_port = new("cov_mon_out_port", this);
 
@@ -163,18 +191,39 @@ class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
     endtask
 
     // Write functions for both analysis ports
+
+    // Automatically triggered by input monitor
+    // Evaluates sequence transitions and requested operations (rw, address ranges)
     function void write_mon_in(apb_transaction t);
         cov_in_tx = t;
 
         cov_in_slave_idx = PARAMS::addr_to_slave_idx(cov_in_tx.addr);
         cov_in_reg_idx = PARAMS::addr_to_reg_idx(cov_in_tx.addr);
 
-        cg_reset.sample();
+        if (cov_in_slave_idx == 2 && cov_in_tx.rw == 1 && cov_in_reg_idx < 2) begin
+        time elapsed = $time - timer_start_time[cov_in_reg_idx];
+        time expected = timer_duration[cov_in_reg_idx] * PARAMS::CLK_PERIOD;
+
+        // Override if write occurrs before timer is done
+        cov_timer_override = (elapsed < expected) ? 1 : 0;
+
+        // Update trackers with new write
+        timer_start_time[cov_in_reg_idx] = $time;
+        timer_duration[cov_in_reg_idx] = cov_in_tx.data_in;
+        end else begin
+        cov_timer_override = 0;
+        end
+
+
+
+       // cg_reset.sample();
         cg_apb_operations.sample();
 
         `uvm_info("APB_COV", "Sampled INPUT transaction", UVM_DEBUG)
     endfunction
 
+    // Automatically triggered by output monitor
+    // Evaluates data integrity, protocol error flags, and reset values after a transfer completes
     function void write_mon_out(apb_transaction t);
         cov_out_tx = t;
 
@@ -184,6 +233,9 @@ class apb_coverage extends uvm_component; // Upgraded from uvm_subscriber
         cg_error_resp.sample();
         cg_data_integrity.sample();
         cg_timer_validation.sample();
+
+        // adding reset function here, from write_mon_in() function
+        cg_reset.sample();
 
         `uvm_info("APB_COV", "Sampled OUTPUT transaction", UVM_DEBUG)
 
