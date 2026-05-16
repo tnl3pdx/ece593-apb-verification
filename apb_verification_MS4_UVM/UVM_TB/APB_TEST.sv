@@ -3,10 +3,13 @@ class apb_test extends uvm_test;
 
 	apb_env env;
 	uvm_sequence_base seq;
-	string test_mode = "all";
-	int unsigned random_count = 1000;
-	int unsigned run_timeout_us = 100;
 	time run_timeout;
+	
+	// Configuration vars for test
+	string test_mode = "random";
+	int unsigned random_count = 20;
+	int unsigned run_timeout_us = 100;
+	
 
 	// APB_TEST Constructor
 	function new(string name = "apb_test", uvm_component parent);

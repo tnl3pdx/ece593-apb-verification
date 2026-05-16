@@ -2,6 +2,11 @@
 
 Milestone 4
 
+## LLM Acknowledgement
+
+Sections of the UVM Testbench utilized LLMs to help debug, generate, and fix the implementation. Anthropic Claude, Google Gemini, and OpenAI GPT models were used in this section.
+
+
 ## APB_DRIVER.sv
 extends uvm_driver, parameterized with apb_transaction
 `uvm_component_utils(apb_driver): Registers the driver with the UVM factory
