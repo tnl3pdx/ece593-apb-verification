@@ -1,0 +1,127 @@
+Command: /home/tnl3/common/Documents/ECE593/ece593-apb-verification/apb_verification_MS4_UVM/./simv -l run.log -cm line+cond+fsm+tgl+branch -l logs/make_run.log
+Chronologic VCS simulator copyright 1991-2023
+Contains Synopsys proprietary information.
+Compiler version V-2023.12-SP2_Full64; Runtime version V-2023.12-SP2_Full64;  May 15 21:09 2026
+----------------------------------------------------------------
+UVM-1.1d.Synopsys
+(C) 2007-2013 Mentor Graphics Corporation
+(C) 2007-2013 Cadence Design Systems, Inc.
+(C) 2006-2013 Synopsys, Inc.
+(C) 2011-2013 Cypress Semiconductor Corp.
+----------------------------------------------------------------
+
+  ***********       IMPORTANT RELEASE NOTES         ************
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_NO_DEPRECATED undefined.
+  See http://www.eda.org/svdb/view.php?id=3313 for more details.
+
+  You are using a version of the UVM library that has been compiled
+  with `UVM_OBJECT_MUST_HAVE_CONSTRUCTOR undefined.
+  See http://www.eda.org/svdb/view.php?id=3770 for more details.
+
+      (Specify +UVM_NO_RELNOTES to turn off this notice)
+
+UVM_INFO @ 0: reporter [RNTST] Running test apb_test...
+*Verdi* Loading libsscore_vcs202312.so
+FSDB Dumper for VCS, Release Verdi_X-2025.06-SP2-1, Linux x86_64/64bit, 01/19/2026
+(C) 1996 - 2026 by Synopsys, Inc.
+*Verdi* : Create FSDB file 'novas.fsdb'
+*Verdi* : Begin traversing the scopes, layer (0).
+*Verdi* : End of traversing.
+UVM_INFO @ 0: uvm_test_top.env [APB_ENV] APB Environment initialized
+UVM_INFO @ 0: uvm_test_top [APB_TEST] Run phase timeout set to 0 (100 us)
+UVM_INFO @ 0: uvm_test_top.env [APB_ENV] Initializing components
+UVM_INFO @ 0: uvm_test_top.env.agnt [APB_AGENT] APB Agent initialized
+UVM_INFO @ 0: uvm_test_top.env.scb [APB_SCB] APB Scoreboard initialized
+UVM_INFO @ 0: uvm_test_top.env.cov [APB_COV] APB Coverage Groups initialized
+UVM_INFO @ 0: uvm_test_top.env [APB_ENV] Agent, Scoreboard, and Coverage components initialized
+UVM_INFO @ 0: uvm_test_top.env.agnt [APB_AGENT] Building agent components
+UVM_INFO @ 0: uvm_test_top.env.agnt.seqr [APB_SEQR] APB Sequencer initialized
+UVM_INFO @ 0: uvm_test_top.env.agnt.drv [APB_DRV] APB Driver initialized
+UVM_INFO @ 0: uvm_test_top.env.agnt.mon [APB_MON] APB Monitor initialized
+UVM_INFO @ 0: uvm_test_top.env.agnt [APB_AGENT] Built sequencer, driver, and monitor
+UVM_INFO @ 0: uvm_test_top.env.agnt.drv [APB_DRV] Checking VIF
+UVM_INFO @ 0: uvm_test_top.env.agnt.drv [APB_DRV] VIF present
+UVM_INFO @ 0: uvm_test_top.env.agnt.mon [APB_MON] Building APB Monitor components (initialize ports and check VIF)
+UVM_INFO @ 0: uvm_test_top.env.agnt.mon [APB_MON] Ports initialized and VIF present
+UVM_INFO @ 0: uvm_test_top.env.cov [APB_COV] Building Coverage components (analysis ports)
+UVM_INFO @ 0: uvm_test_top.env.cov [APB_COV] Coverage ports initialized
+UVM_INFO @ 0: uvm_test_top.env.scb [APB_SCB] Building Scoreboard components (analysis ports, FIFOs, and golden models)
+UVM_INFO @ 0: uvm_test_top.env.scb [APB_SCB] Configured Scoreboard components
+UVM_INFO @ 0: uvm_test_top.env.agnt [APB_AGENT] Connecting sequencer to driver
+UVM_INFO @ 0: uvm_test_top.env.agnt [APB_AGENT] Sequencer connected to driver
+UVM_INFO @ 0: reporter [UVMTOP] UVM testbench topology:
+----------------------------------------------------------------
+Name                       Type                      Size  Value
+----------------------------------------------------------------
+uvm_test_top               apb_test                  -     @461 
+  env                      apb_env                   -     @469 
+    agnt                   apb_agent                 -     @477 
+      drv                  apb_driver                -     @628 
+        rsp_port           uvm_analysis_port         -     @645 
+        seq_item_port      uvm_seq_item_pull_port    -     @636 
+      mon                  apb_monitor               -     @654 
+        ap_in              uvm_analysis_port         -     @663 
+        ap_out             uvm_analysis_port         -     @672 
+      seqr                 apb_sequencer             -     @505 
+        rsp_export         uvm_analysis_export       -     @513 
+        seq_item_export    uvm_seq_item_pull_imp     -     @619 
+        arbitration_queue  array                     0     -    
+        lock_queue         array                     0     -    
+        num_last_reqs      integral                  32    'd1  
+        num_last_rsps      integral                  32    'd1  
+    cov                    apb_coverage              -     @493 
+      cov_mon_in_port      uvm_analysis_imp_mon_in   -     @687 
+      cov_mon_out_port     uvm_analysis_imp_mon_out  -     @696 
+    scb                    apb_scoreboard            -     @485 
+      scb_mon_in_port      uvm_analysis_imp_mon_in   -     @705 
+      scb_mon_out_port     uvm_analysis_imp_mon_out  -     @714 
+----------------------------------------------------------------
+
+UVM_INFO @ 0: uvm_test_top.env.agnt.mon [APB_MON] Run phase started. Waiting for reset...
+UVM_INFO @ 0: uvm_test_top.env.scb [APB_SCB] Starting Scoreboard
+UVM_INFO @ 25: uvm_test_top.env.agnt.mon [APB_MON] Reset complete. Starting capture threads...
+UVM_INFO @ 1025: reporter [TEST_DONE] 'run' phase is ready to proceed to the 'extract' phase
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] ===== FINAL SCOREBOARD REPORT =====
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] WRITES: PASS=10 FAIL=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] READS:  PASS=10 FAIL=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] ILLEGAL TX: PASS=0 FAIL=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB]   Slave 0: 4 accesses (WRITES=2 (ERRORS=0) READS=2 (ERRORS=0))
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB]   Slave 1: 10 accesses (WRITES=7 (ERRORS=0) READS=3 (ERRORS=0))
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB]   Slave 2: 6 accesses (WRITES=1 (ERRORS=0) READS=5 (ERRORS=0))
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] VERIFICATION PASSED! TOTAL ERRORS: 0 | TRANSACTIONS VERIFIED: 20
+
+--- UVM Report Summary ---
+
+** Report counts by severity
+UVM_INFO :  129
+UVM_WARNING :    0
+UVM_ERROR :    0
+UVM_FATAL :    0
+** Report counts by id
+[APB_AGENT]     5
+[APB_COV]     3
+[APB_DRV]    26
+[APB_ENV]     3
+[APB_MON]     5
+[APB_MON_IN]    20
+[APB_MON_OUT]    20
+[APB_SCB]    12
+[APB_SCB_IN]    10
+[APB_SCB_OUT]    20
+[APB_SEQR]     1
+[APB_TEST]     1
+[RNTST]     1
+[TEST_DONE]     1
+[UVMTOP]     1
+$finish called from file "/pkgs/synopsys/2024/vcs/vcs/V-2023.12-SP2/etc/uvm/base/uvm_root.svh", line 437.
+$finish at simulation time                 1025
+
+---------------------------------------------------------------------------
+VCS Coverage Metrics: during simulation line, cond, FSM, branch, tgl was monitored
+---------------------------------------------------------------------------
+           V C S   S i m u l a t i o n   R e p o r t 
+Time: 1025
+CPU Time:      1.050 seconds;       Data structure size:   0.6Mb
+Fri May 15 21:09:03 2026

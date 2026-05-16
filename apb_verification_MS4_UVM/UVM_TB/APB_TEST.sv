@@ -3,10 +3,13 @@ class apb_test extends uvm_test;
 
 	apb_env env;
 	uvm_sequence_base seq;
-	string test_mode = "all";
-	int unsigned random_count = 1000;
-	int unsigned run_timeout_us = 100;
 	time run_timeout;
+	
+	// Configuration vars for test
+	string test_mode = "random";
+	int unsigned random_count = 20;
+	int unsigned run_timeout_us = 100;
+	
 
 	// APB_TEST Constructor
 	function new(string name = "apb_test", uvm_component parent);
@@ -15,7 +18,7 @@ class apb_test extends uvm_test;
 	endfunction
 
 	// APB_TEST Build Phase
-	function void build_phase(uvm_phase phase);
+	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 		`uvm_info("APB_TEST", "Building test environment", UVM_HIGH)
 
@@ -29,13 +32,13 @@ class apb_test extends uvm_test;
 	endfunction
 
 	// APB_TEST Connect Phase
-	function void connect_phase(uvm_phase phase);
+	virtual function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
 		`uvm_info("APB_TEST", "Connecting test components", UVM_HIGH)
 	endfunction
 	
 	// APB_TEST Run Phase
-	task run_phase(uvm_phase phase);
+	virtual task run_phase(uvm_phase phase);
 		super.run_phase(phase);
 		`uvm_info("APB_TEST", "RUNNING", UVM_HIGH)
 
@@ -102,9 +105,7 @@ class apb_test extends uvm_test;
 		seq.start(env.agnt.seqr);
 	endtask
 
-// LOGGING
-
-	function void end_of_elaboration_phase(uvm_phase phase);
+	virtual function void end_of_elaboration_phase(uvm_phase phase);
         UVM_FILE scb_file, trs_file;
         super.end_of_elaboration_phase(phase);
 

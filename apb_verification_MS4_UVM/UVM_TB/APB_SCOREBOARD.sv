@@ -2,11 +2,12 @@ class apb_scoreboard extends uvm_scoreboard;
     `uvm_component_utils(apb_scoreboard)
 
     // TLM Interfaces
-    uvm_analysis_export #(apb_transaction) mon_in_export;
-    uvm_analysis_export #(apb_transaction) mon_out_export;
+    uvm_analysis_imp_mon_in #(apb_transaction, apb_scoreboard) scb_mon_in_port;
+    uvm_analysis_imp_mon_out #(apb_transaction, apb_scoreboard) scb_mon_out_port;
 
-    uvm_tlm_analysis_fifo #(apb_transaction) mon_in_fifo;
-    uvm_tlm_analysis_fifo #(apb_transaction) mon_out_fifo;
+    // FIFOs
+    apb_transaction scb_mon_in_fifo[$];
+    apb_transaction scb_mon_out_fifo[$];
 
     // Scoreboard State Variables
     int total_tests;
@@ -39,75 +40,49 @@ class apb_scoreboard extends uvm_scoreboard;
     // Slave to Model Index Mapping
     int slave_to_model_idx[PARAMS::SLAVE_COUNT];
 
-    // Coverage Groups
-    int cov_slave_idx, cov_reg_idx;
-    bit cov_rw;
-    bit [PARAMS::DATA_WIDTH-1:0] cov_data;
-    bit cov_timer_override; 
+    // Write Functions for Monitors
+    function write_mon_in(apb_transaction t);
+        scb_mon_in_fifo.push_back(t);
+    endfunction
 
-    covergroup cg_data_integrity;
-        option.per_instance = 1;
-        option.name = "FV-004_Data_Integrity";
-        cp_slave: coverpoint cov_slave_idx {
-            bins slave0 = {0}; bins slave1 = {1}; bins slave2 = {2};
-        }
-        cp_data: coverpoint cov_data {
-            bins all_zeros = {32'h00000000};
-            bins all_ones  = {32'hFFFFFFFF};
-            bins alt_a     = {32'hAAAAAAAA};
-            bins alt_5     = {32'h55555555};
-            bins others    = default;
-        }
-        cp_rw: coverpoint cov_rw {
-            bins read  = {0}; bins write = {1};
-        }
-        cx_integrity: cross cp_slave, cp_data, cp_rw;
-    endgroup
+    function write_mon_out(apb_transaction t);
+        scb_mon_out_fifo.push_back(t);
+    endfunction
 
-    covergroup cg_reset;
-        option.per_instance = 1;
-        option.name = "FV-001_Reset";
-        cp_s0_regs: coverpoint cov_reg_idx iff (cov_slave_idx == 0 && cov_rw == 0 && cov_data == 32'h0) {
-            bins regs[] = {[0:31]};
-        }
-        cp_s1_regs: coverpoint cov_reg_idx iff (cov_slave_idx == 1 && cov_rw == 0 && cov_data == 32'h0) {
-            bins regs[] = {[0:31]};
-        }
-    endgroup
+    // Golder Timer Helper Tasks and Functions
+    task simulate_timers();
+        forever begin
+            #PARAMS::CLK_PERIOD;
+            for (int s = 0; s < PARAMS::SLAVE_COUNT; s++) begin
+                if (PARAMS::PERIPH_TYPE[s] == PARAMS::TYPE_TIMER) begin
+                    foreach (ref_timer_val[s][r]) begin
+                        if (ref_timer_active[s][r] && ref_timer_val[s][r] > 0) begin
+                            ref_timer_val[s][r] = ref_timer_val[s][r] - 1;
+                        end
+                    end
+                end
+            end
+        end
+    endtask
     
-    covergroup cg_timer_validation;
-        option.per_instance = 1;
-        option.name = "FV-005_Timer_Sequences";
-        cp_floor_zero: coverpoint cov_data iff (cov_slave_idx == 2 && cov_rw == 0) {
-            bins hit_zero = {32'h00000000};
-        }
-        cp_oob_addr: coverpoint cov_reg_idx iff (cov_slave_idx == 2) {
-            bins valid_regs = {[0:1]}; bins oob_regs = {[2:31]}; 
-        }
-        cp_override: coverpoint cov_timer_override iff (cov_slave_idx == 2 && cov_rw == 1) {
-            bins occurred = {1};
-        }
-    endgroup
+    function bit [PARAMS::DATA_WIDTH-1:0] sample_ref_timer(int slave_idx, int reg_idx);
+        sample_ref_timer = ref_timer_val[slave_idx][reg_idx];
+    endfunction
 
-    // Constructor & Build Phase
+    // --- Constructor & Phases ---
     function new(string name = "apb_scoreboard", uvm_component parent);
         super.new(name, parent);
-        cg_data_integrity = new();
-        cg_reset = new();
-        cg_timer_validation = new();
 
         `uvm_info("APB_SCB", "APB Scoreboard initialized", UVM_MEDIUM)
     endfunction
 
-    function void build_phase(uvm_phase phase);
+    virtual function void build_phase(uvm_phase phase);
         super.build_phase(phase);
 
         `uvm_info("APB_SCB", "Building Scoreboard components (analysis ports, FIFOs, and golden models)", UVM_MEDIUM)
 
-        mon_in_export  = new("mon_in_export", this);
-        mon_out_export = new("mon_out_export", this);
-        mon_in_fifo    = new("mon_in_fifo", this);
-        mon_out_fifo   = new("mon_out_fifo", this);
+        scb_mon_in_port  = new("scb_mon_in_port", this);
+        scb_mon_out_port = new("scb_mon_out_port", this);
 
         foreach (slave_to_model_idx[i]) slave_to_model_idx[i] = -1;
         mem_slave_count = 0;
@@ -139,38 +114,13 @@ class apb_scoreboard extends uvm_scoreboard;
         `uvm_info("APB_SCB", "Configured Scoreboard components", UVM_MEDIUM)
     endfunction
 
-    function void connect_phase(uvm_phase phase);
+    virtual function void connect_phase(uvm_phase phase);
         super.connect_phase(phase);
-
-        `uvm_info("APB_SCB", "Connecting scoreboard analysis exports to FIFOs", UVM_MEDIUM)
-
-        mon_in_export.connect(mon_in_fifo.analysis_export);
-        mon_out_export.connect(mon_out_fifo.analysis_export);
-
-        `uvm_info("APB_SCB", "Scoreboard connections established", UVM_MEDIUM)
     endfunction
 
-    task simulate_timers();
-        forever begin
-            #PARAMS::CLK_PERIOD;
-            for (int s = 0; s < PARAMS::SLAVE_COUNT; s++) begin
-                if (PARAMS::PERIPH_TYPE[s] == PARAMS::TYPE_TIMER) begin
-                    foreach (ref_timer_val[s][r]) begin
-                        if (ref_timer_active[s][r] && ref_timer_val[s][r] > 0) begin
-                            ref_timer_val[s][r] = ref_timer_val[s][r] - 1;
-                        end
-                    end
-                end
-            end
-        end
-    endtask
-
-    function bit [PARAMS::DATA_WIDTH-1:0] sample_ref_timer(int slave_idx, int reg_idx);
-        sample_ref_timer = ref_timer_val[slave_idx][reg_idx];
-    endfunction
-
-    // Run Phase Threads
-    task run_phase(uvm_phase phase);
+    // --- Run Phase ---
+    virtual task run_phase(uvm_phase phase);
+        super.run_phase(phase);
         `uvm_info("APB_SCB", "Starting Scoreboard", UVM_MEDIUM)
         fork
             get_input();
@@ -183,7 +133,8 @@ class apb_scoreboard extends uvm_scoreboard;
         apb_transaction tx;
         int slave_idx, reg_idx, model_idx;
         forever begin
-            mon_in_fifo.get(tx);
+            wait(scb_mon_in_fifo.size() != 0);
+            tx = scb_mon_in_fifo.pop_front();
             total_input_count++;
             slave_idx = PARAMS::addr_to_slave_idx(tx.addr);
             reg_idx = PARAMS::addr_to_reg_idx(tx.addr);
@@ -191,22 +142,14 @@ class apb_scoreboard extends uvm_scoreboard;
             
             if (tx.illegal) begin
                 illegal_count++;
-                if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
-                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
-                    cg_timer_validation.sample();
-                end
                 `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Illegal Transaction Acknowledged: ADDR=0x%08x SLAVE=%0d REG=%0d", total_input_count, tx.addr, slave_idx, reg_idx), UVM_HIGH)
             end
             else if (tx.rw) begin 
-                cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_in;
-                cg_data_integrity.sample();
                 if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_MEM) begin
                     golden_mem[model_idx][reg_idx] = tx.data_in;
                     `uvm_info("APB_SCB_IN", $sformatf("TX#%0d Memory Write Registered: SLAVE=%0d REG=%0d ADDR=0x%08x DATA=0x%08x", total_input_count, slave_idx, reg_idx, tx.addr, tx.data_in), UVM_HIGH)
                 end 
                 else if (slave_idx < PARAMS::SLAVE_COUNT && PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER) begin
-                    cov_timer_override = (ref_timer_active[slave_idx][reg_idx] && ref_timer_val[slave_idx][reg_idx] > 0) ? 1 : 0;
-                    cg_timer_validation.sample();
                     pending_start_val[slave_idx][reg_idx] = tx.data_in;
                     pending_start_request_time[slave_idx][reg_idx] = tx.timestamp;
                     pending_start_valid[slave_idx][reg_idx] = 1;
@@ -222,7 +165,8 @@ class apb_scoreboard extends uvm_scoreboard;
         bit [PARAMS::DATA_WIDTH-1:0] expected_data;
         bit transfer_status_ok, valid_ok, data_ok, check_pass;
         forever begin
-            mon_out_fifo.get(tx);
+            wait(scb_mon_out_fifo.size() != 0);
+            tx = scb_mon_out_fifo.pop_front();
             total_output_count++;
             slave_idx = PARAMS::addr_to_slave_idx(tx.addr);
             reg_idx = PARAMS::addr_to_reg_idx(tx.addr);
@@ -231,11 +175,7 @@ class apb_scoreboard extends uvm_scoreboard;
             if (tx.illegal) begin
                 // --- ILLEGAL TRANSACTION CHECK ---
                 // Only check: transfer_status should be asserted (1)
-                if ((slave_idx < PARAMS::SLAVE_COUNT) && (PARAMS::PERIPH_TYPE[slave_idx] == PARAMS::TYPE_TIMER)) begin
-                    cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
-                    cg_timer_validation.sample();
-                end
-                
+
                 if (tx.transfer_status != 1'b1) begin
                     illegal_fail_count++;
                     `uvm_error("APB_SCB_OUT", $sformatf("TX#%0d ILLEGAL FAIL: transfer_status=%0b (expected 1)", total_output_count, tx.transfer_status))
@@ -243,12 +183,15 @@ class apb_scoreboard extends uvm_scoreboard;
                     illegal_pass_count++;
                     `uvm_info("APB_SCB_OUT", $sformatf("TX#%0d ILLEGAL PASS: transfer_status=%0b", total_output_count, tx.transfer_status), UVM_HIGH)
                 end
+
                 continue;
+
             end
 
             if (tx.rw) begin 
                 // --- WRITE COMPLETION CHECK ---
                 // Check: transfer_status deasserted (0) AND valid deasserted (0)
+
                 transfer_status_ok = (tx.transfer_status == 1'b0);
                 valid_ok = (tx.valid == 1'b0);
                 check_pass = transfer_status_ok && valid_ok;
@@ -270,8 +213,6 @@ class apb_scoreboard extends uvm_scoreboard;
             end else begin 
                 // --- READ COMPLETION CHECK ---
                 // Check: transfer_status deasserted (0), valid asserted (1), and data_out matches expected
-                cov_slave_idx = slave_idx; cov_reg_idx = reg_idx; cov_rw = tx.rw; cov_data = tx.data_out;
-                cg_data_integrity.sample(); cg_reset.sample(); cg_timer_validation.sample();
                 
                 transfer_status_ok = (tx.transfer_status == 1'b0);
                 valid_ok = (tx.valid == 1'b1);

@@ -32,7 +32,7 @@ class apb_monitor extends uvm_monitor;
 		`uvm_info("APB_MON", "APB Monitor initialized", UVM_MEDIUM)
 	endfunction
 
-	function void build_phase(uvm_phase phase);
+	virtual function void build_phase(uvm_phase phase);
 		super.build_phase(phase);
 
 		`uvm_info("APB_MON", "Building APB Monitor components (initialize ports and check VIF)", UVM_MEDIUM)
@@ -46,11 +46,13 @@ class apb_monitor extends uvm_monitor;
 		`uvm_info("APB_MON", "Ports initialized and VIF present", UVM_MEDIUM)
 	endfunction
 
-	function void connect_phase(uvm_phase phase);
+	virtual function void connect_phase(uvm_phase phase);
 		super.connect_phase(phase);
 	endfunction
 
-	task run_phase(uvm_phase phase);
+	virtual task run_phase(uvm_phase phase);
+		super.run_phase(phase);
+	
         `uvm_info("APB_MON", "Run phase started. Waiting for reset...", UVM_MEDIUM)
 
         // Wait for reset sequence to complete before starting monitoring

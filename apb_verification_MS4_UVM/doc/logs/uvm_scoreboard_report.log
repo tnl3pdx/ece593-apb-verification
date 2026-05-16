@@ -1,0 +1,39 @@
+UVM_INFO @ 0: uvm_test_top.env.scb [APB_SCB] Starting Scoreboard
+UVM_INFO @ 75: uvm_test_top.env.scb [APB_SCB_OUT] TX#1 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 125: uvm_test_top.env.scb [APB_SCB_OUT] TX#2 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 135: uvm_test_top.env.scb [APB_SCB_IN] TX#3 Memory Write Registered: SLAVE=1 REG=31 ADDR=0x000000fc DATA=0x00000000
+UVM_INFO @ 175: uvm_test_top.env.scb [APB_SCB_OUT] TX#3 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 225: uvm_test_top.env.scb [APB_SCB_OUT] TX#4 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 275: uvm_test_top.env.scb [APB_SCB_OUT] TX#5 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 325: uvm_test_top.env.scb [APB_SCB_OUT] TX#6 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 335: uvm_test_top.env.scb [APB_SCB_IN] TX#7 Memory Write Registered: SLAVE=0 REG=4 ADDR=0x00000010 DATA=0x64326e0b
+UVM_INFO @ 375: uvm_test_top.env.scb [APB_SCB_OUT] TX#7 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 425: uvm_test_top.env.scb [APB_SCB_OUT] TX#8 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 435: uvm_test_top.env.scb [APB_SCB_IN] TX#9 Timer Write Registered: SLAVE=2 REG=4 ADDR=0x00000110 DATA=0xbd52556e
+UVM_INFO @ 475: uvm_test_top.env.scb [APB_SCB_OUT] TX#9 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 485: uvm_test_top.env.scb [APB_SCB_IN] TX#10 Memory Write Registered: SLAVE=1 REG=1 ADDR=0x00000084 DATA=0x00000000
+UVM_INFO @ 525: uvm_test_top.env.scb [APB_SCB_OUT] TX#10 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 575: uvm_test_top.env.scb [APB_SCB_OUT] TX#11 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 625: uvm_test_top.env.scb [APB_SCB_OUT] TX#12 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 635: uvm_test_top.env.scb [APB_SCB_IN] TX#13 Memory Write Registered: SLAVE=1 REG=18 ADDR=0x000000c8 DATA=0xffffffff
+UVM_INFO @ 675: uvm_test_top.env.scb [APB_SCB_OUT] TX#13 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 725: uvm_test_top.env.scb [APB_SCB_OUT] TX#14 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 735: uvm_test_top.env.scb [APB_SCB_IN] TX#15 Memory Write Registered: SLAVE=1 REG=23 ADDR=0x000000dc DATA=0x2d6009a9
+UVM_INFO @ 775: uvm_test_top.env.scb [APB_SCB_OUT] TX#15 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 825: uvm_test_top.env.scb [APB_SCB_OUT] TX#16 READ PASS: transfer_status=0, valid=1, data_out=0x00000000
+UVM_INFO @ 835: uvm_test_top.env.scb [APB_SCB_IN] TX#17 Memory Write Registered: SLAVE=0 REG=9 ADDR=0x00000024 DATA=0x92aa1127
+UVM_INFO @ 875: uvm_test_top.env.scb [APB_SCB_OUT] TX#17 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 885: uvm_test_top.env.scb [APB_SCB_IN] TX#18 Memory Write Registered: SLAVE=1 REG=23 ADDR=0x000000dc DATA=0x188cc392
+UVM_INFO @ 925: uvm_test_top.env.scb [APB_SCB_OUT] TX#18 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 935: uvm_test_top.env.scb [APB_SCB_IN] TX#19 Memory Write Registered: SLAVE=1 REG=5 ADDR=0x00000094 DATA=0xd175cd94
+UVM_INFO @ 975: uvm_test_top.env.scb [APB_SCB_OUT] TX#19 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 985: uvm_test_top.env.scb [APB_SCB_IN] TX#20 Memory Write Registered: SLAVE=1 REG=24 ADDR=0x000000e0 DATA=0x2226f24d
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB_OUT] TX#20 WRITE PASS: transfer_status=0, valid=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] ===== FINAL SCOREBOARD REPORT =====
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] WRITES: PASS=10 FAIL=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] READS:  PASS=10 FAIL=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] ILLEGAL TX: PASS=0 FAIL=0
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB]   Slave 0: 4 accesses (WRITES=2 (ERRORS=0) READS=2 (ERRORS=0))
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB]   Slave 1: 10 accesses (WRITES=7 (ERRORS=0) READS=3 (ERRORS=0))
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB]   Slave 2: 6 accesses (WRITES=1 (ERRORS=0) READS=5 (ERRORS=0))
+UVM_INFO @ 1025: uvm_test_top.env.scb [APB_SCB] VERIFICATION PASSED! TOTAL ERRORS: 0 | TRANSACTIONS VERIFIED: 20
